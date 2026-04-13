@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
+import 'package:birthday_calendar/shared/widgets/app_shell.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // 日付フォーマットのロケール初期化 (ja_JP用)
+  await initializeDateFormatting('ja_JP');
+
   runApp(
     // Riverpod の ProviderScope でアプリ全体をラップ
     const ProviderScope(
@@ -26,11 +33,7 @@ class BirthdayCalendarApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const Scaffold(
-        body: Center(
-          child: Text('BirthDay Calendar - Phase 4 で UI を実装予定'),
-        ),
-      ),
+      home: const AppShell(),
     );
   }
 }

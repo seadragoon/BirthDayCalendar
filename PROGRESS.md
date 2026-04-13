@@ -4,7 +4,7 @@
 > セッションを跨いでも現在の状態を把握できるようにしています。
 > 最終更新: 2026-04-13
 
-## 全体の進捗: ███░░░░░░░ 25%
+## 全体の進捗: ████░░░░░░ 35%
 
 ---
 
@@ -45,12 +45,14 @@
 - [x] main.dart を ProviderScope で wrap
 - [x] `flutter analyze` — エラーなし確認済み
 
-## Phase 4: UI - 基盤レイアウト 🔲 未着手
-- [ ] main.dart をRiverpod/calendar_view対応に書き換え
-- [ ] AppShell（ヘッダー + メインビュー + フッター + FAB）
-- [ ] Header View（メニュー、タイトル、検索、今日ボタン）
-- [ ] Footer View（スケジュール / 誕生日 切り替え）
-- [ ] FAB（表示モードに応じたモーダル表示）
+## Phase 4: UI - 基盤レイアウト ✅ 完了
+- [x] main.dart をRiverpod・intl対応に書き換え — `lib/main.dart`
+- [x] AppShell（ヘッダー + メインビュー + フッター + FAB） — `lib/shared/widgets/app_shell.dart`
+- [x] Header View（メニュー、タイトル、検索、今日ボタン） — `lib/shared/widgets/custom_header.dart`
+- [x] Footer View（スケジュール / 誕生日 切り替え） — `lib/shared/widgets/custom_footer.dart`
+- [x] FAB（表示モードに応じたアラート表示） — `lib/shared/widgets/custom_fab.dart`
+- [x] Drawer（設定メニューのプレースホルダ） — `lib/shared/widgets/custom_drawer.dart`
+- [x] ScheduleView / BirthdayView のプレースホルダ作成
 
 ## Phase 5: UI - Schedule View 🔲 未着手
 - [ ] MonthView（calendar_view 使用）
@@ -99,7 +101,8 @@ lib/
 │   │   │   └── sqflite_event_repository.dart ✅
 │   │   ├── providers/
 │   │   │   └── event_providers.dart    ✅
-│   │   └── views/                     （空）
+│   │   └── views/
+│   │       └── schedule_view.dart      ✅
 │   ├── birthday/
 │   │   ├── models/
 │   │   │   └── birthday_model.dart    ✅
@@ -108,7 +111,8 @@ lib/
 │   │   │   └── sqflite_birthday_repository.dart ✅
 │   │   ├── providers/
 │   │   │   └── birthday_providers.dart ✅
-│   │   └── views/                     （空）
+│   │   └── views/
+│   │       └── birthday_view.dart      ✅
 │   └── settings/                      （空）
 └── shared/
     ├── constants/
@@ -122,5 +126,10 @@ lib/
     ├── db/
     │   └── database_helper.dart       ✅
     ├── theme/                         （空）
-    └── widgets/                       （空）
+    └── widgets/
+        ├── app_shell.dart             ✅
+        ├── custom_header.dart         ✅
+        ├── custom_footer.dart         ✅
+        ├── custom_fab.dart            ✅
+        └── custom_drawer.dart         ✅
 ```

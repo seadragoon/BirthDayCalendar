@@ -1,0 +1,41 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:birthday_calendar/shared/constants/view_type.dart';
+import 'package:birthday_calendar/shared/providers/app_state_providers.dart';
+
+/// アプリ共通のフローティングアクションボタン（FAB）。
+///
+/// 現在の [ViewType] に応じてアイコンやアクションが切り替わる。
+class CustomFab extends ConsumerWidget {
+  const CustomFab({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewType = ref.watch(viewTypeProvider);
+
+    if (viewType == ViewType.schedule) {
+      return FloatingActionButton(
+        onPressed: () {
+          // TODO(Phase 7): イベント追加モーダルを開く
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('イベント追加機能は Phase 7 で実装予定です')),
+          );
+        },
+        tooltip: '予定を追加',
+        child: const Icon(Icons.add),
+      );
+    } else {
+      return FloatingActionButton(
+        onPressed: () {
+          // TODO(Phase 7): 誕生日追加モーダルを開く
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('誕生日追加機能は Phase 7 で実装予定です')),
+          );
+        },
+        tooltip: '誕生日を追加',
+        child: const Icon(Icons.cake),
+      );
+    }
+  }
+}
