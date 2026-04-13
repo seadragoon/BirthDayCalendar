@@ -4,7 +4,7 @@
 > セッションを跨いでも現在の状態を把握できるようにしています。
 > 最終更新: 2026-04-13
 
-## 全体の進捗: █████░░░░░ 50%
+## 全体の進捗: ██████░░░░ 65%
 
 ---
 
@@ -61,9 +61,10 @@
 - [x] Today Bar（選択日付表示） — `lib/features/calendar/widgets/today_bar.dart`
 - [x] Event List（選択日付のイベント表示） — `lib/features/calendar/widgets/event_list_view.dart`
 
-## Phase 6: UI - Birthday View 🔲 未着手
-- [ ] タグフィルター（すべて / 家族 / 友達 / カスタム / 未設定）
-- [ ] 誕生日リスト（名前 / 日付 / 満年齢）
+## Phase 6: UI - Birthday View ✅ 完了
+- [x] タグフィルター（すべて / カスタム / 未設定） — `lib/features/birthday/widgets/tag_filter_bar.dart`
+- [x] 誕生日リスト（名前 / 日付 / 満年齢 / ソート対応） — `lib/features/birthday/widgets/birthday_list_view.dart`
+- [x] Birthday View統合 — `lib/features/birthday/views/birthday_view.dart`
 
 ## Phase 7: UI - Full Screen Modal 🔲 未着手
 - [ ] 共通BaseModal（ヘッダー: 閉じる / 決定 / 削除 / 編集）
@@ -114,8 +115,11 @@ lib/
 │   │   │   └── sqflite_birthday_repository.dart ✅
 │   │   ├── providers/
 │   │   │   └── birthday_providers.dart ✅
-│   │   └── views/
-│   │       └── birthday_view.dart      ✅
+│   │   ├── views/
+│   │   │   └── birthday_view.dart      ✅
+│   │   └── widgets/
+│   │       ├── birthday_list_view.dart ✅
+│   │       └── tag_filter_bar.dart     ✅
 │   └── settings/                      （空）
 └── shared/
     ├── constants/
