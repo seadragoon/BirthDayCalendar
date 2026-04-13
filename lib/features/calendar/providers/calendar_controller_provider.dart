@@ -21,7 +21,7 @@ final calendarControllerProvider =
         // 既存のイベントをクリア
         // Note: removeWhere((_) => true) は内部で再描画が走る可能性があるため、
         // 一気にクリアして追加する
-        final existingEvents = controller.allEvents;
+        final existingEvents = controller.allEvents.toList();
         for (final e in existingEvents) {
           controller.remove(e);
         }
