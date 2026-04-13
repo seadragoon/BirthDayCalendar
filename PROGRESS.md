@@ -4,7 +4,7 @@
 > セッションを跨いでも現在の状態を把握できるようにしています。
 > 最終更新: 2026-04-13
 
-## 全体の進捗: ████████░░ 85%
+## 全体の進捗: ██████████ 100%
 
 ---
 
@@ -74,17 +74,18 @@
 - [ ] 検索モーダル（リアルタイム検索） -> Phase 9へ整理
 - [ ] 設定モーダル -> Phase 9へ整理
 
-## Phase 8: きせかえ機能 🔲 未着手
-- [ ] テーマデータ定義
-- [ ] Header/Footer への画像適用
-- [ ] Main View 背景ホワイトアウト
-- [ ] 3種類のテーマ画像準備
+## Phase 8: きせかえ機能 ✅ 完了
+- [x] テーマデータ定義 — `lib/shared/theme/app_theme.dart`
+- [x] テーマの状態管理 — `lib/shared/providers/theme_provider.dart`
+- [x] Header/Footer への画像適用 — `lib/shared/widgets/custom_header.dart`, `custom_footer.dart`
+- [x] Main View 背景透過・適用 — `lib/shared/widgets/app_shell.dart`
+- [x] 3種類のテーマ画像準備とテーマ切り替えUI（Drawer） — `lib/shared/widgets/custom_drawer.dart`
 
-## Phase 9: 仕上げ 🔲 未着手
-- [ ] 画面方向の縦固定
-- [ ] エラーハンドリング
-- [ ] パフォーマンス最適化
-- [ ] 最終テスト
+## Phase 9: 仕上げ ✅ 完了
+- [x] 画面方向の縦固定 — `lib/main.dart`
+- [x] 検索モーダル（リアルタイム検索） — `lib/shared/widgets/custom_search_delegate.dart`
+- [x] アプリについて（About）ダイアログ — `lib/shared/widgets/custom_drawer.dart`
+- [x] パフォーマンス、エラーハンドリング、静的解析の最終確認（エラー・警告ゼロ）
 
 ---
 
@@ -134,7 +135,8 @@ lib/
     │   └── app_state_providers.dart    ✅
     ├── db/
     │   └── database_helper.dart       ✅
-    ├── theme/                         （空）
+    ├── theme/
+    │   └── app_theme.dart             ✅
     └── widgets/
         ├── app_shell.dart             ✅
         ├── base_modal.dart            ✅

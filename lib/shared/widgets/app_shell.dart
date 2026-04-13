@@ -5,6 +5,7 @@ import 'package:birthday_calendar/features/birthday/views/birthday_view.dart';
 import 'package:birthday_calendar/features/calendar/views/schedule_view.dart';
 import 'package:birthday_calendar/shared/constants/view_type.dart';
 import 'package:birthday_calendar/shared/providers/app_state_providers.dart';
+import 'package:birthday_calendar/shared/providers/theme_provider.dart';
 import 'package:birthday_calendar/shared/widgets/custom_drawer.dart';
 import 'package:birthday_calendar/shared/widgets/custom_fab.dart';
 import 'package:birthday_calendar/shared/widgets/custom_footer.dart';
@@ -20,12 +21,16 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewType = ref.watch(viewTypeProvider);
+    final appTheme = ref.watch(themeProvider);
 
     return Scaffold(
       appBar: const CustomHeader(),
       drawer: const CustomDrawer(),
-      body: SafeArea(
-        child: _buildBody(viewType),
+      body: Container(
+        color: appTheme.surfaceColor,
+        child: SafeArea(
+          child: _buildBody(viewType),
+        ),
       ),
       bottomNavigationBar: const CustomFooter(),
       floatingActionButton: const CustomFab(),
