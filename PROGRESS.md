@@ -4,7 +4,7 @@
 > セッションを跨いでも現在の状態を把握できるようにしています。
 > 最終更新: 2026-04-13
 
-## 全体の進捗: ██░░░░░░░░ 15%
+## 全体の進捗: ███░░░░░░░ 25%
 
 ---
 
@@ -35,12 +35,15 @@
   - [x] `SqfliteBirthdayRepository` — `lib/features/birthday/repositories/sqflite_birthday_repository.dart`
 - [x] `flutter analyze` — エラーなし確認済み
 
-## Phase 3: 状態管理（Riverpod Provider / Notifier） 🔲 未着手
-- [ ] Repository Provider の定義
-- [ ] EventNotifier（AsyncNotifier）の実装
-- [ ] BirthdayNotifier（AsyncNotifier）の実装
-- [ ] 選択日付の状態管理
-- [ ] 表示モード（Schedule / Birthday）の状態管理
+## Phase 3: 状態管理（Riverpod Provider / Notifier） ✅ 完了
+- [x] `ViewType` enum — `lib/shared/constants/view_type.dart`
+- [x] Repository Provider — `lib/shared/providers/repository_providers.dart`
+- [x] App State Provider（選択日付 / 表示月 / 表示モード） — `lib/shared/providers/app_state_providers.dart`
+- [x] EventsByDateNotifier / EventsByMonthNotifier — `lib/features/calendar/providers/event_providers.dart`
+- [x] BirthdayListNotifier + フィルタリング派生 — `lib/features/birthday/providers/birthday_providers.dart`
+- [x] 検索Provider（eventSearch / birthdaySearch）
+- [x] main.dart を ProviderScope で wrap
+- [x] `flutter analyze` — エラーなし確認済み
 
 ## Phase 4: UI - 基盤レイアウト 🔲 未着手
 - [ ] main.dart をRiverpod/calendar_view対応に書き換え
@@ -86,7 +89,7 @@
 ## ディレクトリ構成（現在の状態）
 ```
 lib/
-├── main.dart                          ← まだデフォルトのカウンターアプリ
+├── main.dart                          ✅ ProviderScope + MaterialApp
 ├── features/
 │   ├── calendar/
 │   │   ├── models/
@@ -94,7 +97,8 @@ lib/
 │   │   ├── repositories/
 │   │   │   ├── event_repository.dart   ✅
 │   │   │   └── sqflite_event_repository.dart ✅
-│   │   ├── providers/                 （空）
+│   │   ├── providers/
+│   │   │   └── event_providers.dart    ✅
 │   │   └── views/                     （空）
 │   ├── birthday/
 │   │   ├── models/
@@ -102,14 +106,19 @@ lib/
 │   │   ├── repositories/
 │   │   │   ├── birthday_repository.dart ✅
 │   │   │   └── sqflite_birthday_repository.dart ✅
-│   │   ├── providers/                 （空）
+│   │   ├── providers/
+│   │   │   └── birthday_providers.dart ✅
 │   │   └── views/                     （空）
 │   └── settings/                      （空）
 └── shared/
     ├── constants/
     │   ├── event_color.dart           ✅
     │   ├── recurrence_type.dart       ✅
-    │   └── notification_type.dart     ✅
+    │   ├── notification_type.dart     ✅
+    │   └── view_type.dart             ✅
+    ├── providers/
+    │   ├── repository_providers.dart   ✅
+    │   └── app_state_providers.dart    ✅
     ├── db/
     │   └── database_helper.dart       ✅
     ├── theme/                         （空）
