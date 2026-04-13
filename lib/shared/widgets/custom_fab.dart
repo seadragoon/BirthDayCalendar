@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:birthday_calendar/features/birthday/widgets/birthday_modal.dart';
+import 'package:birthday_calendar/features/calendar/widgets/event_modal.dart';
 import 'package:birthday_calendar/shared/constants/view_type.dart';
 import 'package:birthday_calendar/shared/providers/app_state_providers.dart';
 
@@ -17,9 +19,12 @@ class CustomFab extends ConsumerWidget {
     if (viewType == ViewType.schedule) {
       return FloatingActionButton(
         onPressed: () {
-          // TODO(Phase 7): イベント追加モーダルを開く
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('イベント追加機能は Phase 7 で実装予定です')),
+          // イベント追加モーダルを開く
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const EventModal(),
+              fullscreenDialog: true,
+            ),
           );
         },
         tooltip: '予定を追加',
@@ -28,9 +33,12 @@ class CustomFab extends ConsumerWidget {
     } else {
       return FloatingActionButton(
         onPressed: () {
-          // TODO(Phase 7): 誕生日追加モーダルを開く
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('誕生日追加機能は Phase 7 で実装予定です')),
+          // 誕生日追加モーダルを開く
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const BirthdayModal(),
+              fullscreenDialog: true,
+            ),
           );
         },
         tooltip: '誕生日を追加',

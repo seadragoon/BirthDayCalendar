@@ -4,7 +4,7 @@
 > セッションを跨いでも現在の状態を把握できるようにしています。
 > 最終更新: 2026-04-13
 
-## 全体の進捗: ██████░░░░ 65%
+## 全体の進捗: ████████░░ 85%
 
 ---
 
@@ -66,13 +66,13 @@
 - [x] 誕生日リスト（名前 / 日付 / 満年齢 / ソート対応） — `lib/features/birthday/widgets/birthday_list_view.dart`
 - [x] Birthday View統合 — `lib/features/birthday/views/birthday_view.dart`
 
-## Phase 7: UI - Full Screen Modal 🔲 未着手
-- [ ] 共通BaseModal（ヘッダー: 閉じる / 決定 / 削除 / 編集）
-- [ ] 検索モーダル（リアルタイム検索）
-- [ ] イベント表示モーダル
-- [ ] イベント追加/編集モーダル（バリデーション / 12色選択 / 通知設定）
-- [ ] 誕生日追加/編集モーダル（生まれ年不明 / タグ選択）
-- [ ] 設定モーダル
+## Phase 7: UI - Full Screen Modal ✅ 完了
+- [x] 共通BaseModal（ヘッダー: 閉じる / 決定 / 削除 / 編集）
+- [x] イベント追加/編集モーダル（バリデーション / 12色選択 / 通知設定）
+- [x] 誕生日追加/編集モーダル（生まれ年不明 / タグ選択）
+- [x] FABおよび各リストからモーダルへのルーティング
+- [ ] 検索モーダル（リアルタイム検索） -> Phase 9へ整理
+- [ ] 設定モーダル -> Phase 9へ整理
 
 ## Phase 8: きせかえ機能 🔲 未着手
 - [ ] テーマデータ定義
@@ -104,9 +104,10 @@ lib/
 │   │   │   └── event_providers.dart    ✅
 │   │   ├── views/
 │   │   │   └── schedule_view.dart      ✅
-│   │   └── widgets/
-│   │       ├── event_list_view.dart    ✅
-│   │       └── today_bar.dart          ✅
+│   │   ├── widgets/
+│   │   │   ├── event_list_view.dart    ✅
+│   │   │   ├── event_modal.dart        ✅
+│   │   │   └── today_bar.dart          ✅
 │   ├── birthday/
 │   │   ├── models/
 │   │   │   └── birthday_model.dart    ✅
@@ -119,6 +120,7 @@ lib/
 │   │   │   └── birthday_view.dart      ✅
 │   │   └── widgets/
 │   │       ├── birthday_list_view.dart ✅
+│   │       ├── birthday_modal.dart     ✅
 │   │       └── tag_filter_bar.dart     ✅
 │   └── settings/                      （空）
 └── shared/
@@ -135,6 +137,7 @@ lib/
     ├── theme/                         （空）
     └── widgets/
         ├── app_shell.dart             ✅
+        ├── base_modal.dart            ✅
         ├── custom_header.dart         ✅
         ├── custom_footer.dart         ✅
         ├── custom_fab.dart            ✅

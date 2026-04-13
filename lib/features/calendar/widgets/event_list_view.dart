@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:birthday_calendar/features/calendar/providers/event_providers.dart';
+import 'package:birthday_calendar/features/calendar/widgets/event_modal.dart';
 
 /// 選択中の日付に該当するイベントをリスト表示するWidget。
 ///
@@ -58,9 +59,11 @@ class EventListView extends ConsumerWidget {
               ),
               subtitle: Text(timeText),
               onTap: () {
-                // TODO(Phase 7): イベント表示モーダルを開く
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('「${event.title}」の詳細表示は Phase 7 で実装予定です')),
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => EventModal(existingEvent: event),
+                    fullscreenDialog: true,
+                  ),
                 );
               },
             );

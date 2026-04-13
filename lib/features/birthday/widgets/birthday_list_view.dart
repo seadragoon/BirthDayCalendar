@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
 import 'package:birthday_calendar/features/birthday/providers/birthday_providers.dart';
+import 'package:birthday_calendar/features/birthday/widgets/birthday_modal.dart';
 
 /// 誕生日データをリスト形式で表示するコンポーネント。
 class BirthdayListView extends ConsumerWidget {
@@ -97,9 +98,11 @@ class BirthdayListView extends ConsumerWidget {
                     )
                   : null,
               onTap: () {
-                // TODO(Phase 7): 誕生日表示モーダル or 編集モーダルを開く
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('「${birthday.name}」の編集は Phase 7 で実装予定です')),
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => BirthdayModal(existingBirthday: birthday),
+                    fullscreenDialog: true,
+                  ),
                 );
               },
             );
