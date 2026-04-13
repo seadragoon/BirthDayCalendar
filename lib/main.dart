@@ -1,11 +1,26 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 import 'package:birthday_calendar/shared/widgets/app_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  if (kIsWeb) {
+    // Web環境での初期化
+    databaseFactory = databaseFactoryFfiWeb;
+  } else if (Platform.isWindows || Platform.isLinux) {
+    // Windows / Linux環境での初期化
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
   // 日付フォーマットのロケール初期化 (ja_JP用)
   await initializeDateFormatting('ja_JP');
 

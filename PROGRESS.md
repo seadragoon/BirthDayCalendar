@@ -4,7 +4,7 @@
 > セッションを跨いでも現在の状態を把握できるようにしています。
 > 最終更新: 2026-04-13
 
-## 全体の進捗: ████░░░░░░ 35%
+## 全体の進捗: █████░░░░░ 50%
 
 ---
 
@@ -54,13 +54,12 @@
 - [x] Drawer（設定メニューのプレースホルダ） — `lib/shared/widgets/custom_drawer.dart`
 - [x] ScheduleView / BirthdayView のプレースホルダ作成
 
-## Phase 5: UI - Schedule View 🔲 未着手
-- [ ] MonthView（calendar_view 使用）
-- [ ] 日本語対応（locale: ja_JP）
-- [ ] 5週/6週 高さ調整
-- [ ] イベントバー表示（日付跨ぎ対応）
-- [ ] Today Bar（選択日付表示）
-- [ ] Event List（選択日付のイベントリスト）
+## Phase 5: UI - Schedule View ✅ 完了
+- [x] MonthView（calendar_view 使用） — `lib/features/calendar/views/schedule_view.dart`
+- [x] イベントリストとMonthViewのデータ同期 — `lib/features/calendar/providers/calendar_controller_provider.dart`
+- [x] 日本語・スワイプ対応
+- [x] Today Bar（選択日付表示） — `lib/features/calendar/widgets/today_bar.dart`
+- [x] Event List（選択日付のイベント表示） — `lib/features/calendar/widgets/event_list_view.dart`
 
 ## Phase 6: UI - Birthday View 🔲 未着手
 - [ ] タグフィルター（すべて / 家族 / 友達 / カスタム / 未設定）
@@ -100,9 +99,13 @@ lib/
 │   │   │   ├── event_repository.dart   ✅
 │   │   │   └── sqflite_event_repository.dart ✅
 │   │   ├── providers/
+│   │   │   ├── calendar_controller_provider.dart ✅
 │   │   │   └── event_providers.dart    ✅
-│   │   └── views/
-│   │       └── schedule_view.dart      ✅
+│   │   ├── views/
+│   │   │   └── schedule_view.dart      ✅
+│   │   └── widgets/
+│   │       ├── event_list_view.dart    ✅
+│   │       └── today_bar.dart          ✅
 │   ├── birthday/
 │   │   ├── models/
 │   │   │   └── birthday_model.dart    ✅
