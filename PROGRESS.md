@@ -10,7 +10,7 @@
 
 ## Phase 1: 環境構築 ✅ 完了
 - [x] Flutterプロジェクト初期化
-- [x] pubspec.yaml に依存パッケージ追加（calendar_view, flutter_riverpod, intl, sqflite, path）
+- [x] pubspec.yaml に依存パッケージ追加（calendar_view, flutter_riverpod, intl, sqflite, path, holiday_jp）
 - [x] Android minSdkVersion 設定（21以上）
 - [x] アセットディレクトリ作成（assets/images/themes/）
 - [x] Feature-based ディレクトリ構成の作成
@@ -55,9 +55,10 @@
 - [x] ScheduleView / BirthdayView のプレースホルダ作成
 
 ## Phase 5: UI - Schedule View ✅ 完了
-- [x] MonthView（calendar_view 使用） — `lib/features/calendar/views/schedule_view.dart`
-- [x] イベントリストとMonthViewのデータ同期 — `lib/features/calendar/providers/calendar_controller_provider.dart`
-- [x] 日本語・スワイプ対応
+- [x] MonthView（自作 CustomMonthView に置き換え済） — `lib/features/calendar/views/schedule_view.dart`
+- [x] 5週/6週可変高さ、横方向スワイプ対応
+- [x] 土日・祝日の色分け対応（holiday_jp 使用）
+- [x] 複数日イベントバーの連結表示
 - [x] Today Bar（選択日付表示） — `lib/features/calendar/widgets/today_bar.dart`
 - [x] Event List（選択日付のイベント表示） — `lib/features/calendar/widgets/event_list_view.dart`
 
@@ -101,11 +102,11 @@ lib/
 │   │   │   ├── event_repository.dart   ✅
 │   │   │   └── sqflite_event_repository.dart ✅
 │   │   ├── providers/
-│   │   │   ├── calendar_controller_provider.dart ✅
 │   │   │   └── event_providers.dart    ✅
 │   │   ├── views/
 │   │   │   └── schedule_view.dart      ✅
 │   │   ├── widgets/
+│   │   │   ├── custom_month_view.dart  ✅
 │   │   │   ├── event_list_view.dart    ✅
 │   │   │   ├── event_modal.dart        ✅
 │   │   │   └── today_bar.dart          ✅
@@ -127,6 +128,7 @@ lib/
 └── shared/
     ├── constants/
     │   ├── event_color.dart           ✅
+    │   ├── japanese_holiday.dart      ✅
     │   ├── recurrence_type.dart       ✅
     │   ├── notification_type.dart     ✅
     │   └── view_type.dart             ✅

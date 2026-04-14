@@ -50,6 +50,9 @@ dependencies:
   sqflite_common_ffi: ^2.4.0+2
   sqflite_common_ffi_web: ^1.1.1
 
+  # Japanese holidays
+  holiday_jp: ^0.0.8
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

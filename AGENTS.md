@@ -59,6 +59,7 @@
 | DB (デスクトップ) | `sqflite_common_ffi` | ^2.4.0+2 | Windows/Linux対応 |
 | DB (Web) | `sqflite_common_ffi_web` | ^1.1.1 | Web対応 |
 | パス操作 | `path` | ^1.9.1 | DBファイルパス構築 |
+| 祝日判定 | `holiday_jp` | ^0.0.8 | 日本の祝日データと判定論理 |
 
 ---
 
@@ -100,11 +101,11 @@ lib/
 │   │   │   ├── event_repository.dart            # EventRepository 抽象クラス
 │   │   │   └── sqflite_event_repository.dart    # sqflite実装
 │   │   ├── providers/
-│   │   │   ├── event_providers.dart             # EventsByDate/Month Notifier, 検索Provider
-│   │   │   └── calendar_controller_provider.dart # MonthViewのコントローラ管理
+│   │   │   └── event_providers.dart             # EventsByDate/Month Notifier, 検索Provider
 │   │   ├── views/
 │   │   │   └── schedule_view.dart               # Schedule画面（MonthView + EventList統合）
 │   │   └── widgets/
+│   │       ├── custom_month_view.dart           # 横スワイプ可能・可変高さのカスタムカレンダー
 │   │       ├── event_list_view.dart             # 選択日付のイベントリスト
 │   │       ├── event_modal.dart                 # イベント追加/編集/表示モーダル
 │   │       └── today_bar.dart                   # 選択日付表示バー
@@ -129,6 +130,7 @@ lib/
 └── shared/                                      # ── 共通部品 ──
     ├── constants/
     │   ├── event_color.dart                     # EventColor enum（12色）
+    │   ├── japanese_holiday.dart                # 日本の祝日判定ユーティリティ
     │   ├── recurrence_type.dart                 # RecurrenceType enum（none/daily/weekly/monthly/yearly）
     │   ├── notification_type.dart               # NotificationType enum（none〜1週間前）
     │   └── view_type.dart                       # ViewType enum（schedule/birthday）
