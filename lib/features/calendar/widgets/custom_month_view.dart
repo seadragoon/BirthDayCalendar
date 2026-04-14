@@ -41,61 +41,23 @@ class _CustomMonthViewState extends ConsumerState<CustomMonthView> {
     // 最初に設定されたcurrentMonthを基準にする（ビルド中に変わらないように）
     final initialMonth = ref.read(currentMonthProvider);
 
-    return Column(
-      children: [
-        _buildWeekHeader(),
-        Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) {
-              final newMonth = _getMonthFromIndex(initialMonth, index);
-              // 月を切り替えたら currentMonthProvider を更新
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                ref.read(currentMonthProvider.notifier).state = newMonth;
-              });
-            },
-            itemBuilder: (context, index) {
-              final month = _getMonthFromIndex(initialMonth, index);
-              return _MonthGrid(month: month);
-            },
-          ),
-        ),
-      ],
+    return PageView.builder(
+      controller: _pageController,
+      onPageChanged: (index) {
+        final newMonth = _getMonthFromIndex(initialMonth, index);
+        // 月を切り替えたら currentMonthProvider を更新
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(currentMonthProvider.notifier).state = newMonth;
+        });
+      },
+      itemBuilder: (context, index) {
+        final month = _getMonthFromIndex(initialMonth, index);
+        return _MonthGrid(month: month);
+      },
     );
   }
 
-  /// 曜日行を描画（日曜日から土曜日）
-  Widget _buildWeekHeader() {
-    final weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.shade300, width: 1)),
-      ),
-      child: Row(
-        children: List.generate(7, (index) {
-          // 日曜は赤、土曜は青、その他は黒
-          Color color = Colors.black;
-          if (index == 0) color = Colors.red;
-          if (index == 6) color = Colors.blue;
 
-          return Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4.0),
-              child: Text(
-                weekdays[index],
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
 }
 
 class _MonthGrid extends ConsumerWidget {
@@ -133,22 +95,52 @@ class _MonthGrid extends ConsumerWidget {
     final events = eventsAsync.valueOrNull ?? [];
 
     return Column(
-      children: List.generate(weeks, (weekIndex) {
-        return Expanded(
-          child: Row(
-            children: List.generate(7, (dayIndex) {
-              final date = dates[weekIndex * 7 + dayIndex];
-              return Expanded(
-                child: _DayCell(
-                  date: date,
-                  currentMonth: month,
-                  events: events,
+      children: [
+        _buildWeekHeader(),
+        ...List.generate(weeks, (weekIndex) {
+          return Expanded(
+            child: Row(
+              children: List.generate(7, (dayIndex) {
+                final date = dates[weekIndex * 7 + dayIndex];
+                return Expanded(
+                  child: _DayCell(
+                    date: date,
+                    currentMonth: month,
+                    events: events,
+                  ),
+                );
+              }),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  /// 曜日行を描画（日曜日から土曜日）
+  Widget _buildWeekHeader() {
+    final weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: Colors.grey.shade300, width: 1)),
+      ),
+      child: Row(
+        children: List.generate(7, (index) {
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Text(
+                weekdays[index],
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12, // 日付と同じサイズ
+                  color: Colors.black, // 土日も黒色
                 ),
-              );
-            }),
-          ),
-        );
-      }),
+              ),
+            ),
+          );
+        }),
+      ),
     );
   }
 }
