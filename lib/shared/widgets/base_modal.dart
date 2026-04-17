@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:birthday_calendar/shared/providers/theme_provider.dart';
 
 /// 全画面モーダルの共通ベースレイアウト。
 ///
 /// 下からスライドアップするモーダル（ `showGeneralDialog` または
 /// `Navigator.push(..., fullscreenDialog: true)` など）で使用する。
 /// ヘッダーに閉じるボタン、タイトル、アクション（保存、削除など）を持つ。
-class BaseModal extends StatelessWidget {
+class BaseModal extends ConsumerWidget {
   /// モーダルのタイトル
   final String title;
 
@@ -35,19 +38,45 @@ class BaseModal extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appTheme = ref.watch(themeProvider);
+
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            color: appTheme.backgroundImagePath.isEmpty ? appTheme.primaryColor : null,
+            image: appTheme.backgroundImagePath.isNotEmpty
+                ? DecorationImage(
+                    image: AssetImage(appTheme.backgroundImagePath),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Colors.black.withValues(alpha: 0.2),
+                      BlendMode.darken,
+                    ),
+                  )
+                : null,
+          ),
+        ),
+        iconTheme: IconThemeData(color: appTheme.onPrimaryColor),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
           tooltip: '閉じる',
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: appTheme.onPrimaryColor,
+          ),
+        ),
         actions: [
           if (isEditMode && onDelete != null)
             IconButton(
-              icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
+              icon: Icon(Icons.delete, color: appTheme.onPrimaryColor.withValues(alpha: 0.8)),
               tooltip: '削除',
               onPressed: () async {
                 final confirm = await showDialog<bool>(
@@ -79,9 +108,13 @@ class BaseModal extends StatelessWidget {
           if (onSave != null)
             TextButton(
               onPressed: isSaveActionEnabled ? onSave : null,
-              child: const Text(
+              child: Text(
                 '保存',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: isSaveActionEnabled ? appTheme.onPrimaryColor : appTheme.onPrimaryColor.withValues(alpha: 0.5),
+                ),
               ),
             ),
           const SizedBox(width: 8),

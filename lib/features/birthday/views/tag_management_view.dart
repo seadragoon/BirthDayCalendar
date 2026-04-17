@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:birthday_calendar/features/birthday/providers/birthday_providers.dart';
+import 'package:birthday_calendar/shared/providers/theme_provider.dart';
 
 /// タグの一覧管理画面。
 ///
@@ -12,17 +13,40 @@ class TagManagementView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tagListAsync = ref.watch(tagListProvider);
+    final appTheme = ref.watch(themeProvider);
 
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            color: appTheme.backgroundImagePath.isEmpty ? appTheme.primaryColor : null,
+            image: appTheme.backgroundImagePath.isNotEmpty
+                ? DecorationImage(
+                    image: AssetImage(appTheme.backgroundImagePath),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Colors.black.withValues(alpha: 0.2),
+                      BlendMode.darken,
+                    ),
+                  )
+                : null,
+          ),
+        ),
+        iconTheme: IconThemeData(color: appTheme.onPrimaryColor),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('タグ管理', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          'タグ管理',
+          style: TextStyle(fontWeight: FontWeight.bold, color: appTheme.onPrimaryColor),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
+            color: appTheme.onPrimaryColor,
             onPressed: () => _showAddTagDialog(context, ref),
           ),
         ],
