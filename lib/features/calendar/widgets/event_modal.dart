@@ -8,6 +8,7 @@ import 'package:birthday_calendar/shared/constants/event_color.dart';
 import 'package:birthday_calendar/shared/constants/notification_type.dart';
 import 'package:birthday_calendar/shared/constants/recurrence_type.dart';
 import 'package:birthday_calendar/shared/widgets/base_modal.dart';
+import 'package:birthday_calendar/shared/widgets/multi_select_dialog.dart';
 
 /// スケジュール（イベント）の追加・編集を行うフルスクリーンモーダル。
 class EventModal extends ConsumerStatefulWidget {
@@ -36,7 +37,7 @@ class _EventModalState extends ConsumerState<EventModal> {
   late DateTime _endDate;
   EventColor _selectedColor = EventColor.peacock;
   RecurrenceType _recurrence = RecurrenceType.none;
-  NotificationType _notification = NotificationType.none;
+  List<NotificationType> _notifications = [NotificationType.none];
 
   @override
   void initState() {
@@ -54,7 +55,7 @@ class _EventModalState extends ConsumerState<EventModal> {
       _endDate = event.endDate;
       _selectedColor = event.colorIndex;
       _recurrence = event.recurrence;
-      _notification = event.notification;
+      _notifications = List.from(event.notifications);
     } else {
       // 新規作成時の初期値
       final now = DateTime.now();
@@ -166,7 +167,7 @@ class _EventModalState extends ConsumerState<EventModal> {
       isAllDay: _isAllDay,
       colorIndex: _selectedColor,
       recurrence: _recurrence,
-      notification: _notification,
+      notifications: _notifications,
       comment: _commentController.text.trim(),
     );
 
@@ -201,8 +202,14 @@ class _EventModalState extends ConsumerState<EventModal> {
     final isEditMode = widget.existingEvent != null;
     final isSaveEnabled = _titleController.text.trim().isNotEmpty;
 
-    final dateFormat = DateFormat('yyyy年M月d日 (E)', 'ja_JP');
+    final dateFormat = DateFormat('yyyy年M月d日');
+    final weekdayFormat = DateFormat('E', 'ja_JP');
     final timeFormat = DateFormat('HH:mm');
+
+    // 通知名の連結
+    final notificationLabel = _notifications.isEmpty || (_notifications.length == 1 && _notifications.first == NotificationType.none)
+        ? 'なし'
+        : _notifications.map((e) => e.label).join(', ');
 
     return BaseModal(
       title: isEditMode ? '予定を編集' : '予定を追加',
@@ -218,10 +225,10 @@ class _EventModalState extends ConsumerState<EventModal> {
             // タイトル
             TextField(
               controller: _titleController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'タイトルを入力',
                 border: InputBorder.none,
-                hintStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                hintStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey.shade400),
               ),
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               autofocus: !isEditMode,
@@ -257,7 +264,7 @@ class _EventModalState extends ConsumerState<EventModal> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            dateFormat.format(_startDate), 
+                            '${dateFormat.format(_startDate)}(${weekdayFormat.format(_startDate)})', 
                             style: const TextStyle(fontSize: 16)
                           ),
                         ),
@@ -303,7 +310,7 @@ class _EventModalState extends ConsumerState<EventModal> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            dateFormat.format(_endDate), 
+                            '${dateFormat.format(_endDate)}(${weekdayFormat.format(_endDate)})', 
                             style: const TextStyle(fontSize: 16)
                           ),
                         ),
@@ -360,33 +367,64 @@ class _EventModalState extends ConsumerState<EventModal> {
               ),
             ),
             const SizedBox(height: 16),
+            const SizedBox(height: 16),
             const Divider(),
 
-            // 繰り返し・通知
-            InputDecorator(
-              decoration: const InputDecoration(labelText: '繰り返し', border: InputBorder.none),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<RecurrenceType>(
-                  value: _recurrence,
-                  isDense: true,
-                  isExpanded: true,
-                  items: RecurrenceType.values.map((e) => DropdownMenuItem(value: e, child: Text(e.label))).toList(),
-                  onChanged: (val) => setState(() => _recurrence = val!),
-                ),
-              ),
+            // 繰り返し
+            const SizedBox(height: 8),
+            ListTile(
+              title: const Text('繰り返し', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
+              subtitle: Text(_recurrence.label, style: const TextStyle(fontSize: 16, color: Colors.black)),
+              trailing: const Icon(Icons.arrow_drop_down),
+              contentPadding: EdgeInsets.zero,
+              onTap: () async {
+                final result = await showModalBottomSheet<RecurrenceType>(
+                  context: context,
+                  builder: (context) {
+                    return SafeArea(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: RecurrenceType.values.map((type) {
+                          return ListTile(
+                            title: Text(type.label),
+                            onTap: () => Navigator.pop(context, type),
+                          );
+                        }).toList(),
+                      ),
+                    );
+                  },
+                );
+                if (result != null) {
+                  setState(() => _recurrence = result);
+                }
+              },
             ),
             const Divider(),
-            InputDecorator(
-              decoration: const InputDecoration(labelText: '通知', border: InputBorder.none),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<NotificationType>(
-                  value: _notification,
-                  isDense: true,
-                  isExpanded: true,
-                  items: NotificationType.values.map((e) => DropdownMenuItem(value: e, child: Text(e.label))).toList(),
-                  onChanged: (val) => setState(() => _notification = val!),
-                ),
-              ),
+
+            // 通知
+            const SizedBox(height: 8),
+            ListTile(
+              title: const Text('通知', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
+              subtitle: Text(notificationLabel, style: const TextStyle(fontSize: 16, color: Colors.black)),
+              trailing: const Icon(Icons.arrow_drop_down),
+              contentPadding: EdgeInsets.zero,
+              onTap: () async {
+                final result = await showDialog<List<NotificationType>>(
+                  context: context,
+                  builder: (context) {
+                    return MultiSelectDialog<NotificationType>(
+                      items: NotificationType.values,
+                      initialSelectedItems: _notifications,
+                      title: '通知設定',
+                      labelBuilder: (item) => item.label,
+                      noneItem: NotificationType.none,
+                    );
+                  },
+                );
+                if (result != null) {
+                  setState(() => _notifications = result);
+                }
+              },
             ),
             const Divider(),
 

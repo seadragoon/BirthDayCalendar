@@ -12,7 +12,7 @@ class BirthdayModel {
   final DateTime date;
   final bool isYearUnknown;
   final List<String> tags;
-  final NotificationType notification;
+  final List<NotificationType> notifications;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -22,7 +22,7 @@ class BirthdayModel {
     required this.date,
     this.isYearUnknown = false,
     this.tags = const [],
-    this.notification = NotificationType.none,
+    this.notifications = const [NotificationType.none],
     DateTime? createdAt,
     DateTime? updatedAt,
   })  : createdAt = createdAt ?? date,
@@ -70,13 +70,24 @@ class BirthdayModel {
       parsedTags = (decoded as List<dynamic>).cast<String>();
     }
 
+    // notifications の解析
+    List<NotificationType> parsedNotifications = [NotificationType.none];
+    if (map['notification'] != null && (map['notification'] as String).isNotEmpty) {
+      try {
+        final decoded = jsonDecode(map['notification'] as String) as List<dynamic>;
+        parsedNotifications = decoded.map((e) => NotificationType.fromIndex(e as int)).toList();
+      } catch (_) {
+        parsedNotifications = [NotificationType.none];
+      }
+    }
+
     return BirthdayModel(
       id: map['id'] as int?,
       name: map['name'] as String,
       date: DateTime.fromMillisecondsSinceEpoch(map['date'] as int),
       isYearUnknown: (map['is_year_unknown'] as int) == 1,
       tags: parsedTags,
-      notification: NotificationType.fromIndex(map['notification'] as int),
+      notifications: parsedNotifications,
       createdAt:
           DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
       updatedAt:
@@ -95,7 +106,7 @@ class BirthdayModel {
       'date': date.millisecondsSinceEpoch,
       'is_year_unknown': isYearUnknown ? 1 : 0,
       'tags': jsonEncode(tags),
-      'notification': notification.index,
+      'notification': jsonEncode(notifications.map((e) => e.index).toList()),
       'created_at': createdAt.millisecondsSinceEpoch,
       'updated_at': updatedAt.millisecondsSinceEpoch,
     };
@@ -112,7 +123,7 @@ class BirthdayModel {
     DateTime? date,
     bool? isYearUnknown,
     List<String>? tags,
-    NotificationType? notification,
+    List<NotificationType>? notifications,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -122,7 +133,7 @@ class BirthdayModel {
       date: date ?? this.date,
       isYearUnknown: isYearUnknown ?? this.isYearUnknown,
       tags: tags ?? this.tags,
-      notification: notification ?? this.notification,
+      notifications: notifications ?? this.notifications,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

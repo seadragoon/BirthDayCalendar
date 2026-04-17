@@ -1,8 +1,7 @@
 # AGENTS.md — AI向けプロジェクトリファレンス
 
 > **このファイルはAIアシスタントがセッション開始時に最初に読むべきドキュメントです。**
-> プロジェクトの全体像、アーキテクチャ、実装状況、コーディング規約をまとめています。
-> 最終更新: 2026-04-14
+> 最終更新: 2026-04-16
 
 ---
 
@@ -131,7 +130,7 @@ lib/
     ├── constants/
     │   ├── event_color.dart                     # EventColor enum（12色）
     │   ├── japanese_holiday.dart                # 日本の祝日判定ユーティリティ
-    │   ├── recurrence_type.dart                 # RecurrenceType enum（none/daily/weekly/monthly/yearly）
+    │   ├── recurrence_type.dart                 # RecurrenceType enum（none/daily/weekly/monthly/yearly/weekday）
     │   ├── notification_type.dart               # NotificationType enum（none〜1週間前）
     │   └── view_type.dart                       # ViewType enum（schedule/birthday）
     ├── db/
@@ -149,7 +148,8 @@ lib/
         ├── custom_footer.dart                   # フッター（スケジュール/誕生日 切り替え）
         ├── custom_fab.dart                      # FAB（ViewType連動、モーダル起動）
         ├── custom_drawer.dart                   # ドロワー（テーマ切り替え/About）
-        └── custom_search_delegate.dart          # 検索モーダル（リアルタイム検索）
+        ├── custom_search_delegate.dart          # 検索モーダル（リアルタイム検索）
+        └── multi_select_dialog.dart             # 汎用複数選択ダイアログ
 ```
 
 ---
@@ -166,8 +166,8 @@ lib/
 | endDate | `DateTime` | (必須) | end_date | 終了日時（ミリ秒） |
 | isAllDay | `bool` | false | is_all_day | 終日フラグ |
 | colorIndex | `EventColor` | peacock | color_index | 12色enum |
-| recurrence | `RecurrenceType` | none | recurrence | 繰り返し種別 |
-| notification | `NotificationType` | none | notification | 通知設定 |
+| recurrence | `RecurrenceType` | none | recurrence | 繰り返し（なし/毎日/毎週/毎月/毎年/平日） |
+| notifications | `List<NotificationType>` | [none] | notification | 通知設定（JSON形式） |
 | comment | `String` | '' | comment | コメント |
 | isBirthday | `bool` | false | is_birthday | 誕生日紐づきフラグ |
 | createdAt | `DateTime` | startDate | created_at | 作成日時 |
@@ -182,7 +182,7 @@ lib/
 | date | `DateTime` | (必須) | date | 誕生日（ミリ秒） |
 | isYearUnknown | `bool` | false | is_year_unknown | 生まれ年不明フラグ |
 | tags | `List<String>` | [] | tags | タグ（JSON文字列保存） |
-| notification | `NotificationType` | none | notification | 通知設定 |
+| notifications | `List<NotificationType>` | [none] | notification | 通知設定（JSON形式） |
 | createdAt | `DateTime` | date | created_at | 作成日時 |
 | updatedAt | `DateTime` | date | updated_at | 更新日時 |
 
@@ -237,7 +237,7 @@ CREATE TABLE events (
   is_all_day INTEGER NOT NULL DEFAULT 0,
   color_index INTEGER NOT NULL DEFAULT 6,  -- EventColor.peacock
   recurrence INTEGER NOT NULL DEFAULT 0,
-  notification INTEGER NOT NULL DEFAULT 0,
+  notification TEXT NOT NULL DEFAULT '[0]', -- 通知タイミング（JSON配列）
   comment TEXT DEFAULT '',
   is_birthday INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL,
@@ -254,16 +254,16 @@ CREATE TABLE birthdays (
   date INTEGER NOT NULL,            -- ミリ秒エポック
   is_year_unknown INTEGER NOT NULL DEFAULT 0,
   tags TEXT DEFAULT '[]',           -- JSON文字列
-  notification INTEGER NOT NULL DEFAULT 0,
+  notification TEXT NOT NULL DEFAULT '[0]', -- 通知タイミング（JSON配列）
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
 -- INDEX: idx_birthdays_date
 ```
 
-- **DBバージョン:** 1
+- **DBバージョン:** 2
 - **DBファイル名:** `birthday_calendar.db`
-- **マイグレーション:** `_upgradeDB` メソッドに追加（現在未使用）
+- **マイグレーション:** `_upgradeDB` にて notification カラムを TEXT に変換済み
 
 ---
 
@@ -335,7 +335,7 @@ CREATE TABLE birthdays (
 | テスト | `test/` ディレクトリは空 | Unit/Widget テスト追加 |
 | プッシュ通知 | 未実装 | Firebase Cloud Messaging |
 | データバックアップ | 未実装 | Google Drive / iCloud 連携 |
-| 繰り返しイベント | DB保存のみ（実際の繰り返し展開は未実装） | 繰り返しイベントの日付展開ロジック |
+| 繰り返しイベント | DB保存のみ（実際の繰り返し展開は未実装） | 繰り返しイベント（平日を含む）の日付展開ロジック |
 
 ---
 

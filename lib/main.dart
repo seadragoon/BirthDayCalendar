@@ -16,11 +16,13 @@ import 'package:birthday_calendar/shared/widgets/app_shell.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 画面の向きを縦（Portrait）に固定
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  if (!kIsWeb) {
+    // 画面の向きを縦（Portrait）に固定（モバイル環境のみ）
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
   
   if (kIsWeb) {
     // Web環境での初期化
@@ -72,6 +74,13 @@ class BirthdayCalendarApp extends ConsumerWidget {
       supportedLocales: const [
         Locale('ja', 'JP'),
       ],
+      builder: (context, child) {
+        // Webでの表示崩れ（1/4サイズ、左寄せ）を防ぐため、全体を明示的に
+        // 中央配置し、制約を安定させる
+        return Center(
+          child: child,
+        );
+      },
       home: const AppShell(),
     );
   }

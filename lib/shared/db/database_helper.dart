@@ -17,7 +17,7 @@ class DatabaseHelper {
   static const String _databaseName = 'birthday_calendar.db';
 
   /// データベースバージョン（スキーマ変更時にインクリメント）
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 2;
 
   // テーブル名
   static const String tableEvents = 'events';
@@ -46,7 +46,7 @@ class DatabaseHelper {
 
   /// テーブルを作成する。
   Future<void> _createDB(Database db, int version) async {
-    // events テーブル
+    // events テーブル (Version 2 以降は notification が TEXT)
     await db.execute('''
       CREATE TABLE $tableEvents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,7 +56,7 @@ class DatabaseHelper {
         is_all_day INTEGER NOT NULL DEFAULT 0,
         color_index INTEGER NOT NULL DEFAULT 6,
         recurrence INTEGER NOT NULL DEFAULT 0,
-        notification INTEGER NOT NULL DEFAULT 0,
+        notification TEXT NOT NULL DEFAULT '[0]',
         comment TEXT DEFAULT '',
         is_birthday INTEGER NOT NULL DEFAULT 0,
         created_at INTEGER NOT NULL,
@@ -64,7 +64,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // birthdays テーブル
+    // birthdays テーブル (Version 2 以降は notification が TEXT)
     await db.execute('''
       CREATE TABLE $tableBirthdays (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,7 +72,7 @@ class DatabaseHelper {
         date INTEGER NOT NULL,
         is_year_unknown INTEGER NOT NULL DEFAULT 0,
         tags TEXT DEFAULT '[]',
-        notification INTEGER NOT NULL DEFAULT 0,
+        notification TEXT NOT NULL DEFAULT '[0]',
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       )
@@ -91,13 +91,34 @@ class DatabaseHelper {
   }
 
   /// データベースのアップグレード処理。
-  /// 将来のスキーマ変更時にマイグレーションロジックを追加する。
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    // 将来のバージョンアップ時にマイグレーション処理を追加
-    // 例:
-    // if (oldVersion < 2) {
-    //   await db.execute('ALTER TABLE $tableEvents ADD COLUMN location TEXT');
-    // }
+    if (oldVersion < 2) {
+      // notification カラムを INTEGER から TEXT に変更するためのマイグレーション
+
+      // 1. 既存テーブルのリネーム
+      await db.execute('ALTER TABLE $tableEvents RENAME TO events_old');
+      await db.execute('ALTER TABLE $tableBirthdays RENAME TO birthdays_old');
+
+      // 2. 新しいスキーマでテーブル作成
+      await _createDB(db, newVersion);
+
+      // 3. データ移行 (INTEGER を JSON形式の文字列 "[x]" に変換)
+      await db.execute('''
+        INSERT INTO $tableEvents (id, title, start_date, end_date, is_all_day, color_index, recurrence, notification, comment, is_birthday, created_at, updated_at)
+        SELECT id, title, start_date, end_date, is_all_day, color_index, recurrence, '[' || notification || ']', comment, is_birthday, created_at, updated_at
+        FROM events_old
+      ''');
+
+      await db.execute('''
+        INSERT INTO $tableBirthdays (id, name, date, is_year_unknown, tags, notification, created_at, updated_at)
+        SELECT id, name, date, is_year_unknown, tags, '[' || notification || ']', created_at, updated_at
+        FROM birthdays_old
+      ''');
+
+      // 4. 旧テーブルの削除
+      await db.execute('DROP TABLE events_old');
+      await db.execute('DROP TABLE birthdays_old');
+    }
   }
 
   /// データベースを閉じる。

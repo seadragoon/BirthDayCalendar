@@ -16,11 +16,13 @@ class CustomMonthView extends ConsumerStatefulWidget {
 
 class _CustomMonthViewState extends ConsumerState<CustomMonthView> {
   late PageController _pageController;
+  late DateTime _initialMonth;
 
   @override
   void initState() {
     super.initState();
     // 初期表示月を中心に設定（前後1000ヶ月をスワイプ可能範囲とする）
+    _initialMonth = ref.read(currentMonthProvider);
     _pageController = PageController(initialPage: 1000);
   }
 
@@ -36,28 +38,46 @@ class _CustomMonthViewState extends ConsumerState<CustomMonthView> {
     return DateTime(initialMonth.year, initialMonth.month + monthOffset, 1);
   }
 
+  /// 指定した月からページインデックスを計算して返す
+  int _getIndexFromMonth(DateTime initialMonth, DateTime targetMonth) {
+    final yearDiff = targetMonth.year - initialMonth.year;
+    final monthDiff = targetMonth.month - initialMonth.month;
+    final totalMonths = yearDiff * 12 + monthDiff;
+    return 1000 + totalMonths;
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 最初に設定されたcurrentMonthを基準にする（ビルド中に変わらないように）
-    final initialMonth = ref.read(currentMonthProvider);
+    // 外部（今日ボタン等）からの月変更を監視してカレンダーをスクロールさせる
+    ref.listen<DateTime>(currentMonthProvider, (previous, next) {
+      final targetPage = _getIndexFromMonth(_initialMonth, next);
+      if (_pageController.hasClients) {
+        final currentPage = _pageController.page?.round();
+        if (currentPage != targetPage) {
+          _pageController.animateToPage(
+            targetPage,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      }
+    });
 
     return PageView.builder(
       controller: _pageController,
       onPageChanged: (index) {
-        final newMonth = _getMonthFromIndex(initialMonth, index);
-        // 月を切り替えたら currentMonthProvider を更新
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+        final newMonth = _getMonthFromIndex(_initialMonth, index);
+        // 現在の Provider の値と異なる場合のみ更新（無限ループ防止）
+        if (ref.read(currentMonthProvider) != newMonth) {
           ref.read(currentMonthProvider.notifier).state = newMonth;
-        });
+        }
       },
       itemBuilder: (context, index) {
-        final month = _getMonthFromIndex(initialMonth, index);
+        final month = _getMonthFromIndex(_initialMonth, index);
         return _MonthGrid(month: month);
       },
     );
   }
-
-
 }
 
 class _MonthGrid extends ConsumerWidget {

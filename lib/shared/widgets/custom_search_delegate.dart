@@ -20,6 +20,18 @@ class CustomSearchDelegate extends SearchDelegate<void> {
   String get searchFieldLabel => viewType == ViewType.schedule ? '予定を検索' : '誕生日を検索';
 
   @override
+  ThemeData appBarTheme(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.copyWith(
+      inputDecorationTheme: theme.inputDecorationTheme.copyWith(
+        hintStyle: TextStyle(
+          color: Colors.grey.shade400,
+        ),
+      ),
+    );
+  }
+
+  @override
   List<Widget>? buildActions(BuildContext context) {
     return [
       if (query.isNotEmpty)

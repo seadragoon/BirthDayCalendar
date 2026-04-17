@@ -2,7 +2,11 @@
 
 > このファイルはプロジェクトの実装進捗を管理するものです。
 > セッションを跨いでも現在の状態を把握できるようにしています。
-> 最終更新: 2026-04-13
+> 最終更新: 2026-04-16
+
+- **2026-04-16**: 「今日」ボタン押下時にカレンダーが現在の月までスクロールしない不具合を修正。
+- **2026-04-16**: Web版でのレイアウト崩れ（1/4縮小・左上寄り）の修正。MaterialApp.builder による安定化。
+- **2026-04-15**: 通知設定ダイアログ内での排他制御ロジック（「なし」選択時の他項目解除など）を実装。
 
 ## 全体の進捗: ██████████ 100%
 
@@ -18,7 +22,7 @@
 ## Phase 2: データモデル & Repository ✅ 完了
 - [x] 共通Enum定義
   - [x] `EventColor`（12色） — `lib/shared/constants/event_color.dart`
-  - [x] `RecurrenceType`（繰り返し） — `lib/shared/constants/recurrence_type.dart`
+  - [x] `RecurrenceType`（繰り返し: なし/毎日/毎週/毎月/毎年/平日） — `lib/shared/constants/recurrence_type.dart`
   - [x] `NotificationType`（通知） — `lib/shared/constants/notification_type.dart`
 - [x] データモデル
   - [x] `EventModel`（toMap / fromMap / copyWith） — `lib/features/calendar/models/event_model.dart`
@@ -69,7 +73,11 @@
 
 ## Phase 7: UI - Full Screen Modal ✅ 完了
 - [x] 共通BaseModal（ヘッダー: 閉じる / 決定 / 削除 / 編集）
-- [x] イベント追加/編集モーダル（バリデーション / 12色選択 / 通知設定）
+- [x] イベント追加/編集モーダル
+  - [x] バリデーション / 12色選択 / 通知設定
+  - [x] **UI/UX 改善（タップ領域拡大、背景色付与、メモ欄の強調表示、半角括弧統一）**
+  - [x] **日本語化対応（日付/時刻ピッカー、セレクトボックスの表示ラベル）**
+  - [x] **通知の複数選択対応**
 - [x] 誕生日追加/編集モーダル（生まれ年不明 / タグ選択）
 - [x] FABおよび各リストからモーダルへのルーティング
 - [x] 検索モーダル（リアルタイム検索） -> Phase 9へ整理

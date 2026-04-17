@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:birthday_calendar/shared/constants/event_color.dart';
 import 'package:birthday_calendar/shared/constants/notification_type.dart';
 import 'package:birthday_calendar/shared/constants/recurrence_type.dart';
@@ -14,7 +16,7 @@ class EventModel {
   final bool isAllDay;
   final EventColor colorIndex;
   final RecurrenceType recurrence;
-  final NotificationType notification;
+  final List<NotificationType> notifications;
   final String comment;
   final bool isBirthday;
   final DateTime createdAt;
@@ -28,7 +30,7 @@ class EventModel {
     this.isAllDay = false,
     this.colorIndex = EventColor.peacock,
     this.recurrence = RecurrenceType.none,
-    this.notification = NotificationType.none,
+    this.notifications = const [NotificationType.none],
     this.comment = '',
     this.isBirthday = false,
     DateTime? createdAt,
@@ -38,6 +40,18 @@ class EventModel {
 
   /// sqfliteの [Map] からインスタンスを生成する。
   factory EventModel.fromMap(Map<String, dynamic> map) {
+    // notifications の解析
+    List<NotificationType> parsedNotifications = [NotificationType.none];
+    if (map['notification'] != null && (map['notification'] as String).isNotEmpty) {
+      try {
+        final decoded = jsonDecode(map['notification'] as String) as List<dynamic>;
+        parsedNotifications = decoded.map((e) => NotificationType.fromIndex(e as int)).toList();
+      } catch (_) {
+        // フォールバック
+        parsedNotifications = [NotificationType.none];
+      }
+    }
+
     return EventModel(
       id: map['id'] as int?,
       title: map['title'] as String,
@@ -46,7 +60,7 @@ class EventModel {
       isAllDay: (map['is_all_day'] as int) == 1,
       colorIndex: EventColor.fromIndex(map['color_index'] as int),
       recurrence: RecurrenceType.fromIndex(map['recurrence'] as int),
-      notification: NotificationType.fromIndex(map['notification'] as int),
+      notifications: parsedNotifications,
       comment: (map['comment'] as String?) ?? '',
       isBirthday: (map['is_birthday'] as int) == 1,
       createdAt:
@@ -68,7 +82,7 @@ class EventModel {
       'is_all_day': isAllDay ? 1 : 0,
       'color_index': colorIndex.index,
       'recurrence': recurrence.index,
-      'notification': notification.index,
+      'notification': jsonEncode(notifications.map((e) => e.index).toList()),
       'comment': comment,
       'is_birthday': isBirthday ? 1 : 0,
       'created_at': createdAt.millisecondsSinceEpoch,
@@ -89,7 +103,7 @@ class EventModel {
     bool? isAllDay,
     EventColor? colorIndex,
     RecurrenceType? recurrence,
-    NotificationType? notification,
+    List<NotificationType>? notifications,
     String? comment,
     bool? isBirthday,
     DateTime? createdAt,
@@ -103,7 +117,7 @@ class EventModel {
       isAllDay: isAllDay ?? this.isAllDay,
       colorIndex: colorIndex ?? this.colorIndex,
       recurrence: recurrence ?? this.recurrence,
-      notification: notification ?? this.notification,
+      notifications: notifications ?? this.notifications,
       comment: comment ?? this.comment,
       isBirthday: isBirthday ?? this.isBirthday,
       createdAt: createdAt ?? this.createdAt,

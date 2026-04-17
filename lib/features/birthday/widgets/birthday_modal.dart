@@ -6,6 +6,7 @@ import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
 import 'package:birthday_calendar/features/birthday/providers/birthday_providers.dart';
 import 'package:birthday_calendar/shared/constants/notification_type.dart';
 import 'package:birthday_calendar/shared/widgets/base_modal.dart';
+import 'package:birthday_calendar/shared/widgets/multi_select_dialog.dart';
 
 /// 誕生日の追加・編集を行うフルスクリーンモーダル。
 class BirthdayModal extends ConsumerStatefulWidget {
@@ -27,7 +28,7 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
 
   late DateTime _date;
   bool _isYearUnknown = false;
-  NotificationType _notification = NotificationType.none;
+  List<NotificationType> _notifications = [NotificationType.none];
 
   @override
   void initState() {
@@ -42,7 +43,7 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
       _tagsController.text = b.tags.join(', ');
       _date = b.date;
       _isYearUnknown = b.isYearUnknown;
-      _notification = b.notification;
+      _notifications = List.from(b.notifications);
     } else {
       final now = DateTime.now();
       _date = DateTime(now.year, now.month, now.day);
@@ -88,7 +89,7 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
       date: _date,
       isYearUnknown: _isYearUnknown,
       tags: tagsInput,
-      notification: _notification,
+      notifications: _notifications,
     );
 
     if (widget.existingBirthday == null) {
@@ -133,10 +134,10 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
             // 名前
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: '名前を入力',
                 border: InputBorder.none,
-                hintStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                hintStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey.shade400),
               ),
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               autofocus: !isEditMode,
@@ -146,11 +147,23 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
             // 誕生日ピッカー
             const SizedBox(height: 16),
             const Text('誕生日', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            const SizedBox(height: 8),
             InkWell(
               onTap: _pickDate,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(dateFormat.format(_date), style: const TextStyle(fontSize: 20)),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Text(dateFormat.format(_date), style: const TextStyle(fontSize: 20)),
+                    const Spacer(),
+                    const Icon(Icons.calendar_today, size: 20, color: Colors.grey),
+                  ],
+                ),
               ),
             ),
             
@@ -178,17 +191,36 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
             const Divider(),
 
             // 通知
-            InputDecorator(
-              decoration: const InputDecoration(labelText: '通知', border: InputBorder.none, icon: Icon(Icons.notifications)),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<NotificationType>(
-                  value: _notification,
-                  isDense: true,
-                  items: NotificationType.values.map((e) => DropdownMenuItem(value: e, child: Text(e.name))).toList(),
-                  onChanged: (val) => setState(() => _notification = val!),
-                ),
+            const SizedBox(height: 8),
+            ListTile(
+              title: const Text('通知', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
+              subtitle: Text(
+                _notifications.isEmpty || (_notifications.length == 1 && _notifications.first == NotificationType.none)
+                    ? 'なし'
+                    : _notifications.map((e) => e.label).join(', '),
+                style: const TextStyle(fontSize: 16, color: Colors.black),
               ),
+              trailing: const Icon(Icons.arrow_drop_down),
+              contentPadding: EdgeInsets.zero,
+              onTap: () async {
+                final result = await showDialog<List<NotificationType>>(
+                  context: context,
+                  builder: (context) {
+                    return MultiSelectDialog<NotificationType>(
+                      items: NotificationType.values,
+                      initialSelectedItems: _notifications,
+                      title: '通知設定',
+                      labelBuilder: (item) => item.label,
+                      noneItem: NotificationType.none,
+                    );
+                  },
+                );
+                if (result != null) {
+                  setState(() => _notifications = result);
+                }
+              },
             ),
+            const Divider(),
             const SizedBox(height: 40),
           ],
         ),

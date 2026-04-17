@@ -23,17 +23,19 @@ class AppShell extends ConsumerWidget {
     final viewType = ref.watch(viewTypeProvider);
     final appTheme = ref.watch(themeProvider);
 
-    return Scaffold(
-      appBar: const CustomHeader(),
-      drawer: const CustomDrawer(),
-      body: Container(
-        color: appTheme.surfaceColor,
-        child: SafeArea(
-          child: _buildBody(viewType),
+    return SizedBox.expand(
+      child: Scaffold(
+        appBar: const CustomHeader(),
+        drawer: const CustomDrawer(),
+        body: Container(
+          color: appTheme.surfaceColor,
+          child: SafeArea(
+            child: _buildBody(viewType),
+          ),
         ),
+        bottomNavigationBar: const CustomFooter(),
+        floatingActionButton: const CustomFab(),
       ),
-      bottomNavigationBar: const CustomFooter(),
-      floatingActionButton: const CustomFab(),
     );
   }
 
