@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:birthday_calendar/shared/theme/app_theme.dart';
 import 'package:birthday_calendar/shared/providers/theme_provider.dart';
+import 'package:birthday_calendar/features/birthday/views/tag_management_view.dart';
 
 /// アプリのドロワー（サイドメニュー）。
 ///
@@ -59,6 +60,22 @@ class CustomDrawer extends ConsumerWidget {
               },
             );
           }),
+          const Divider(),
+
+          // タグ管理の追加
+          ListTile(
+            leading: const Icon(Icons.sell_outlined),
+            title: const Text('タグ管理'),
+            onTap: () {
+              Navigator.of(context).pop(); // まずドロワーを閉じる
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const TagManagementView(),
+                  fullscreenDialog: true,
+                ),
+              );
+            },
+          ),
           const Divider(),
           const Padding(
             padding: EdgeInsets.all(16.0),

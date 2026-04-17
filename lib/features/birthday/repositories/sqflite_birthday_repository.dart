@@ -151,6 +151,6 @@ class SqfliteBirthdayRepository implements BirthdayRepository {
       }
     }
 
-    return allTags.toList()..sort();
+    return allTags.toList(); // 追加順（LinkedHashSetの順序）を維持
   }
 }

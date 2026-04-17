@@ -17,11 +17,12 @@ class DatabaseHelper {
   static const String _databaseName = 'birthday_calendar.db';
 
   /// データベースバージョン（スキーマ変更時にインクリメント）
-  static const int _databaseVersion = 2;
+  static const int _databaseVersion = 4;
 
   // テーブル名
   static const String tableEvents = 'events';
   static const String tableBirthdays = 'birthdays';
+  static const String tableTags = 'tags';
 
   /// データベースインスタンスを取得する。
   /// 初回アクセス時に自動的にDBファイルを作成する。
@@ -46,9 +47,9 @@ class DatabaseHelper {
 
   /// テーブルを作成する。
   Future<void> _createDB(Database db, int version) async {
-    // events テーブル (Version 2 以降は notification が TEXT)
+    // events テーブル
     await db.execute('''
-      CREATE TABLE $tableEvents (
+      CREATE TABLE IF NOT EXISTS $tableEvents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         start_date INTEGER NOT NULL,
@@ -64,9 +65,9 @@ class DatabaseHelper {
       )
     ''');
 
-    // birthdays テーブル (Version 2 以降は notification が TEXT)
+    // birthdays テーブル
     await db.execute('''
-      CREATE TABLE $tableBirthdays (
+      CREATE TABLE IF NOT EXISTS $tableBirthdays (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         date INTEGER NOT NULL,
@@ -75,6 +76,15 @@ class DatabaseHelper {
         notification TEXT NOT NULL DEFAULT '[0]',
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
+      )
+    ''');
+
+    // tags テーブル (Version 3 追加)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableTags (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        created_at INTEGER NOT NULL
       )
     ''');
 
@@ -88,6 +98,9 @@ class DatabaseHelper {
     await db.execute('''
       CREATE INDEX idx_birthdays_date ON $tableBirthdays (date)
     ''');
+
+    // 初期データの投入 (Version 4 以降)
+    await _seedTags(db);
   }
 
   /// データベースのアップグレード処理。
@@ -119,6 +132,37 @@ class DatabaseHelper {
       await db.execute('DROP TABLE events_old');
       await db.execute('DROP TABLE birthdays_old');
     }
+
+    if (oldVersion < 3) {
+      // tags テーブルの追加
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS $tableTags (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL UNIQUE,
+          created_at INTEGER NOT NULL
+        )
+      ''');
+    }
+
+    if (oldVersion < 4) {
+      // 初期データの投入 (v3で登録に失敗した可能性があるため、v4でも実行)
+      await _seedTags(db);
+    }
+  }
+
+  /// 初期タグの投入
+  Future<void> _seedTags(Database db) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await db.insert(
+      tableTags,
+      {'name': '家族', 'created_at': now},
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+    await db.insert(
+      tableTags,
+      {'name': '友人', 'created_at': now},
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
   }
 
   /// データベースを閉じる。

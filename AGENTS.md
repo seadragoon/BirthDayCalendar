@@ -261,9 +261,18 @@ CREATE TABLE birthdays (
 -- INDEX: idx_birthdays_date
 ```
 
-- **DBバージョン:** 2
+### 7.3 tags テーブル (Version 3 追加)
+```sql
+CREATE TABLE tags (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  created_at INTEGER NOT NULL
+);
+```
+
+- **DBバージョン:** 3
 - **DBファイル名:** `birthday_calendar.db`
-- **マイグレーション:** `_upgradeDB` にて notification カラムを TEXT に変換済み
+- **マイグレーション:** notification の JSON化 (v2) および tags テーブル追加 + デフォルトデータ投入 (v3)
 
 ---
 
@@ -301,7 +310,8 @@ CREATE TABLE birthdays (
 | モーダル | ファイル | 操作 |
 |---------|--------|------|
 | イベント追加/編集/表示 | `event_modal.dart` | CRUD + 12色選択 + バリデーション |
-| 誕生日追加/編集 | `birthday_modal.dart` | CRUD + タグ複数選択 + 生まれ年不明 |
+| 誕生日追加/編集 | `birthday_modal.dart` | CRUD + タグ選択グリッド + 生まれ年不明 |
+| タグ管理 | `tag_management_view.dart` | タグの一覧表示・追加・削除（フルスクリーン） |
 | 検索 | `custom_search_delegate.dart` | リアルタイム横断検索 |
 | 共通ヘッダー | `base_modal.dart` | ×ボタン / 決定 / 削除 / 編集 |
 

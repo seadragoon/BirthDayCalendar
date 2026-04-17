@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
+import 'package:birthday_calendar/features/birthday/models/tag_model.dart';
 import 'package:birthday_calendar/features/birthday/repositories/birthday_repository.dart';
+import 'package:birthday_calendar/features/birthday/repositories/tag_repository.dart';
 import 'package:birthday_calendar/shared/providers/repository_providers.dart';
 
 /// 全誕生日データを管理するProvider。
@@ -50,6 +52,41 @@ class BirthdayListNotifier extends AsyncNotifier<List<BirthdayModel>> {
   }
 }
 
+/// 管理されているタグのリストを提供するProvider。
+final tagListProvider =
+    AsyncNotifierProvider<TagListNotifier, List<TagModel>>(
+  TagListNotifier.new,
+);
+
+/// タグのリストを管理するNotifier。
+class TagListNotifier extends AsyncNotifier<List<TagModel>> {
+  late TagRepository _repository;
+
+  @override
+  Future<List<TagModel>> build() async {
+    _repository = ref.watch(tagRepositoryProvider);
+    return _repository.getAllTags();
+  }
+
+  /// 新しいタグを追加する。
+  Future<void> addTag(String name) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await _repository.insertTag(name);
+      return _repository.getAllTags();
+    });
+  }
+
+  /// タグを削除する。
+  Future<void> deleteTag(int id) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await _repository.deleteTag(id);
+      return _repository.getAllTags();
+    });
+  }
+}
+
 /// 現在選択中のタグフィルターを管理するProvider。
 ///
 /// null の場合は「すべて」を表し、全件表示する。
@@ -90,18 +127,25 @@ final filteredBirthdaysProvider = Provider<AsyncValue<List<BirthdayModel>>>((ref
 
 /// 登録されている全ユニークタグを提供するProvider。
 ///
-/// Birthday View のタグフィルターバーの表示に使用する。
-/// birthdayListProvider を監視し、データ変更時に自動更新する。
+/// 現在は「管理されたタグリスト（tagListProvider）」をメインソースとする。
+/// 誕生日データにのみ存在するタグも含めたい場合は、ここでマージを行う。
 final allTagsProvider = Provider<AsyncValue<List<String>>>((ref) {
+  final managedTagsAsync = ref.watch(tagListProvider);
   final birthdayListAsync = ref.watch(birthdayListProvider);
 
-  return birthdayListAsync.when(
-    data: (birthdays) {
-      final tags = <String>{};
-      for (final birthday in birthdays) {
-        tags.addAll(birthday.tags);
-      }
-      final sortedTags = tags.toList()..sort();
+  return managedTagsAsync.when(
+    data: (managedTags) {
+      final tagsSet = managedTags.map((t) => t.name).toSet();
+      
+      // 念のため、既存の誕生日データに使われているタグもマージする（オプション）
+      // これにより、管理画面で作成していないタグでも、過去に使っていれば選択肢に残る
+      birthdayListAsync.whenData((birthdays) {
+        for (final b in birthdays) {
+          tagsSet.addAll(b.tags);
+        }
+      });
+
+      final sortedTags = tagsSet.toList(); // 追加順（DBのオーダー）を維持
       return AsyncValue.data(sortedTags);
     },
     loading: () => const AsyncValue.loading(),

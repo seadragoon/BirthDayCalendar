@@ -24,11 +24,10 @@ class BirthdayModal extends ConsumerStatefulWidget {
 
 class _BirthdayModalState extends ConsumerState<BirthdayModal> {
   final _nameController = TextEditingController();
-  final _tagsController = TextEditingController();
-
   late DateTime _date;
   bool _isYearUnknown = false;
   List<NotificationType> _notifications = [NotificationType.none];
+  List<String> _selectedTags = [];
 
   @override
   void initState() {
@@ -40,7 +39,7 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
     final b = widget.existingBirthday;
     if (b != null) {
       _nameController.text = b.name;
-      _tagsController.text = b.tags.join(', ');
+      _selectedTags = List.from(b.tags);
       _date = b.date;
       _isYearUnknown = b.isYearUnknown;
       _notifications = List.from(b.notifications);
@@ -57,7 +56,6 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
   @override
   void dispose() {
     _nameController.dispose();
-    _tagsController.dispose();
     super.dispose();
   }
 
@@ -80,15 +78,12 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
 
-    // 簡単なカンマ区切りでのタグ入力処理
-    final tagsInput = _tagsController.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-
     final newBirthday = BirthdayModel(
       id: widget.existingBirthday?.id,
       name: name,
       date: _date,
       isYearUnknown: _isYearUnknown,
-      tags: tagsInput,
+      tags: _selectedTags,
       notifications: _notifications,
     );
 
@@ -178,16 +173,10 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
             ),
             const Divider(),
 
-            // タグ (簡易的なカンマ入力)
-            TextField(
-              controller: _tagsController,
-              decoration: const InputDecoration(
-                labelText: 'タグ (複数ある場合はカンマ区切り)',
-                hintText: '例: 家族, 親戚, 会社',
-                border: InputBorder.none,
-                icon: Icon(Icons.sell),
-              ),
-            ),
+            const SizedBox(height: 16),
+            const Text('タグ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            const SizedBox(height: 8),
+            _buildTagSection(ref),
             const Divider(),
 
             // 通知
@@ -225,6 +214,117 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
           ],
         ),
       ),
+    );
+  }
+
+  /// タグを Wrap 表示し、選択・追加を行うウィジェット
+  Widget _buildTagSection(WidgetRef ref) {
+    final allTagsAsync = ref.watch(allTagsProvider);
+    final allTags = allTagsAsync.valueOrNull ?? [];
+
+    // 表示する全てのタグ（DBにあるタグ + 選択済みタグ）
+    final displayTags = {...allTags, ..._selectedTags}.toList(); // 追加順を維持
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: displayTags.map((tag) {
+            final isSelected = _selectedTags.contains(tag);
+            return FilterChip(
+              label: Text(tag),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  if (selected) {
+                    _selectedTags.add(tag);
+                  } else {
+                    _selectedTags.remove(tag);
+                  }
+                });
+              },
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 4),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => _showAddTagDialog(displayTags),
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('タグを追加', style: TextStyle(decoration: TextDecoration.underline)),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 新規タグ入力ダイアログを表示
+  Future<void> _showAddTagDialog(List<String> existingTags) async {
+    String newTagName = '';
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('タグを追加'),
+          content: TextField(
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'タグ名を入力'),
+            onChanged: (value) => newTagName = value.trim(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('キャンセル'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (newTagName.isEmpty) {
+                  Navigator.pop(context);
+                  return;
+                }
+
+                if (existingTags.contains(newTagName)) {
+                  // 重複チェック
+                  await showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('注意'),
+                      content: const Text('既に追加済みのタグです'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                  return;
+                }
+
+                // タグを管理リストに追加（DB保存）
+                await ref.read(tagListProvider.notifier).addTag(newTagName);
+                
+                setState(() {
+                  if (!_selectedTags.contains(newTagName)) {
+                    _selectedTags.add(newTagName);
+                  }
+                });
+                
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: const Text('追加'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
