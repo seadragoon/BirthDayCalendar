@@ -8,6 +8,8 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'package:birthday_calendar/shared/providers/theme_provider.dart';
 import 'package:birthday_calendar/shared/widgets/app_shell.dart';
 
@@ -62,6 +64,14 @@ class BirthdayCalendarApp extends ConsumerWidget {
         scaffoldBackgroundColor: appTheme.backgroundColor,
         useMaterial3: true,
       ),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('ja', 'JP'),
+      ],
       home: const AppShell(),
     );
   }

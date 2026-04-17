@@ -243,49 +243,89 @@ class _EventModalState extends ConsumerState<EventModal> {
               children: [
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const Text('開始', style: TextStyle(color: Colors.grey)),
+                      const SizedBox(height: 4),
                       InkWell(
                         onTap: () => _pickDate(true),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Text(dateFormat.format(_startDate), style: const TextStyle(fontSize: 16)),
-                        ),
-                      ),
-                      if (!_isAllDay)
-                        InkWell(
-                          onTap: () => _pickTime(true),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Text(timeFormat.format(_startDate), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            dateFormat.format(_startDate), 
+                            style: const TextStyle(fontSize: 16)
                           ),
                         ),
+                      ),
+                      if (!_isAllDay) ...[
+                        const SizedBox(height: 4),
+                        InkWell(
+                          onTap: () => _pickTime(true),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              timeFormat.format(_startDate), 
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                const SizedBox(width: 16),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                ),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const Text('終了', style: TextStyle(color: Colors.grey)),
+                      const SizedBox(height: 4),
                       InkWell(
                         onTap: () => _pickDate(false),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Text(dateFormat.format(_endDate), style: const TextStyle(fontSize: 16)),
-                        ),
-                      ),
-                      if (!_isAllDay)
-                        InkWell(
-                          onTap: () => _pickTime(false),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Text(timeFormat.format(_endDate), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            dateFormat.format(_endDate), 
+                            style: const TextStyle(fontSize: 16)
                           ),
                         ),
+                      ),
+                      if (!_isAllDay) ...[
+                        const SizedBox(height: 4),
+                        InkWell(
+                          onTap: () => _pickTime(false),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              timeFormat.format(_endDate), 
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -329,7 +369,8 @@ class _EventModalState extends ConsumerState<EventModal> {
                 child: DropdownButton<RecurrenceType>(
                   value: _recurrence,
                   isDense: true,
-                  items: RecurrenceType.values.map((e) => DropdownMenuItem(value: e, child: Text(e.name))).toList(),
+                  isExpanded: true,
+                  items: RecurrenceType.values.map((e) => DropdownMenuItem(value: e, child: Text(e.label))).toList(),
                   onChanged: (val) => setState(() => _recurrence = val!),
                 ),
               ),
@@ -341,7 +382,8 @@ class _EventModalState extends ConsumerState<EventModal> {
                 child: DropdownButton<NotificationType>(
                   value: _notification,
                   isDense: true,
-                  items: NotificationType.values.map((e) => DropdownMenuItem(value: e, child: Text(e.name))).toList(),
+                  isExpanded: true,
+                  items: NotificationType.values.map((e) => DropdownMenuItem(value: e, child: Text(e.label))).toList(),
                   onChanged: (val) => setState(() => _notification = val!),
                 ),
               ),
@@ -349,14 +391,24 @@ class _EventModalState extends ConsumerState<EventModal> {
             const Divider(),
 
             // メモ
-            TextField(
-              controller: _commentController,
-              decoration: const InputDecoration(
-                hintText: 'メモ',
-                border: InputBorder.none,
-                icon: Icon(Icons.notes),
+            const Text('メモ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.05),
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
               ),
-              maxLines: null,
+              child: TextField(
+                controller: _commentController,
+                decoration: const InputDecoration(
+                  hintText: '詳細を入力...',
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.all(12),
+                ),
+                maxLines: 5,
+                minLines: 3,
+              ),
             ),
             const SizedBox(height: 40),
           ],

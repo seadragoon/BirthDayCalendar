@@ -6,7 +6,8 @@ enum RecurrenceType {
   daily('毎日'),
   weekly('毎週'),
   monthly('毎月'),
-  yearly('毎年');
+  yearly('毎年'),
+  weekday('平日');
 
   const RecurrenceType(this.label);
 

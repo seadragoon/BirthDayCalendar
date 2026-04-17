@@ -22,7 +22,7 @@ class CustomFab extends ConsumerWidget {
           // イベント追加モーダルを開く
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => const EventModal(),
+              builder: (_) => EventModal(initialDate: ref.read(selectedDateProvider)),
               fullscreenDialog: true,
             ),
           );
