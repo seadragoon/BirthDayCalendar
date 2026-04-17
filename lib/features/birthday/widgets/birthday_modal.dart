@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -25,7 +26,7 @@ class BirthdayModal extends ConsumerStatefulWidget {
 class _BirthdayModalState extends ConsumerState<BirthdayModal> {
   final _nameController = TextEditingController();
   late DateTime _date;
-  bool _isYearUnknown = false;
+  bool _isYearSet = false;
   List<NotificationType> _notifications = [NotificationType.none];
   List<String> _selectedTags = [];
 
@@ -41,11 +42,12 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
       _nameController.text = b.name;
       _selectedTags = List.from(b.tags);
       _date = b.date;
-      _isYearUnknown = b.isYearUnknown;
+      _isYearSet = !b.isYearUnknown;
       _notifications = List.from(b.notifications);
     } else {
-      final now = DateTime.now();
-      _date = DateTime(now.year, now.month, now.day);
+      // 新規作成時のデフォルトは 2000年6月15日
+      _date = DateTime(2000, 6, 15);
+      _isYearSet = false; // デフォルトは年を設定しない（月日のみ）
     }
 
     _nameController.addListener(() {
@@ -60,18 +62,124 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
   }
 
   Future<void> _pickDate() async {
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _date,
-      firstDate: DateTime(1900),
-      lastDate: DateTime(2100),
-    );
+    await _showRollerPicker();
+  }
 
-    if (pickedDate != null) {
-      setState(() {
-        _date = pickedDate;
-      });
-    }
+  /// ドラムロール（CupertinoPicker）式のピッカーを表示
+  Future<void> _showRollerPicker() async {
+    final now = DateTime.now();
+    int tempYear = _date.year;
+    int tempMonth = _date.month;
+    int tempDay = _date.day;
+
+    // 年のリスト (1900〜現在)
+    final years = List.generate(now.year - 1900 + 1, (index) => 1900 + index);
+    // 月のリスト (1〜12)
+    final months = List.generate(12, (index) => index + 1);
+
+    await showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setPickerState) {
+            // 指定された月の日数を取得（うるう年考慮）
+            final daysInMonth = DateTime(tempYear, tempMonth + 1, 0).day;
+            if (tempDay > daysInMonth) tempDay = daysInMonth;
+
+            final days = List.generate(daysInMonth, (index) => index + 1);
+
+            return Container(
+              height: 300,
+              color: Colors.white,
+              child: Column(
+                children: [
+                  // ヘッダー（キャンセル・決定）
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('キャンセル', style: TextStyle(color: Colors.grey)),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _date = DateTime(tempYear, tempMonth, tempDay);
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: const Text('決定', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // ピッカー本体
+                  Expanded(
+                    child: Row(
+                      children: [
+                        // 年のロール（生まれ年を設定する場合のみ表示）
+                        if (_isYearSet)
+                          Expanded(
+                            flex: 2,
+                            child: CupertinoPicker(
+                              scrollController: FixedExtentScrollController(
+                                initialItem: years.indexOf(tempYear),
+                              ),
+                              itemExtent: 40,
+                              onSelectedItemChanged: (index) {
+                                setPickerState(() {
+                                  tempYear = years[index];
+                                });
+                              },
+                              children: years.map((y) => Center(child: Text('$y年'))).toList(),
+                            ),
+                          ),
+                        // 月のロール
+                        Expanded(
+                          flex: 1,
+                          child: CupertinoPicker(
+                            scrollController: FixedExtentScrollController(
+                              initialItem: months.indexOf(tempMonth),
+                            ),
+                            itemExtent: 40,
+                            onSelectedItemChanged: (index) {
+                              setPickerState(() {
+                                tempMonth = months[index];
+                              });
+                            },
+                            children: months.map((m) => Center(child: Text('$m月'))).toList(),
+                          ),
+                        ),
+                        // 日のロール
+                        Expanded(
+                          flex: 1,
+                          child: CupertinoPicker(
+                            scrollController: FixedExtentScrollController(
+                              initialItem: days.indexOf(tempDay),
+                            ),
+                            itemExtent: 40,
+                            onSelectedItemChanged: (index) {
+                              setPickerState(() {
+                                tempDay = days[index];
+                              });
+                            },
+                            children: days.map((d) => Center(child: Text('$d日'))).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _onSave() async {
@@ -82,7 +190,7 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
       id: widget.existingBirthday?.id,
       name: name,
       date: _date,
-      isYearUnknown: _isYearUnknown,
+      isYearUnknown: !_isYearSet,
       tags: _selectedTags,
       notifications: _notifications,
     );
@@ -112,8 +220,8 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
     final isEditMode = widget.existingBirthday != null;
     final isSaveEnabled = _nameController.text.trim().isNotEmpty;
 
-    // 年不明の場合は年を隠す
-    final dateFormat = _isYearUnknown ? DateFormat('M月d日') : DateFormat('yyyy年M月d日', 'ja_JP');
+    // 年を設定しない場合は月日のみ表示
+    final dateFormat = !_isYearSet ? DateFormat('M月d日') : DateFormat('yyyy年M月d日', 'ja_JP');
 
     return BaseModal(
       title: isEditMode ? '誕生日の編集' : '誕生日の追加',
@@ -162,13 +270,13 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
               ),
             ),
             
-            // 年齢不詳トグル
+            // 年齢設定トグル
             SwitchListTile(
-              title: const Text('生まれ年が不明'),
-              value: _isYearUnknown,
+              title: const Text('生まれ年を設定'),
+              value: _isYearSet,
               contentPadding: EdgeInsets.zero,
               onChanged: (val) {
-                setState(() => _isYearUnknown = val);
+                setState(() => _isYearSet = val);
               },
             ),
             const Divider(),

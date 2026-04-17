@@ -61,8 +61,10 @@ class CustomDrawer extends ConsumerWidget {
             );
           }),
           const Divider(),
-
-          // タグ管理の追加
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text('誕生日', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          ),
           ListTile(
             leading: const Icon(Icons.sell_outlined),
             title: const Text('タグ管理'),
