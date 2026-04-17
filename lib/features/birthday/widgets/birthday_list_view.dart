@@ -66,10 +66,12 @@ class BirthdayListView extends ConsumerWidget {
                   ),
                   if (birthday.daysUntilNextBirthday == 0)
                     // 当日の場合はキラキラ等をつける（暫定でオレンジ枠）
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.orange, width: 2),
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.orange, width: 2),
+                        ),
                       ),
                     ),
                 ],

@@ -78,7 +78,7 @@ class BirthdayCalendarApp extends ConsumerWidget {
         // Webでの表示崩れ（1/4サイズ、左寄せ）を防ぐため、全体を明示的に
         // 中央配置し、制約を安定させる
         return Center(
-          child: child,
+          child: child ?? const SizedBox.shrink(),
         );
       },
       home: const AppShell(),

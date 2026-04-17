@@ -83,15 +83,15 @@ class BirthdayModel {
 
     return BirthdayModel(
       id: map['id'] as int?,
-      name: map['name'] as String,
-      date: DateTime.fromMillisecondsSinceEpoch(map['date'] as int),
-      isYearUnknown: (map['is_year_unknown'] as int) == 1,
+      name: (map['name'] as String?) ?? '名前なし',
+      date: DateTime.fromMillisecondsSinceEpoch((map['date'] as num?)?.toInt() ?? 0),
+      isYearUnknown: (map['is_year_unknown'] as num?)?.toInt() == 1,
       tags: parsedTags,
       notifications: parsedNotifications,
       createdAt:
-          DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
+          DateTime.fromMillisecondsSinceEpoch((map['created_at'] as num?)?.toInt() ?? 0),
       updatedAt:
-          DateTime.fromMillisecondsSinceEpoch(map['updated_at'] as int),
+          DateTime.fromMillisecondsSinceEpoch((map['updated_at'] as num?)?.toInt() ?? 0),
     );
   }
 

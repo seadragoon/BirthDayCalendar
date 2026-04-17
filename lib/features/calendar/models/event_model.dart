@@ -54,19 +54,19 @@ class EventModel {
 
     return EventModel(
       id: map['id'] as int?,
-      title: map['title'] as String,
-      startDate: DateTime.fromMillisecondsSinceEpoch(map['start_date'] as int),
-      endDate: DateTime.fromMillisecondsSinceEpoch(map['end_date'] as int),
-      isAllDay: (map['is_all_day'] as int) == 1,
-      colorIndex: EventColor.fromIndex(map['color_index'] as int),
-      recurrence: RecurrenceType.fromIndex(map['recurrence'] as int),
+      title: (map['title'] as String?) ?? 'タイトルなし',
+      startDate: DateTime.fromMillisecondsSinceEpoch((map['start_date'] as num?)?.toInt() ?? 0),
+      endDate: DateTime.fromMillisecondsSinceEpoch((map['end_date'] as num?)?.toInt() ?? 0),
+      isAllDay: (map['is_all_day'] as num?)?.toInt() == 1,
+      colorIndex: EventColor.fromIndex((map['color_index'] as num?)?.toInt() ?? 6),
+      recurrence: RecurrenceType.fromIndex((map['recurrence'] as num?)?.toInt() ?? 0),
       notifications: parsedNotifications,
       comment: (map['comment'] as String?) ?? '',
-      isBirthday: (map['is_birthday'] as int) == 1,
+      isBirthday: (map['is_birthday'] as num?)?.toInt() == 1,
       createdAt:
-          DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
+          DateTime.fromMillisecondsSinceEpoch((map['created_at'] as num?)?.toInt() ?? 0),
       updatedAt:
-          DateTime.fromMillisecondsSinceEpoch(map['updated_at'] as int),
+          DateTime.fromMillisecondsSinceEpoch((map['updated_at'] as num?)?.toInt() ?? 0),
     );
   }
 
