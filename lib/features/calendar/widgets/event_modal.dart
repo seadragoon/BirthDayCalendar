@@ -32,6 +32,7 @@ class EventModal extends ConsumerStatefulWidget {
 class _EventModalState extends ConsumerState<EventModal> {
   final _titleController = TextEditingController();
   final _commentController = TextEditingController();
+  final _colorScrollController = ScrollController();
 
   bool _isAllDay = false;
   late DateTime _startDate;
@@ -45,6 +46,17 @@ class _EventModalState extends ConsumerState<EventModal> {
   void initState() {
     super.initState();
     _initForm();
+
+    // 画面表示後、選択中のカラーまでスクロール
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_colorScrollController.hasClients) {
+        final index = EventColor.values.indexOf(_selectedColor);
+        if (index >= 0) {
+          // 各カラーアイテムの幅(40) + マージン(12) = 52
+          _colorScrollController.jumpTo(index * 52.0);
+        }
+      }
+    });
   }
 
   void _initForm() {
@@ -74,6 +86,7 @@ class _EventModalState extends ConsumerState<EventModal> {
   void dispose() {
     _titleController.dispose();
     _commentController.dispose();
+    _colorScrollController.dispose();
     super.dispose();
   }
 
@@ -226,6 +239,7 @@ class _EventModalState extends ConsumerState<EventModal> {
             const Text('カラー', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
             const SizedBox(height: 8),
             SingleChildScrollView(
+              controller: _colorScrollController,
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: EventColor.values.map((color) {
