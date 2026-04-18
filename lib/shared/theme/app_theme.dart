@@ -69,4 +69,24 @@ class AppThemeData {
   );
 
   static final values = [standard, sakura, night];
+
+  AppThemeData copyWith({
+    AppThemeType? type,
+    String? label,
+    String? backgroundImagePath,
+    Color? primaryColor,
+    Color? onPrimaryColor,
+    Color? backgroundColor,
+    Color? surfaceColor,
+  }) {
+    return AppThemeData(
+      type: type ?? this.type,
+      label: label ?? this.label,
+      backgroundImagePath: backgroundImagePath ?? this.backgroundImagePath,
+      primaryColor: primaryColor ?? this.primaryColor,
+      onPrimaryColor: onPrimaryColor ?? this.onPrimaryColor,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      surfaceColor: surfaceColor ?? this.surfaceColor,
+    );
+  }
 }

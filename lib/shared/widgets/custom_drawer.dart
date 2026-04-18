@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:birthday_calendar/shared/theme/app_theme.dart';
 import 'package:birthday_calendar/shared/providers/theme_provider.dart';
+import 'package:birthday_calendar/shared/widgets/theme_selection_modal.dart';
 import 'package:birthday_calendar/features/birthday/views/tag_management_view.dart';
 
 /// アプリのドロワー（サイドメニュー）。
@@ -43,26 +42,25 @@ class CustomDrawer extends ConsumerWidget {
             ),
           ),
           const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text('きせかえ（テーマ）', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text('アプリ設定', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           ),
-          ...AppThemeData.values.map((theme) {
-            final isSelected = theme.type == currentTheme.type;
-            return ListTile(
-              leading: Icon(
-                isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                color: isSelected ? currentTheme.primaryColor : Colors.grey,
-              ),
-              title: Text(theme.label),
-              onTap: () {
-                ref.read(themeProvider.notifier).setTheme(theme);
-                Navigator.of(context).pop(); // ドロワーを閉じる
-              },
-            );
-          }),
+          ListTile(
+            leading: const Icon(Icons.palette_outlined),
+            title: const Text('きせかえ（テーマ）'),
+            onTap: () {
+              Navigator.of(context).pop(); // ドロワーを閉じる
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const ThemeSelectionModal(),
+                  fullscreenDialog: true,
+                ),
+              );
+            },
+          ),
           const Divider(),
           const Padding(
-            padding: EdgeInsets.all(16.0),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text('誕生日', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           ),
           ListTile(

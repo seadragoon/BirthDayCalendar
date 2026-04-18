@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:birthday_calendar/shared/theme/app_theme.dart';
 
@@ -15,6 +16,16 @@ class ThemeNotifier extends Notifier<AppThemeData> {
   /// 指定したテーマに変更する。
   void setTheme(AppThemeData theme) {
     state = theme;
+  }
+
+  /// プライマリカラーを更新する（テーマは標準に切り替わる）。
+  void updatePrimaryColor(Color color) {
+    state = AppThemeData.standard.copyWith(primaryColor: color);
+  }
+
+  /// テーマタイプ（標準、桜、夜空）に基づいてテーマを切り替える。
+  void setThemeType(AppThemeType type) {
+    state = AppThemeData.values.firstWhere((theme) => theme.type == type);
   }
 }
 
