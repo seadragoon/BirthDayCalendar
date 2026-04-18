@@ -284,62 +284,102 @@ class _DayCell extends ConsumerWidget {
         ref.read(selectedDateProvider.notifier).state = date;
       },
       child: Container(
-        color: Theme.of(context).colorScheme.surface,
-        child: Stack(
-          children: [
-            // グリッド線（背景レイヤー）
-            // Border.all ではなく個別の Border を使うことで、
-            // 予定バーが境界線の上を隙間なく通れるようにする
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade200, width: 0.5),
-                    right: BorderSide(color: Colors.grey.shade200, width: 0.5),
-                    // 左端の列のみ左側の線を描画
-                    left: dayIndex == 0
-                        ? BorderSide(color: Colors.grey.shade200, width: 0.5)
-                        : BorderSide.none,
-                  ),
-                ),
-              ),
-            ),
-            // 選択時の枠線
-            if (isSelected)
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFF1A237E), width: 2),
-                ),
-              ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+        ),
+        clipBehavior: Clip.hardEdge, // 見切れバーが下の週にはみ出さないように制御
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // セル全体の高さから日付エリア(18px)を引く
+            final availableHeight = constraints.maxHeight - 18.0;
+            // 1予定あたりの高さは 18px (16px + 下マージン2px)
+            // 見切れ分も表示するため、ceilを使用して「少しでも枠内に入る」予定を含める
+            final visibleLanesCount = (availableHeight / 18.0).ceil().clamp(0, lanes.length);
             
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            // はみ出し件数の計算 (完全に見えないレーンにある非nullイベント数)
+            int overflowCount = 0;
+            bool hasOverflow = lanes.length > visibleLanesCount;
+            if (hasOverflow) {
+              overflowCount = lanes.sublist(visibleLanesCount).where((e) => e != null).length;
+            }
+
+            return Stack(
               children: [
-                // 日付テキスト (左寄せ)
-                Padding(
-                  padding: const EdgeInsets.only(left: 4.0, top: 4.0, bottom: 2.0),
-                  child: Text(
-                    '${date.day}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: dateColor,
+                // グリッド線（背景レイヤー）
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: Colors.grey.shade200, width: 0.5),
+                        right: BorderSide(color: Colors.grey.shade200, width: 0.5),
+                        left: dayIndex == 0
+                            ? BorderSide(color: Colors.grey.shade200, width: 0.5)
+                            : BorderSide.none,
+                      ),
                     ),
                   ),
                 ),
-                // イベントバーエリア
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const NeverScrollableScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: lanes.map((e) => _buildEventBar(e)).toList(),
+                // 選択時の枠線
+                if (isSelected)
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFF1A237E), width: 2),
                     ),
                   ),
+                
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // 日付テキスト (左寄せ)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4.0, top: 4.0, bottom: 2.0),
+                      child: Text(
+                        '${date.day}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.0,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: dateColor,
+                        ),
+                      ),
+                    ),
+                    // イベントバーエリア
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: lanes.take(visibleLanesCount).map((e) => _buildEventBar(e)).toList(),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+
+                // はみ出し件数オーバーレイ
+                if (hasOverflow && overflowCount > 0)
+                  Positioned(
+                    right: 2,
+                    bottom: 2,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '+$overflowCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

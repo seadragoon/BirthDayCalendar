@@ -15,6 +15,7 @@ class EventListView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // 選択中の日付に紐づくイベントを取得
     final eventsAsyncValue = ref.watch(eventsByDateProvider);
+    final scrollController = ScrollController();
 
     return eventsAsyncValue.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -33,41 +34,46 @@ class EventListView extends ConsumerWidget {
           );
         }
 
-        return ListView.builder(
-          itemCount: events.length,
-          itemBuilder: (context, index) {
-            final event = events[index];
-            final timeFormat = DateFormat('HH:mm');
+        return Scrollbar(
+          controller: scrollController,
+          thumbVisibility: true, // スクロールバーを常時表示
+          child: ListView.builder(
+            controller: scrollController,
+            itemCount: events.length,
+            itemBuilder: (context, index) {
+              final event = events[index];
+              final timeFormat = DateFormat('HH:mm');
 
-            // 終日イベントか、時刻指定イベントかで表示を分ける
-            final timeText = event.isAllDay
-                ? '終日'
-                : '${timeFormat.format(event.startDate)} - ${timeFormat.format(event.endDate)}';
+              // 終日イベントか、時刻指定イベントかで表示を分ける
+              final timeText = event.isAllDay
+                  ? '終日'
+                  : '${timeFormat.format(event.startDate)} - ${timeFormat.format(event.endDate)}';
 
-            return ListTile(
-              leading: Container(
-                width: 12,
-                height: double.infinity,
-                decoration: BoxDecoration(
-                  color: event.colorIndex.color,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-              ),
-              title: Text(
-                event.title,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(timeText),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => EventModal(existingEvent: event),
-                    fullscreenDialog: true,
+              return ListTile(
+                leading: Container(
+                  width: 12,
+                  height: double.infinity,
+                  decoration: BoxDecoration(
+                    color: event.colorIndex.color,
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                );
-              },
-            );
-          },
+                ),
+                title: Text(
+                  event.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(timeText),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => EventModal(existingEvent: event),
+                      fullscreenDialog: true,
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         );
       },
     );
