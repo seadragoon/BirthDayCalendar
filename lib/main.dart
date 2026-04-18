@@ -53,35 +53,51 @@ class BirthdayCalendarApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 選択中のテーマを監視
-    final appTheme = ref.watch(themeProvider);
+    // 選択中のテーマを監視 (非同期対応)
+    final appThemeAsync = ref.watch(themeProvider);
 
-    return MaterialApp(
-      title: 'BirthDay Calendar',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: appTheme.primaryColor,
+    return appThemeAsync.when(
+      data: (appTheme) => MaterialApp(
+        title: 'BirthDay Calendar',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: appTheme.primaryColor,
+          ),
+          scaffoldBackgroundColor: appTheme.backgroundColor,
+          useMaterial3: true,
         ),
-        scaffoldBackgroundColor: appTheme.backgroundColor,
-        useMaterial3: true,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('ja', 'JP'),
+        ],
+        builder: (context, child) {
+          return Center(
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
+        home: const AppShell(),
       ),
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('ja', 'JP'),
-      ],
-      builder: (context, child) {
-        // Webでの表示崩れ（1/4サイズ、左寄せ）を防ぐため、全体を明示的に
-        // 中央配置し、制約を安定させる
-        return Center(
-          child: child ?? const SizedBox.shrink(),
-        );
-      },
-      home: const AppShell(),
+      loading: () => const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      ),
+      error: (err, stack) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(
+            child: Text('テーマの読み込みに失敗しました: $err'),
+          ),
+        ),
+      ),
     );
   }
 }

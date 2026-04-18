@@ -22,7 +22,7 @@ class CustomHeader extends ConsumerWidget implements PreferredSizeWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final viewType = ref.watch(viewTypeProvider);
     final currentMonth = ref.watch(currentMonthProvider);
-    final appTheme = ref.watch(themeProvider);
+    final appTheme = ref.watch(themeProvider).requireValue;
 
     // タイトルの出し分け
     final String title = viewType == ViewType.schedule
@@ -69,7 +69,22 @@ class CustomHeader extends ConsumerWidget implements PreferredSizeWidget {
         ),
         if (viewType == ViewType.schedule)
           IconButton(
-            icon: const Icon(Icons.today),
+            icon: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              decoration: BoxDecoration(
+                border: Border.all(color: appTheme.onPrimaryColor, width: 1.5),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                '当日',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: appTheme.onPrimaryColor,
+                  height: 1.2,
+                ),
+              ),
+            ),
             tooltip: '今日',
             onPressed: () {
               final now = DateTime.now();

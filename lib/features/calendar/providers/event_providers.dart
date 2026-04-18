@@ -167,9 +167,9 @@ List<EventModel> _generateBirthdayEvents(
           id: -(b.id ?? 0) * 10000 - year, 
           title: '🎂 ${b.name}の誕生日',
           startDate: bDate,
-          endDate: bDate,
+          endDate: DateTime(year, b.date.month, b.date.day, 23, 59, 59),
           isAllDay: true,
-          colorIndex: EventColor.peacock, // 誕生日の標準色（ピーコック）
+          colorIndex: EventColor.fromIndex(settings.colorIndex), // 設定色を使用
           isBirthday: true,
         ));
       }

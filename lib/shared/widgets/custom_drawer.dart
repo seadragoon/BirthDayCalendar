@@ -13,7 +13,7 @@ class CustomDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTheme = ref.watch(themeProvider);
+    final currentTheme = ref.watch(themeProvider).requireValue;
 
     return Drawer(
       child: ListView(
@@ -79,7 +79,7 @@ class CustomDrawer extends ConsumerWidget {
           ),
           ListTile(
             leading: const Icon(Icons.calendar_view_month_outlined),
-            title: const Text('スケジュール表示設定'),
+            title: const Text('表示設定'),
             onTap: () {
               Navigator.of(context).pop();
               Navigator.of(context).push(

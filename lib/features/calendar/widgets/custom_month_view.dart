@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:birthday_calendar/shared/constants/japanese_holiday.dart';
+import 'package:birthday_calendar/shared/providers/app_state_providers.dart';
 import 'package:birthday_calendar/features/calendar/models/event_model.dart';
 import 'package:birthday_calendar/features/calendar/providers/event_providers.dart';
-import 'package:birthday_calendar/shared/providers/app_state_providers.dart';
-import 'package:birthday_calendar/shared/constants/japanese_holiday.dart';
+import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
+import 'package:birthday_calendar/shared/constants/event_color.dart';
 
 /// 横スワイプ可能で、5/6週可変高さ、祝日・色分け等に対応したカスタムカレンダー。
 class CustomMonthView extends ConsumerStatefulWidget {
@@ -266,6 +268,16 @@ class _DayCell extends ConsumerWidget {
     final isSelected = _isSameDay(date, selectedDate);
     final isCurrentMonth = date.month == currentMonth.month;
 
+    // 誕生日設定の取得
+    final settingsAsync = ref.watch(birthdayDisplaySettingsProvider);
+    final settings = settingsAsync.valueOrNull;
+    final hasBirthday = settings != null &&
+        settings.isShowOnSchedule &&
+        lanes.any((e) => e?.isBirthday == true);
+    final birthdayColor = settings != null
+        ? EventColor.fromIndex(settings.colorIndex).color
+        : EventColor.basil.color;
+
     // 日付文字色
     Color dateColor = Colors.black;
     if (!isCurrentMonth) {
@@ -278,6 +290,8 @@ class _DayCell extends ConsumerWidget {
       dateColor = Colors.blue;
     }
 
+
+    final isToday = _isSameDay(date, DateTime.now());
 
     return GestureDetector(
       onTap: () {
@@ -305,10 +319,11 @@ class _DayCell extends ConsumerWidget {
 
             return Stack(
               children: [
-                // グリッド線（背景レイヤー）
+                // グリッド線（背景レイヤー） & 今日ハイライト
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
+                      color: isToday ? Colors.blue.withValues(alpha: 0.1) : null,
                       border: Border(
                         bottom: BorderSide(color: Colors.grey.shade200, width: 0.5),
                         right: BorderSide(color: Colors.grey.shade200, width: 0.5),
@@ -319,13 +334,6 @@ class _DayCell extends ConsumerWidget {
                     ),
                   ),
                 ),
-                // 選択時の枠線
-                if (isSelected)
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFF1A237E), width: 2),
-                    ),
-                  ),
                 
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -333,14 +341,29 @@ class _DayCell extends ConsumerWidget {
                     // 日付テキスト (左寄せ)
                     Padding(
                       padding: const EdgeInsets.only(left: 4.0, top: 4.0, bottom: 2.0),
-                      child: Text(
-                        '${date.day}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          height: 1.0,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: dateColor,
-                        ),
+                      child: Row(
+                        children: [
+                          Text(
+                            '${date.day}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              height: 1.0,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: dateColor,
+                            ),
+                          ),
+                          if (hasBirthday) ...[
+                            const SizedBox(width: 4),
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: birthdayColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                     // イベントバーエリア
@@ -373,6 +396,18 @@ class _DayCell extends ConsumerWidget {
                           color: Colors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // 選択時の枠線 (最前面に描画)
+                if (isSelected)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFF1A237E), width: 2),
                         ),
                       ),
                     ),

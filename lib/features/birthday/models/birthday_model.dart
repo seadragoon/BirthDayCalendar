@@ -13,6 +13,7 @@ class BirthdayModel {
   final bool isYearUnknown;
   final List<String> tags;
   final List<NotificationType> notifications;
+  final String comment;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -23,6 +24,7 @@ class BirthdayModel {
     this.isYearUnknown = false,
     this.tags = const [],
     this.notifications = const [NotificationType.none],
+    this.comment = '',
     DateTime? createdAt,
     DateTime? updatedAt,
   })  : createdAt = createdAt ?? date,
@@ -88,6 +90,7 @@ class BirthdayModel {
       isYearUnknown: (map['is_year_unknown'] as num?)?.toInt() == 1,
       tags: parsedTags,
       notifications: parsedNotifications,
+      comment: (map['comment'] as String?) ?? '',
       createdAt:
           DateTime.fromMillisecondsSinceEpoch((map['created_at'] as num?)?.toInt() ?? 0),
       updatedAt:
@@ -107,6 +110,7 @@ class BirthdayModel {
       'is_year_unknown': isYearUnknown ? 1 : 0,
       'tags': jsonEncode(tags),
       'notification': jsonEncode(notifications.map((e) => e.index).toList()),
+      'comment': comment,
       'created_at': createdAt.millisecondsSinceEpoch,
       'updated_at': updatedAt.millisecondsSinceEpoch,
     };
@@ -124,6 +128,7 @@ class BirthdayModel {
     bool? isYearUnknown,
     List<String>? tags,
     List<NotificationType>? notifications,
+    String? comment,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -134,6 +139,7 @@ class BirthdayModel {
       isYearUnknown: isYearUnknown ?? this.isYearUnknown,
       tags: tags ?? this.tags,
       notifications: notifications ?? this.notifications,
+      comment: comment ?? this.comment,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

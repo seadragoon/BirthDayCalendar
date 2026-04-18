@@ -4,6 +4,7 @@ import 'package:birthday_calendar/features/settings/providers/settings_providers
 import 'package:birthday_calendar/features/settings/models/birthday_display_settings.dart';
 import 'package:birthday_calendar/features/birthday/providers/birthday_providers.dart';
 import 'package:birthday_calendar/shared/widgets/base_modal.dart';
+import 'package:birthday_calendar/shared/constants/event_color.dart';
 
 /// 誕生日のスケジュール表示設定画面。
 class BirthdayDisplaySettingsModal extends ConsumerWidget {
@@ -14,7 +15,7 @@ class BirthdayDisplaySettingsModal extends ConsumerWidget {
     final settingsAsync = ref.watch(birthdayDisplaySettingsProvider);
 
     return BaseModal(
-      title: '【誕生日】スケジュール表示設定',
+      title: '【誕生日】表示設定',
       body: settingsAsync.when(
         data: (settings) => SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -34,6 +35,64 @@ class BirthdayDisplaySettingsModal extends ConsumerWidget {
                 onChanged: (val) {
                   ref.read(birthdayDisplaySettingsProvider.notifier).setShowOnSchedule(val);
                 },
+              ),
+              const SizedBox(height: 32),
+
+              // 大項目: 表示カラー設定
+              Opacity(
+                opacity: settings.isShowOnSchedule ? 1.0 : 0.4,
+                child: IgnorePointer(
+                  ignoring: !settings.isShowOnSchedule,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionHeader('表示カラー設定'),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 50,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: EventColor.values.length,
+                          itemBuilder: (context, index) {
+                            final color = EventColor.values[index];
+                            final isSelected = settings.colorIndex == color.index;
+                            return GestureDetector(
+                              onTap: () {
+                                ref
+                                    .read(birthdayDisplaySettingsProvider.notifier)
+                                    .setBirthdayColor(color);
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 12),
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: color.color,
+                                  shape: BoxShape.circle,
+                                  border: isSelected
+                                      ? Border.all(color: Colors.white, width: 3)
+                                      : null,
+                                  boxShadow: isSelected
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.3),
+                                            blurRadius: 4,
+                                            spreadRadius: 1,
+                                          )
+                                        ]
+                                      : null,
+                                ),
+                                child: isSelected
+                                    ? const Icon(Icons.check, color: Colors.white, size: 20)
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 32),
 

@@ -25,6 +25,7 @@ class BirthdayModal extends ConsumerStatefulWidget {
 
 class _BirthdayModalState extends ConsumerState<BirthdayModal> {
   final _nameController = TextEditingController();
+  final _commentController = TextEditingController();
   late DateTime _date;
   bool _isYearSet = false;
   List<NotificationType> _notifications = [NotificationType.none];
@@ -44,6 +45,7 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
       _date = b.date;
       _isYearSet = !b.isYearUnknown;
       _notifications = List.from(b.notifications);
+      _commentController.text = b.comment;
     } else {
       // 新規作成時のデフォルトは 今日
       _date = DateTime.now();
@@ -58,6 +60,7 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
   @override
   void dispose() {
     _nameController.dispose();
+    _commentController.dispose();
     super.dispose();
   }
 
@@ -193,6 +196,7 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
       isYearUnknown: !_isYearSet,
       tags: _selectedTags,
       notifications: _notifications,
+      comment: _commentController.text.trim(),
     );
 
     if (widget.existingBirthday == null) {
@@ -273,6 +277,10 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
             // 年齢設定トグル
             SwitchListTile(
               title: const Text('生まれ年を設定'),
+              subtitle: const Text(
+                '※生まれ年を設定すると、年齢が表示できます',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
               value: _isYearSet,
               contentPadding: EdgeInsets.zero,
               onChanged: (val) {
@@ -317,6 +325,27 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
                 }
               },
             ),
+            const Divider(),
+            
+            // メモ
+            const SizedBox(height: 16),
+            const Text('メモ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _commentController,
+              maxLines: null,
+              minLines: 3,
+              decoration: InputDecoration(
+                hintText: 'メモを入力...',
+                fillColor: Colors.grey.withValues(alpha: 0.05),
+                filled: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             const Divider(),
             const SizedBox(height: 40),
           ],

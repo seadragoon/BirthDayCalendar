@@ -17,7 +17,7 @@ class DatabaseHelper {
   static const String _databaseName = 'birthday_calendar.db';
 
   /// データベースバージョン（スキーマ変更時にインクリメント）
-  static const int _databaseVersion = 4;
+  static const int _databaseVersion = 5;
 
   // テーブル名
   static const String tableEvents = 'events';
@@ -74,6 +74,7 @@ class DatabaseHelper {
         is_year_unknown INTEGER NOT NULL DEFAULT 0,
         tags TEXT DEFAULT '[]',
         notification TEXT NOT NULL DEFAULT '[0]',
+        comment TEXT DEFAULT '',
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       )
@@ -147,6 +148,11 @@ class DatabaseHelper {
     if (oldVersion < 4) {
       // 初期データの投入 (v3で登録に失敗した可能性があるため、v4でも実行)
       await _seedTags(db);
+    }
+
+    if (oldVersion < 5) {
+      // birthdays テーブルに comment カラムを追加
+      await db.execute('ALTER TABLE $tableBirthdays ADD COLUMN comment TEXT DEFAULT ""');
     }
   }
 

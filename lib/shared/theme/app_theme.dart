@@ -42,7 +42,7 @@ class AppThemeData {
     type: AppThemeType.standard,
     label: '標準（シンプルホワイト）',
     backgroundImagePath: '',
-    primaryColor: Color(0xFF42A5F5), // Blue 400
+    primaryColor: Color(0xFF7986CB), // Lavender (Default: 薄紫)
     onPrimaryColor: Colors.white,
     backgroundColor: Colors.white,
     surfaceColor: Colors.white,

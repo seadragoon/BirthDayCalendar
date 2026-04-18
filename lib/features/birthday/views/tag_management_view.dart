@@ -13,7 +13,7 @@ class TagManagementView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tagListAsync = ref.watch(tagListProvider);
-    final appTheme = ref.watch(themeProvider);
+    final appTheme = ref.watch(themeProvider).requireValue;
 
     return Scaffold(
       appBar: AppBar(

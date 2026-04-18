@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:birthday_calendar/features/settings/models/birthday_display_settings.dart';
+import 'package:birthday_calendar/shared/constants/event_color.dart';
 
 /// 誕生日のカレンダー表示設定を管理する Provider。
 final birthdayDisplaySettingsProvider =
@@ -51,6 +52,17 @@ class BirthdayDisplaySettingsNotifier extends AsyncNotifier<BirthdayDisplaySetti
     }
     
     final updated = current.copyWith(excludedTags: excluded);
+    state = AsyncValue.data(updated); // 即座にUIに反映
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, updated.toJson());
+  }
+
+  /// スケジュール表示時のカラーを変更する。
+  Future<void> setBirthdayColor(EventColor color) async {
+    final current = state.valueOrNull ?? const BirthdayDisplaySettings();
+    final updated = current.copyWith(colorIndex: color.index);
+    
     state = AsyncValue.data(updated); // 即座にUIに反映
     
     final prefs = await SharedPreferences.getInstance();

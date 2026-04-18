@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:birthday_calendar/shared/providers/app_state_providers.dart';
 import 'package:birthday_calendar/features/calendar/providers/event_providers.dart';
+import 'package:birthday_calendar/features/birthday/providers/birthday_providers.dart';
+import 'package:birthday_calendar/features/birthday/widgets/birthday_modal.dart';
 import 'package:birthday_calendar/features/calendar/widgets/event_modal.dart';
 
 /// 選択中の日付に該当するイベントをリスト表示するWidget。
@@ -104,12 +106,35 @@ class EventListView extends ConsumerWidget {
                   style: const TextStyle(fontSize: 13),
                 ),
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => EventModal(existingEvent: event),
-                      fullscreenDialog: true,
-                    ),
-                  );
+                  if (event.isBirthday && event.id != null) {
+                    // 仮想IDから元の誕生日IDを抽出: (abs(id) / 10000).floor
+                    final originalId = (event.id!.abs() / 10000).floor();
+                    final birthdayList = ref.read(birthdayListProvider).valueOrNull ?? [];
+                    try {
+                      final birthday = birthdayList.firstWhere((b) => b.id == originalId);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => BirthdayModal(existingBirthday: birthday),
+                          fullscreenDialog: true,
+                        ),
+                      );
+                    } catch (_) {
+                      // 見つからない場合は通常の予定として遷移（フォールバック）
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => EventModal(existingEvent: event),
+                          fullscreenDialog: true,
+                        ),
+                      );
+                    }
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => EventModal(existingEvent: event),
+                        fullscreenDialog: true,
+                      ),
+                    );
+                  }
                 },
               );
             },

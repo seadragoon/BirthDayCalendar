@@ -39,7 +39,7 @@ class BaseModal extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appTheme = ref.watch(themeProvider);
+    final appTheme = ref.watch(themeProvider).requireValue;
 
     return Scaffold(
       appBar: AppBar(

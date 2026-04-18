@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 /// 各色には表示用の日本語ラベルとFlutterの[Color]値を持つ。
 /// sqfliteへの保存時は [index] を整数値として格納する。
 enum EventColor {
-  tomato(Color(0xFFD50000), 'トマト'),
+  tomato(Color(0xFFD63838), 'トマト'),
   flamingo(Color(0xFFE67C73), 'フラミンゴ'),
   tangerine(Color(0xFFF4511E), 'みかん'),
   banana(Color(0xFFF6BF26), 'バナナ'),
   sage(Color(0xFF33B679), 'セージ'),
-  basil(Color(0xFF0B8043), 'バジル'),
-  peacock(Color(0xFF039BE5), 'ピーコック'),
+  basil(Color(0xFF11A659), 'バジル'),
+  peacock(Color(0xFF48B1E0), 'ピーコック'),
   blueberry(Color(0xFF3F51B5), 'ブルーベリー'),
   lavender(Color(0xFF7986CB), 'ラベンダー'),
   grape(Color(0xFF8E24AA), 'ぶどう'),

@@ -21,7 +21,7 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewType = ref.watch(viewTypeProvider);
-    final appTheme = ref.watch(themeProvider);
+    final appTheme = ref.watch(themeProvider).requireValue;
 
     return SizedBox.expand(
       child: Scaffold(

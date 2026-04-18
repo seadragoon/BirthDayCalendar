@@ -13,31 +13,32 @@ class ThemeSelectionModal extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTheme = ref.watch(themeProvider);
+    final currentThemeAsync = ref.watch(themeProvider);
 
-    return BaseModal(
-      title: 'きせかえ（テーマ）',
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // カラー変更セクション
-            _buildSectionHeader('カラー変更'),
-            const SizedBox(height: 16),
-            Center(
-              child: Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                alignment: WrapAlignment.center,
+    return currentThemeAsync.when(
+      data: (currentTheme) => BaseModal(
+        title: 'きせかえ（テーマ）',
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // カラー変更セクション
+              _buildSectionHeader('カラー変更'),
+              const SizedBox(height: 16),
+              Center(
+                child: GridView.count(
+                crossAxisCount: 6,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
                 children: EventColor.values.map((ec) {
                   final isSelected = currentTheme.type == AppThemeType.standard && 
-                                    currentTheme.primaryColor == ec.color;
+                                    currentTheme.primaryColor.toARGB32() == ec.color.toARGB32();
                   return GestureDetector(
                     onTap: () => ref.read(themeProvider.notifier).updatePrimaryColor(ec.color),
                     child: Container(
-                      width: 54,
-                      height: 54,
                       decoration: BoxDecoration(
                         color: ec.color,
                         shape: BoxShape.circle,
@@ -45,57 +46,66 @@ class ThemeSelectionModal extends ConsumerWidget {
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.15),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
-                      child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 28) : null,
+                      child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 20) : null,
                     ),
                   );
                 }).toList(),
               ),
-            ),
-
-            const SizedBox(height: 48),
-
-            // きせかえセクション
-            _buildSectionHeader('きせかえ'),
-            const SizedBox(height: 16),
-            _buildThemeOption(
-              context: context,
-              ref: ref,
-              type: AppThemeType.sakura,
-              label: '桜（サクラ）',
-              assetPath: 'assets/images/themes/sakura.png',
-              currentType: currentTheme.type,
-            ),
-            const SizedBox(height: 12),
-            _buildThemeOption(
-              context: context,
-              ref: ref,
-              type: AppThemeType.night,
-              label: '夜空（ナイト）',
-              assetPath: 'assets/images/themes/night.png',
-              currentType: currentTheme.type,
-            ),
-            
-            const SizedBox(height: 40),
-            Center(
-              child: Column(
-                children: [
-                  Icon(Icons.stars, color: Colors.amber.shade300, size: 32),
-                  const SizedBox(height: 8),
-                  Text(
-                    'きせかえテーマは今後追加予定です',
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontWeight: FontWeight.bold),
-                  ),
-                ],
               ),
-            ),
-            const SizedBox(height: 40),
-          ],
+
+              const SizedBox(height: 48),
+
+              // きせかえセクション
+              _buildSectionHeader('きせかえ'),
+              const SizedBox(height: 16),
+              _buildThemeOption(
+                context: context,
+                ref: ref,
+                type: AppThemeType.sakura,
+                label: '桜（サクラ）',
+                assetPath: 'assets/images/themes/sakura.png',
+                currentType: currentTheme.type,
+              ),
+              const SizedBox(height: 12),
+              _buildThemeOption(
+                context: context,
+                ref: ref,
+                type: AppThemeType.night,
+                label: '夜空（ナイト）',
+                assetPath: 'assets/images/themes/night.png',
+                currentType: currentTheme.type,
+              ),
+              
+              const SizedBox(height: 40),
+              Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.stars, color: Colors.amber.shade300, size: 32),
+                    const SizedBox(height: 8),
+                    Text(
+                      'きせかえテーマは今後追加予定です',
+                      style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
+      ),
+      loading: () => const BaseModal(
+        title: 'きせかえ（テーマ）',
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, s) => BaseModal(
+        title: 'きせかえ（テーマ）',
+        body: Center(child: Text('エラーが発生しました: $e')),
       ),
     );
   }
