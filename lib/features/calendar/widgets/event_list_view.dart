@@ -78,9 +78,11 @@ class EventListView extends ConsumerWidget {
                 }
               }
 
-              final timeText = event.isAllDay
-                  ? '終日'
-                  : '${timeFormat.format(event.startDate)} - ${timeFormat.format(event.endDate)}';
+              final timeText = event.isBirthday
+                  ? ''
+                  : (event.isAllDay
+                      ? '終日'
+                      : '${timeFormat.format(event.startDate)} - ${timeFormat.format(event.endDate)}');
 
               return ListTile(
                 dense: true,

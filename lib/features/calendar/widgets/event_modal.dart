@@ -40,6 +40,7 @@ class _EventModalState extends ConsumerState<EventModal> {
   bool _isSelectingStart = true; // 現在開始・終了のどちらを操作しているか
   EventColor _selectedColor = EventColor.peacock;
   RecurrenceType _recurrence = RecurrenceType.none;
+  bool _isEndDateManuallyChanged = false;
   List<NotificationType> _notifications = [NotificationType.none];
 
   @override
@@ -50,10 +51,14 @@ class _EventModalState extends ConsumerState<EventModal> {
     // 画面表示後、選択中のカラーまでスクロール
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_colorScrollController.hasClients) {
-        final index = EventColor.values.indexOf(_selectedColor);
-        if (index >= 0) {
-          // 各カラーアイテムの幅(40) + マージン(12) = 52
-          _colorScrollController.jumpTo(index * 52.0);
+        // 画面に入りきっていない（スクロール可能）な場合のみ、選択中のカラーまでスクロール
+        if (_colorScrollController.position.maxScrollExtent > 0) {
+          final index = EventColor.values.indexOf(_selectedColor);
+          if (index >= 0) {
+            // 各カラーアイテムの幅(40) + マージン(12) = 52
+            // 少し左側に余裕を持たせるか、中央付近に来るように調整（ここでは単純に位置へジャンプ）
+            _colorScrollController.jumpTo(index * 52.0);
+          }
         }
       }
     });
@@ -70,6 +75,7 @@ class _EventModalState extends ConsumerState<EventModal> {
       _selectedColor = event.colorIndex;
       _recurrence = event.recurrence;
       _notifications = List.from(event.notifications);
+      _isEndDateManuallyChanged = true; // 編集時は同期しない
     } else {
       // 新規作成時の初期値
       final now = DateTime.now();
@@ -101,10 +107,14 @@ class _EventModalState extends ConsumerState<EventModal> {
           initialEnd: _endDate,
           isAllDay: _isAllDay,
           activeSideStart: _isSelectingStart,
-          onChanged: (newStart, newEnd) {
+          isEndDateManuallyChanged: _isEndDateManuallyChanged,
+          onChanged: (newStart, newEnd, manuallyChanged) {
             setState(() {
               _startDate = newStart;
               _endDate = newEnd;
+              if (manuallyChanged) {
+                _isEndDateManuallyChanged = true;
+              }
             });
           },
           onSideChanged: (isStart) {
@@ -430,7 +440,8 @@ class _DateTimePickerSheet extends StatefulWidget {
   final DateTime initialEnd;
   final bool isAllDay;
   final bool activeSideStart;
-  final Function(DateTime start, DateTime end) onChanged;
+  final bool isEndDateManuallyChanged;
+  final Function(DateTime start, DateTime end, bool manuallyChanged) onChanged;
   final Function(bool isStart) onSideChanged;
 
   const _DateTimePickerSheet({
@@ -438,6 +449,7 @@ class _DateTimePickerSheet extends StatefulWidget {
     required this.initialEnd,
     required this.isAllDay,
     required this.activeSideStart,
+    required this.isEndDateManuallyChanged,
     required this.onChanged,
     required this.onSideChanged,
   });
@@ -462,6 +474,7 @@ class _DateTimePickerSheetState extends State<_DateTimePickerSheet> {
   }
 
   void _onDateSelected(DateTime date) {
+    bool manuallyChanged = false;
     setState(() {
       if (_editingStart) {
         _currentStart = DateTime(
@@ -471,6 +484,17 @@ class _DateTimePickerSheetState extends State<_DateTimePickerSheet> {
           _currentStart.hour,
           _currentStart.minute,
         );
+        // 終日設定かつ終了日が未変更の場合、開始日に合わせて終了日も同期させる
+        if (widget.isAllDay && !widget.isEndDateManuallyChanged) {
+          _currentEnd = DateTime(
+            date.year,
+            date.month,
+            date.day,
+            _currentEnd.hour,
+            _currentEnd.minute,
+          );
+        }
+        
         if (_currentStart.isAfter(_currentEnd)) {
           _currentEnd = _currentStart.add(const Duration(hours: 1));
         }
@@ -482,12 +506,13 @@ class _DateTimePickerSheetState extends State<_DateTimePickerSheet> {
           _currentEnd.hour,
           _currentEnd.minute,
         );
+        manuallyChanged = true; // 終了日が操作された
         if (_currentEnd.isBefore(_currentStart)) {
           _currentStart = _currentEnd.subtract(const Duration(hours: 1));
         }
       }
     });
-    widget.onChanged(_currentStart, _currentEnd);
+    widget.onChanged(_currentStart, _currentEnd, manuallyChanged);
   }
 
   Future<void> _onTimeTap() async {
@@ -535,7 +560,7 @@ class _DateTimePickerSheetState extends State<_DateTimePickerSheet> {
           }
         }
       });
-      widget.onChanged(_currentStart, _currentEnd);
+      widget.onChanged(_currentStart, _currentEnd, !wasEditingStart);
 
       // 開始時刻を選択完了し、かつ開始・終了が同日の場合、自動で終了時刻ピッカーを開く
       if (wasEditingStart && _isSameDay(_currentStart, _currentEnd)) {

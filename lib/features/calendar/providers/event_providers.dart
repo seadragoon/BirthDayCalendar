@@ -9,6 +9,7 @@ import 'package:birthday_calendar/features/settings/providers/settings_providers
 import 'package:birthday_calendar/shared/providers/app_state_providers.dart';
 import 'package:birthday_calendar/shared/providers/repository_providers.dart';
 import 'package:birthday_calendar/shared/constants/event_color.dart';
+import 'package:birthday_calendar/shared/constants/recurrence_type.dart';
 
 /// 選択中の日付に紐づくイベント一覧を提供するProvider。
 final eventsByDateProvider =
@@ -27,6 +28,9 @@ class EventsByDateNotifier extends AsyncNotifier<List<EventModel>> {
     
     // DBからのイベント取得
     final events = await _repository.getEventsByDate(selectedDate);
+
+    // 重複を避けるため、繰り返し予定を展開してからマージする
+    final expandedEvents = _expandEvents(events, selectedDate, selectedDate);
     
     // 誕生日のマージ処理
     final settingsAsync = ref.watch(birthdayDisplaySettingsProvider);
@@ -42,7 +46,7 @@ class EventsByDateNotifier extends AsyncNotifier<List<EventModel>> {
         selectedDate, 
         selectedDate
       );
-      final merged = [...events, ...birthdayEvents];
+      final merged = [...expandedEvents, ...birthdayEvents];
       // 誕生日を優先、その後に開始時刻順でソート
       merged.sort((a, b) {
         if (a.isBirthday && !b.isBirthday) return -1;
@@ -52,7 +56,7 @@ class EventsByDateNotifier extends AsyncNotifier<List<EventModel>> {
       return merged;
     }
     
-    return events;
+    return expandedEvents;
   }
 
   /// イベントを追加し、リストを再取得する。
@@ -102,8 +106,15 @@ class EventsByMonthNotifier extends AsyncNotifier<List<EventModel>> {
     final start = DateTime(currentMonth.year, currentMonth.month, 1);
     final end = DateTime(currentMonth.year, currentMonth.month + 1, 0);
 
+    // カレンダーの6週間表示（前後月の数日が表示される）を考慮し、取得・展開範囲を前後7日間広げる
+    final rangeStart = start.subtract(const Duration(days: 7));
+    final rangeEnd = end.add(const Duration(days: 7));
+    
     // DBからのイベント取得
-    final events = await _repository.getEventsByDateRange(start, end);
+    final events = await _repository.getEventsByDateRange(rangeStart, rangeEnd);
+
+    // 繰り返し予定の展開
+    final expandedEvents = _expandEvents(events, rangeStart, rangeEnd);
 
     // 誕生日のマージ処理
     final settingsAsync = ref.watch(birthdayDisplaySettingsProvider);
@@ -113,11 +124,11 @@ class EventsByMonthNotifier extends AsyncNotifier<List<EventModel>> {
     final birthdays = birthdaysAsync.valueOrNull;
     
     if (settings != null && settings.isShowOnSchedule && birthdays != null) {
-      final birthdayEvents = _generateBirthdayEvents(birthdays, settings, start, end);
-      return [...events, ...birthdayEvents];
+      final birthdayEvents = _generateBirthdayEvents(birthdays, settings, rangeStart, rangeEnd);
+      return [...expandedEvents, ...birthdayEvents];
     }
 
-    return events;
+    return expandedEvents;
   }
 
   /// データを強制的に再取得する。
@@ -127,6 +138,91 @@ class EventsByMonthNotifier extends AsyncNotifier<List<EventModel>> {
       return build();
     });
   }
+}
+
+/// 繰り返し予定を指定された期間に合わせて展開する。
+List<EventModel> _expandEvents(List<EventModel> events, DateTime start, DateTime end) {
+  final results = <EventModel>[];
+  final rangeStart = DateTime(start.year, start.month, start.day);
+  final rangeEnd = DateTime(end.year, end.month, end.day, 23, 59, 59);
+
+  for (final event in events) {
+    if (event.recurrence == RecurrenceType.none) {
+      // 期間内に重なるか最終チェック（念のため）
+      if (event.startDate.isBefore(rangeEnd) && event.endDate.isAfter(rangeStart)) {
+        results.add(event);
+      }
+      continue;
+    }
+
+    // 繰り返し予定の展開
+    final duration = event.endDate.difference(event.startDate);
+    
+    // 期間の数日前（跨ぎ考慮）からチェック開始。時刻を切り落とす
+    DateTime checkDate = DateTime(rangeStart.year, rangeStart.month, rangeStart.day)
+        .subtract(Duration(days: duration.inDays + 1));
+    
+    // イベントの開始日以前はチェック不要
+    final eventStartDay = DateTime(event.startDate.year, event.startDate.month, event.startDate.day);
+    if (checkDate.isBefore(eventStartDay)) {
+      checkDate = eventStartDay;
+    }
+
+    while (checkDate.isBefore(rangeEnd.add(const Duration(seconds: 1)))) {
+      bool isMatch = false;
+      switch (event.recurrence) {
+        case RecurrenceType.daily:
+          isMatch = true;
+          break;
+        case RecurrenceType.weekly:
+          isMatch = checkDate.weekday == event.startDate.weekday;
+          break;
+        case RecurrenceType.monthly:
+          isMatch = checkDate.day == event.startDate.day;
+          break;
+        case RecurrenceType.yearly:
+          isMatch = checkDate.month == event.startDate.month && 
+                    checkDate.day == event.startDate.day;
+          break;
+        case RecurrenceType.weekday:
+          isMatch = checkDate.weekday >= 1 && checkDate.weekday <= 5;
+          break;
+        case RecurrenceType.none:
+          break;
+      }
+
+      if (isMatch) {
+        final occurrenceStart = DateTime(
+          checkDate.year, checkDate.month, checkDate.day,
+          event.startDate.hour, event.startDate.minute,
+        );
+        final occurrenceEnd = occurrenceStart.add(duration);
+
+        // 期間重複チェック
+        if (occurrenceStart.isBefore(rangeEnd) && occurrenceEnd.isAfter(rangeStart)) {
+          results.add(event.copyWith(
+            startDate: occurrenceStart,
+            endDate: occurrenceEnd,
+          ));
+        }
+      }
+
+      // 次のチェック日に進む
+      if (event.recurrence == RecurrenceType.monthly && isMatch) {
+        // 翌月の同日にジャンプ
+        checkDate = DateTime(checkDate.year, checkDate.month + 1, checkDate.day);
+      } else if (event.recurrence == RecurrenceType.yearly && isMatch) {
+        // 翌年の同日にジャンプ
+        checkDate = DateTime(checkDate.year + 1, checkDate.month, checkDate.day);
+      } else {
+        checkDate = checkDate.add(const Duration(days: 1));
+      }
+      
+      // 無限ループ防止（安全策）
+      if (checkDate.year > rangeEnd.year + 1) break;
+    }
+  }
+  return results;
 }
 
 /// 誕生日データからカレンダー表示用の EventModel を生成するヘルパー。

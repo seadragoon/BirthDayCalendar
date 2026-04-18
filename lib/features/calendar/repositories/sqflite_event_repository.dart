@@ -31,15 +31,15 @@ class SqfliteEventRepository implements EventRepository {
     final db = await _dbHelper.database;
 
     // 以下の条件でイベントを取得:
-    // 1. イベントの開始日が指定日内にある
-    // 2. イベントの終了日が指定日内にある
-    // 3. イベントが指定日を跨いでいる（開始日 <= 指定日 && 終了日 >= 指定日）
+    // 1. 通常の期間重複: (start_date <= dayEnd AND end_date >= dayStart)
+    // 2. 繰り返し予定: (recurrence > 0 AND start_date <= dayEnd)
     final maps = await db.query(
       DatabaseHelper.tableEvents,
-      where: 'start_date <= ? AND end_date >= ?',
+      where: '(start_date <= ? AND end_date >= ?) OR (recurrence > 0 AND start_date <= ?)',
       whereArgs: [
         dayEnd.millisecondsSinceEpoch,
         dayStart.millisecondsSinceEpoch,
+        dayEnd.millisecondsSinceEpoch,
       ],
       orderBy: 'is_all_day DESC, start_date ASC',
     );
@@ -57,13 +57,14 @@ class SqfliteEventRepository implements EventRepository {
 
     final db = await _dbHelper.database;
 
-    // 期間内に一部でも重なるイベントを取得
+    // 期間内に一部でも重なるイベント、または開始済みの繰り返し予定を取得
     final maps = await db.query(
       DatabaseHelper.tableEvents,
-      where: 'start_date <= ? AND end_date >= ?',
+      where: '(start_date <= ? AND end_date >= ?) OR (recurrence > 0 AND start_date <= ?)',
       whereArgs: [
         rangeEnd.millisecondsSinceEpoch,
         rangeStart.millisecondsSinceEpoch,
+        rangeEnd.millisecondsSinceEpoch,
       ],
       orderBy: 'is_all_day DESC, start_date ASC',
     );
