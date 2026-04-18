@@ -110,7 +110,7 @@ class _MonthGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dates = _getVisibleDates();
     final weeks = dates.length ~/ 7;
-    
+
     final eventsAsync = ref.watch(eventsByMonthProvider);
     final events = eventsAsync.valueOrNull ?? [];
 
@@ -118,15 +118,19 @@ class _MonthGrid extends ConsumerWidget {
       children: [
         _buildWeekHeader(),
         ...List.generate(weeks, (weekIndex) {
+          final weekDates = dates.sublist(weekIndex * 7, (weekIndex + 1) * 7);
+          final weeklyLanes = _calculateWeeklyLanes(weekDates, events);
+
           return Expanded(
             child: Row(
               children: List.generate(7, (dayIndex) {
-                final date = dates[weekIndex * 7 + dayIndex];
+                final date = weekDates[dayIndex];
                 return Expanded(
                   child: _DayCell(
                     date: date,
+                    dayIndex: dayIndex,
                     currentMonth: month,
-                    events: events,
+                    lanes: weeklyLanes[date] ?? [],
                   ),
                 );
               }),
@@ -135,6 +139,80 @@ class _MonthGrid extends ConsumerWidget {
         }),
       ],
     );
+  }
+
+  /// 指定された期間（1週間）に対して、イベントをレーン（垂直段数）に割り当てる
+  Map<DateTime, List<EventModel?>> _calculateWeeklyLanes(
+      List<DateTime> weekDates, List<EventModel> allEvents) {
+    final weekStart = weekDates.first;
+    final weekEnd =
+        weekDates.last.add(const Duration(hours: 23, minutes: 59, seconds: 59));
+
+    // その週に掛かっているイベントを抽出
+    final weekEvents = allEvents.where((e) {
+      return e.startDate.isBefore(weekEnd) && e.endDate.isAfter(weekStart);
+    }).toList();
+
+    // ソート: 開始日が早い順 > 期間が長い順
+    weekEvents.sort((a, b) {
+      final startCompare = a.startDate.compareTo(b.startDate);
+      if (startCompare != 0) return startCompare;
+      final durationA = a.endDate.difference(a.startDate);
+      final durationB = b.endDate.difference(b.startDate);
+      return durationB.compareTo(durationA);
+    });
+
+    // レーン割り当て: lanes[laneIndex][dayIndex]
+    final lanes = <List<EventModel?>>[];
+
+    for (final event in weekEvents) {
+      int? assignedLane;
+      for (int i = 0; i < lanes.length; i++) {
+        bool canPlace = true;
+        for (int d = 0; d < 7; d++) {
+          final date = weekDates[d];
+          final dayEnd =
+              date.add(const Duration(hours: 23, minutes: 59, seconds: 59));
+          if (event.startDate.isBefore(dayEnd) && event.endDate.isAfter(date)) {
+            if (lanes[i][d] != null) {
+              canPlace = false;
+              break;
+            }
+          }
+        }
+        if (canPlace) {
+          assignedLane = i;
+          break;
+        }
+      }
+
+      if (assignedLane == null) {
+        assignedLane = lanes.length;
+        lanes.add(List<EventModel?>.filled(7, null));
+      }
+
+      for (int d = 0; d < 7; d++) {
+        final date = weekDates[d];
+        final dayEnd =
+            date.add(const Duration(hours: 23, minutes: 59, seconds: 59));
+        if (event.startDate.isBefore(dayEnd) && event.endDate.isAfter(date)) {
+          lanes[assignedLane][d] = event;
+        }
+      }
+    }
+
+    // 日付ごとのリストに変換
+    final result = <DateTime, List<EventModel?>>{};
+    for (int d = 0; d < 7; d++) {
+      final date = weekDates[d];
+      final dayLanes = <EventModel?>[];
+      for (int i = 0; i < lanes.length; i++) {
+        dayLanes.add(lanes[i][d]);
+      }
+      result[date] = dayLanes;
+    }
+
+    return result;
   }
 
   /// 曜日行を描画（日曜日から土曜日）
@@ -167,24 +245,16 @@ class _MonthGrid extends ConsumerWidget {
 
 class _DayCell extends ConsumerWidget {
   final DateTime date;
+  final int dayIndex;
   final DateTime currentMonth;
-  final List<EventModel> events;
+  final List<EventModel?> lanes;
 
   const _DayCell({
     required this.date,
+    required this.dayIndex,
     required this.currentMonth,
-    required this.events,
+    required this.lanes,
   });
-
-  /// この日に該当するイベントをフィルタリング
-  List<EventModel> _getEventsForDay() {
-    final dayStart = DateTime(date.year, date.month, date.day);
-    final dayEnd = DateTime(date.year, date.month, date.day, 23, 59, 59);
-
-    return events.where((e) {
-      return e.startDate.isBefore(dayEnd) && e.endDate.isAfter(dayStart);
-    }).toList();
-  }
 
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
@@ -208,19 +278,32 @@ class _DayCell extends ConsumerWidget {
       dateColor = Colors.blue;
     }
 
-    final dayEvents = _getEventsForDay();
 
     return GestureDetector(
       onTap: () {
         ref.read(selectedDateProvider.notifier).state = date;
       },
       child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade200, width: 0.5),
-          color: Theme.of(context).colorScheme.surface,
-        ),
+        color: Theme.of(context).colorScheme.surface,
         child: Stack(
           children: [
+            // グリッド線（背景レイヤー）
+            // Border.all ではなく個別の Border を使うことで、
+            // 予定バーが境界線の上を隙間なく通れるようにする
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade200, width: 0.5),
+                    right: BorderSide(color: Colors.grey.shade200, width: 0.5),
+                    // 左端の列のみ左側の線を描画
+                    left: dayIndex == 0
+                        ? BorderSide(color: Colors.grey.shade200, width: 0.5)
+                        : BorderSide.none,
+                  ),
+                ),
+              ),
+            ),
             // 選択時の枠線
             if (isSelected)
               Container(
@@ -247,10 +330,10 @@ class _DayCell extends ConsumerWidget {
                 // イベントバーエリア
                 Expanded(
                   child: SingleChildScrollView(
-                    physics: const NeverScrollableScrollPhysics(), // 親スクロール等との兼ね合いを避ける
+                    physics: const NeverScrollableScrollPhysics(),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: dayEvents.map((e) => _buildEventBar(e)).toList(),
+                      children: lanes.map((e) => _buildEventBar(e)).toList(),
                     ),
                   ),
                 ),
@@ -262,20 +345,27 @@ class _DayCell extends ConsumerWidget {
     );
   }
 
-  Widget _buildEventBar(EventModel event) {
+  Widget _buildEventBar(EventModel? event) {
+    if (event == null) {
+      // 空きレーンのためのスペーサー
+      return const SizedBox(height: 18.0); // バー(16) + マージン(2)
+    }
+
     // 終日イベント、または複数日イベントの場合は帯として処理
     final isStart = _isSameDay(event.startDate, date);
     final isEnd = _isSameDay(event.endDate, date);
-    
+
     // 時刻指定で同日内のイベントなら単なる単日イベント
     final isSingleDay = _isSameDay(event.startDate, event.endDate);
 
     // 連結表現のための余白とRadius
     final leftMargin = (isStart || isSingleDay) ? 4.0 : 0.0;
     final rightMargin = (isEnd || isSingleDay) ? 4.0 : 0.0;
-    
-    final leftRadius = (isStart || isSingleDay) ? const Radius.circular(4) : Radius.zero;
-    final rightRadius = (isEnd || isSingleDay) ? const Radius.circular(4) : Radius.zero;
+
+    final leftRadius =
+        (isStart || isSingleDay) ? const Radius.circular(4) : Radius.zero;
+    final rightRadius =
+        (isEnd || isSingleDay) ? const Radius.circular(4) : Radius.zero;
 
     // テキストは開始日、単日、または週の初め（日曜日）に表示
     final showText = isStart || isSingleDay || date.weekday == DateTime.sunday;
@@ -287,27 +377,31 @@ class _DayCell extends ConsumerWidget {
         right: rightMargin,
         bottom: 2.0,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-      decoration: BoxDecoration(
-        color: event.colorIndex.color,
-        borderRadius: BorderRadius.horizontal(
-          left: leftRadius,
-          right: rightRadius,
+      child: Container(
+        decoration: BoxDecoration(
+          color: event.colorIndex.color,
+          borderRadius: BorderRadius.horizontal(
+            left: leftRadius,
+            right: rightRadius,
+          ),
+        ),
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+          child: showText
+              ? Text(
+                  event.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.clip,
+                )
+              : const SizedBox.shrink(),
         ),
       ),
-      alignment: Alignment.centerLeft,
-      child: showText
-          ? Text(
-              event.title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.clip,
-            )
-          : const SizedBox.shrink(),
     );
   }
 }
