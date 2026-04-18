@@ -54,6 +54,7 @@ dependencies:
 
   # Japanese holidays
   holiday_jp: ^0.0.8
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:

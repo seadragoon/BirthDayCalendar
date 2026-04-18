@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:birthday_calendar/shared/providers/theme_provider.dart';
 import 'package:birthday_calendar/shared/widgets/theme_selection_modal.dart';
 import 'package:birthday_calendar/features/birthday/views/tag_management_view.dart';
+import 'package:birthday_calendar/features/settings/widgets/birthday_display_settings_modal.dart';
 
 /// アプリのドロワー（サイドメニュー）。
 ///
@@ -71,6 +72,19 @@ class CustomDrawer extends ConsumerWidget {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const TagManagementView(),
+                  fullscreenDialog: true,
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.calendar_view_month_outlined),
+            title: const Text('スケジュール表示設定'),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const BirthdayDisplaySettingsModal(),
                   fullscreenDialog: true,
                 ),
               );

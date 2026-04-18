@@ -40,7 +40,7 @@ class TagManagementView extends ConsumerWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'タグ管理',
+          '【誕生日】タグ管理',
           style: TextStyle(fontWeight: FontWeight.bold, color: appTheme.onPrimaryColor),
         ),
         actions: [
