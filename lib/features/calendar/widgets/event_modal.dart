@@ -9,6 +9,7 @@ import 'package:birthday_calendar/shared/constants/notification_type.dart';
 import 'package:birthday_calendar/shared/constants/recurrence_type.dart';
 import 'package:birthday_calendar/shared/widgets/base_modal.dart';
 import 'package:birthday_calendar/shared/widgets/multi_select_dialog.dart';
+import 'package:birthday_calendar/shared/constants/japanese_holiday.dart';
 
 /// スケジュール（イベント）の追加・編集を行うフルスクリーンモーダル。
 class EventModal extends ConsumerStatefulWidget {
@@ -35,6 +36,7 @@ class _EventModalState extends ConsumerState<EventModal> {
   bool _isAllDay = false;
   late DateTime _startDate;
   late DateTime _endDate;
+  bool _isSelectingStart = true; // 現在開始・終了のどちらを操作しているか
   EventColor _selectedColor = EventColor.peacock;
   RecurrenceType _recurrence = RecurrenceType.none;
   List<NotificationType> _notifications = [NotificationType.none];
@@ -75,84 +77,31 @@ class _EventModalState extends ConsumerState<EventModal> {
     super.dispose();
   }
 
-  Future<void> _pickDate(bool isStart) async {
-    final initialDate = isStart ? _startDate : _endDate;
-    final pickedDate = await showDatePicker(
+  void _showDateTimePickerSheet() {
+    showModalBottomSheet(
       context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return _DateTimePickerSheet(
+          initialStart: _startDate,
+          initialEnd: _endDate,
+          isAllDay: _isAllDay,
+          activeSideStart: _isSelectingStart,
+          onChanged: (newStart, newEnd) {
+            setState(() {
+              _startDate = newStart;
+              _endDate = newEnd;
+            });
+          },
+          onSideChanged: (isStart) {
+            setState(() {
+              _isSelectingStart = isStart;
+            });
+          },
+        );
+      },
     );
-
-    if (pickedDate != null) {
-      setState(() {
-        if (isStart) {
-          _startDate = DateTime(
-            pickedDate.year,
-            pickedDate.month,
-            pickedDate.day,
-            _startDate.hour,
-            _startDate.minute,
-          );
-          // 開始が終了を超えた場合、終了を合わせる
-          if (_startDate.isAfter(_endDate)) {
-            _endDate = _startDate.add(const Duration(hours: 1));
-          }
-        } else {
-          _endDate = DateTime(
-            pickedDate.year,
-            pickedDate.month,
-            pickedDate.day,
-            _endDate.hour,
-            _endDate.minute,
-          );
-          if (_endDate.isBefore(_startDate)) {
-            _startDate = _endDate.subtract(const Duration(hours: 1));
-          }
-        }
-      });
-    }
-  }
-
-  Future<void> _pickTime(bool isStart) async {
-    if (_isAllDay) return;
-
-    final initialTime = isStart
-        ? TimeOfDay(hour: _startDate.hour, minute: _startDate.minute)
-        : TimeOfDay(hour: _endDate.hour, minute: _endDate.minute);
-
-    final pickedTime = await showTimePicker(
-      context: context,
-      initialTime: initialTime,
-    );
-
-    if (pickedTime != null) {
-      setState(() {
-        if (isStart) {
-          _startDate = DateTime(
-            _startDate.year,
-            _startDate.month,
-            _startDate.day,
-            pickedTime.hour,
-            pickedTime.minute,
-          );
-          if (_startDate.isAfter(_endDate)) {
-            _endDate = _startDate.add(const Duration(hours: 1));
-          }
-        } else {
-          _endDate = DateTime(
-            _endDate.year,
-            _endDate.month,
-            _endDate.day,
-            pickedTime.hour,
-            pickedTime.minute,
-          );
-          if (_endDate.isBefore(_startDate)) {
-            _startDate = _endDate.subtract(const Duration(hours: 1));
-          }
-        }
-      });
-    }
   }
 
   Future<void> _onSave() async {
@@ -202,10 +151,6 @@ class _EventModalState extends ConsumerState<EventModal> {
     final isEditMode = widget.existingEvent != null;
     final isSaveEnabled = _titleController.text.trim().isNotEmpty;
 
-    final dateFormat = DateFormat('yyyy年M月d日');
-    final weekdayFormat = DateFormat('E', 'ja_JP');
-    final timeFormat = DateFormat('HH:mm');
-
     // 通知名の連結
     final notificationLabel = _notifications.isEmpty || (_notifications.length == 1 && _notifications.first == NotificationType.none)
         ? 'なし'
@@ -245,99 +190,35 @@ class _EventModalState extends ConsumerState<EventModal> {
               },
             ),
 
-            // 開始・終了日時
+            // 開始・終了日時選択エリア
+            const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text('開始', style: TextStyle(color: Colors.grey)),
-                      const SizedBox(height: 4),
-                      InkWell(
-                        onTap: () => _pickDate(true),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${dateFormat.format(_startDate)}(${weekdayFormat.format(_startDate)})', 
-                            style: const TextStyle(fontSize: 16)
-                          ),
-                        ),
-                      ),
-                      if (!_isAllDay) ...[
-                        const SizedBox(height: 4),
-                        InkWell(
-                          onTap: () => _pickTime(true),
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              timeFormat.format(_startDate), 
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                _buildDateTimeCard(
+                  title: '開始',
+                  dateTime: _startDate,
+                  isSelected: _isSelectingStart,
+                  onTap: () {
+                    setState(() => _isSelectingStart = true);
+                    _showDateTimePickerSheet();
+                  },
                 ),
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
                 ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text('終了', style: TextStyle(color: Colors.grey)),
-                      const SizedBox(height: 4),
-                      InkWell(
-                        onTap: () => _pickDate(false),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${dateFormat.format(_endDate)}(${weekdayFormat.format(_endDate)})', 
-                            style: const TextStyle(fontSize: 16)
-                          ),
-                        ),
-                      ),
-                      if (!_isAllDay) ...[
-                        const SizedBox(height: 4),
-                        InkWell(
-                          onTap: () => _pickTime(false),
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              timeFormat.format(_endDate), 
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                _buildDateTimeCard(
+                  title: '終了',
+                  dateTime: _endDate,
+                  isSelected: !_isSelectingStart,
+                  onTap: () {
+                    setState(() => _isSelectingStart = false);
+                    _showDateTimePickerSheet();
+                  },
                 ),
               ],
             ),
+            const SizedBox(height: 16),
             const Divider(),
 
             // カラー選択
@@ -454,4 +335,545 @@ class _EventModalState extends ConsumerState<EventModal> {
       ),
     );
   }
+
+  Widget _buildDateTimeCard({
+    required String title,
+    required DateTime dateTime,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final dateFormat = DateFormat('M月d日');
+    final weekdayFormat = DateFormat('E', 'ja_JP');
+    final timeFormat = DateFormat('HH:mm');
+
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.grey.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              )),
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    dateFormat.format(dateTime),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '(${weekdayFormat.format(dateTime)})',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+              if (!_isAllDay) ...[
+                const SizedBox(height: 4),
+                Text(
+                  timeFormat.format(dateTime),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// カスタム日時ピッカーボトムシート
+class _DateTimePickerSheet extends StatefulWidget {
+  final DateTime initialStart;
+  final DateTime initialEnd;
+  final bool isAllDay;
+  final bool activeSideStart;
+  final Function(DateTime start, DateTime end) onChanged;
+  final Function(bool isStart) onSideChanged;
+
+  const _DateTimePickerSheet({
+    required this.initialStart,
+    required this.initialEnd,
+    required this.isAllDay,
+    required this.activeSideStart,
+    required this.onChanged,
+    required this.onSideChanged,
+  });
+
+  @override
+  State<_DateTimePickerSheet> createState() => _DateTimePickerSheetState();
+}
+
+class _DateTimePickerSheetState extends State<_DateTimePickerSheet> {
+  late DateTime _currentStart;
+  late DateTime _currentEnd;
+  late bool _editingStart;
+  late DateTime _viewMonth;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentStart = widget.initialStart;
+    _currentEnd = widget.initialEnd;
+    _editingStart = widget.activeSideStart;
+    _viewMonth = DateTime(_editingStart ? _currentStart.year : _currentEnd.year, _editingStart ? _currentStart.month : _currentEnd.month, 1);
+  }
+
+  void _onDateSelected(DateTime date) {
+    setState(() {
+      if (_editingStart) {
+        _currentStart = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          _currentStart.hour,
+          _currentStart.minute,
+        );
+        if (_currentStart.isAfter(_currentEnd)) {
+          _currentEnd = _currentStart.add(const Duration(hours: 1));
+        }
+      } else {
+        _currentEnd = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          _currentEnd.hour,
+          _currentEnd.minute,
+        );
+        if (_currentEnd.isBefore(_currentStart)) {
+          _currentStart = _currentEnd.subtract(const Duration(hours: 1));
+        }
+      }
+    });
+    widget.onChanged(_currentStart, _currentEnd);
+  }
+
+  Future<void> _onTimeTap() async {
+    final initialTime = _editingStart 
+        ? TimeOfDay(hour: _currentStart.hour, minute: _currentStart.minute)
+        : TimeOfDay(hour: _currentEnd.hour, minute: _currentEnd.minute);
+    
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            materialTapTargetSize: MaterialTapTargetSize.padded,
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedTime != null) {
+      final wasEditingStart = _editingStart;
+      setState(() {
+        if (_editingStart) {
+          _currentStart = DateTime(
+            _currentStart.year,
+            _currentStart.month,
+            _currentStart.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+          if (_currentStart.isAfter(_currentEnd)) {
+            _currentEnd = _currentStart.add(const Duration(hours: 1));
+          }
+        } else {
+          _currentEnd = DateTime(
+            _currentEnd.year,
+            _currentEnd.month,
+            _currentEnd.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+          if (_currentEnd.isBefore(_currentStart)) {
+            _currentStart = _currentEnd.subtract(const Duration(hours: 1));
+          }
+        }
+      });
+      widget.onChanged(_currentStart, _currentEnd);
+
+      // 開始時刻を選択完了し、かつ開始・終了が同日の場合、自動で終了時刻ピッカーを開く
+      if (wasEditingStart && _isSameDay(_currentStart, _currentEnd)) {
+        setState(() {
+          _editingStart = false;
+        });
+        widget.onSideChanged(false);
+        
+        // 連続してダイアログを開くために少しだけ待機
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            _onTimeTap();
+          }
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColor = Theme.of(context).primaryColor;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 10, spreadRadius: 2),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ハンドル
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+          
+          // 切り替えスイッチ 兼 表示
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                _buildTabButton('開始', _currentStart, _editingStart, () {
+                  setState(() {
+                    _editingStart = true;
+                    _viewMonth = DateTime(_currentStart.year, _currentStart.month, 1);
+                  });
+                  widget.onSideChanged(true);
+                }),
+                const SizedBox(width: 12),
+                _buildTabButton('終了', _currentEnd, !_editingStart, () {
+                  setState(() {
+                    _editingStart = false;
+                    _viewMonth = DateTime(_currentEnd.year, _currentEnd.month, 1);
+                  });
+                  widget.onSideChanged(false);
+                }),
+              ],
+            ),
+          ),
+          
+          const Divider(height: 32),
+
+          // カレンダーヘッダー（月切り替え）
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: () => setState(() => _viewMonth = DateTime(_viewMonth.year, _viewMonth.month - 1, 1)),
+                ),
+                Text(
+                  DateFormat('yyyy年 M月').format(_viewMonth),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () => setState(() => _viewMonth = DateTime(_viewMonth.year, _viewMonth.month + 1, 1)),
+                ),
+              ],
+            ),
+          ),
+
+          // カスタムカレンダーグリッド
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: _CustomCalendarPicker(
+              viewMonth: _viewMonth,
+              selectedDate: _editingStart ? _currentStart : _currentEnd,
+              otherDate: _editingStart ? _currentEnd : _currentStart,
+              onDateSelected: _onDateSelected,
+            ),
+          ),
+
+          if (!widget.isAllDay) ...[
+            const Divider(height: 24),
+            // 時刻選択ボタン（時計ピッカー起動）
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: InkWell(
+                onTap: _onTimeTap,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: themeColor.withValues(alpha: 0.3)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.access_time, color: themeColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        '時刻を選択: ${DateFormat('HH:mm').format(_editingStart ? _currentStart : _currentEnd)}',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: themeColor),
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.edit, size: 16, color: Colors.grey),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+          
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: themeColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                ),
+                child: const Text('決定', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabButton(String label, DateTime value, bool isActive, VoidCallback onTap) {
+    final themeColor = Theme.of(context).primaryColor;
+    final dateStr = DateFormat('M/d(E)', 'ja_JP').format(value);
+    final timeStr = DateFormat('HH:mm').format(value);
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            color: isActive ? themeColor : Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isActive ? themeColor : Colors.transparent,
+              width: 2,
+            ),
+            boxShadow: isActive ? [BoxShadow(color: themeColor.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))] : null,
+          ),
+          child: Column(
+            children: [
+              Text(label, style: TextStyle(
+                fontSize: 12,
+                color: isActive ? Colors.white70 : Colors.grey.shade600,
+                fontWeight: FontWeight.bold,
+              )),
+              const SizedBox(height: 2),
+              Text('$dateStr ${widget.isAllDay ? "" : timeStr}', style: TextStyle(
+                fontSize: 15,
+                color: isActive ? Colors.white : Colors.black87,
+                fontWeight: FontWeight.bold,
+              )),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// カスタムカレンダーピッカーウィジェット
+class _CustomCalendarPicker extends StatelessWidget {
+  final DateTime viewMonth;
+  final DateTime selectedDate;
+  final DateTime otherDate;
+  final Function(DateTime) onDateSelected;
+
+  const _CustomCalendarPicker({
+    required this.viewMonth,
+    required this.selectedDate,
+    required this.otherDate,
+    required this.onDateSelected,
+  });
+
+  List<DateTime> _getDates() {
+    final first = DateTime(viewMonth.year, viewMonth.month, 1);
+    final offset = first.weekday % 7;
+    final start = first.subtract(Duration(days: offset));
+    return List.generate(42, (i) => start.add(Duration(days: i)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dates = _getDates();
+    final themeColor = Theme.of(context).primaryColor;
+    final weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+
+    // 範囲ハイライト用の計算
+    final startRange = selectedDate.isBefore(otherDate) ? selectedDate : otherDate;
+    final endRange = selectedDate.isAfter(otherDate) ? selectedDate : otherDate;
+
+    return Column(
+      children: [
+        // 曜日
+        Row(
+          children: weekdays.map((w) => Expanded(
+            child: Center(child: Text(w, style: const TextStyle(fontSize: 12, color: Colors.grey))),
+          )).toList(),
+        ),
+        const SizedBox(height: 8),
+        // 日付グリッド
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: 42,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 7,
+            mainAxisSpacing: 2,
+            crossAxisSpacing: 2,
+          ),
+          itemBuilder: (context, index) {
+            final date = dates[index];
+            final isCurrentMonth = date.month == viewMonth.month;
+            final isSelected = _isSameDay(date, selectedDate);
+            final isOther = _isSameDay(date, otherDate);
+            
+            // 範囲内判定
+            final isInRange = date.isAfter(startRange) && date.isBefore(endRange);
+            final isRangeStart = _isSameDay(date, startRange);
+            final isRangeEnd = _isSameDay(date, endRange);
+
+            Color textColor = isCurrentMonth ? Colors.black87 : Colors.grey.shade300;
+            if (isCurrentMonth) {
+              if (JapaneseHoliday.isHoliday(date) || date.weekday == DateTime.sunday) {
+                textColor = Colors.red.shade400;
+              } else if (date.weekday == DateTime.saturday) {
+                textColor = Colors.blue.shade400;
+              }
+            }
+            if (isSelected) textColor = Colors.white;
+
+            return GestureDetector(
+              onTap: () => onDateSelected(date),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // 範囲ハイライト
+                  if (isInRange)
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      decoration: BoxDecoration(
+                        color: themeColor.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  if (isRangeStart && !_isSameDay(startRange, endRange))
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        width: 20,
+                        height: 32,
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        decoration: BoxDecoration(color: themeColor.withValues(alpha: 0.1)),
+                      ),
+                    ),
+                  if (isRangeEnd && !_isSameDay(startRange, endRange))
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: 20,
+                        height: 32,
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        decoration: BoxDecoration(color: themeColor.withValues(alpha: 0.1)),
+                      ),
+                    ),
+
+                  // 日付サークル
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isSelected ? themeColor : Colors.transparent,
+                      shape: BoxShape.circle,
+                      border: isOther ? Border.all(color: themeColor, width: 2, style: BorderStyle.solid) : null,
+                      boxShadow: isSelected ? [BoxShadow(color: themeColor.withValues(alpha: 0.4), blurRadius: 4, offset: const Offset(0, 2))] : null,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${date.day}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: (isSelected || isOther) ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? Colors.white : textColor,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // 他端を示すドット（枠線だけだと分かりにくい場合用）
+                  if (isOther && !isSelected)
+                    Positioned(
+                      bottom: 4,
+                      child: Container(
+                        width: 4,
+                        height: 4,
+                        decoration: BoxDecoration(color: themeColor, shape: BoxShape.circle),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// ユーティリティ
+// -----------------------------------------------------------------------------
+
+bool _isSameDay(DateTime a, DateTime b) {
+  return a.year == b.year && a.month == b.month && a.day == b.day;
 }
