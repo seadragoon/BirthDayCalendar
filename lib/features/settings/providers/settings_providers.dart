@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:birthday_calendar/features/settings/models/app_settings.dart';
 import 'package:birthday_calendar/features/settings/models/birthday_display_settings.dart';
 import 'package:birthday_calendar/shared/constants/event_color.dart';
 
@@ -65,6 +66,52 @@ class BirthdayDisplaySettingsNotifier extends AsyncNotifier<BirthdayDisplaySetti
     
     state = AsyncValue.data(updated); // 即座にUIに反映
     
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, updated.toJson());
+  }
+}
+
+/// アプリ全体の基本設定を管理する Provider。
+final appSettingsProvider =
+    AsyncNotifierProvider<AppSettingsNotifier, AppSettings>(
+  AppSettingsNotifier.new,
+);
+
+/// アプリ全体の基本設定を管理・永続化する Notifier。
+class AppSettingsNotifier extends AsyncNotifier<AppSettings> {
+  static const _key = 'app_settings';
+
+  @override
+  Future<AppSettings> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    final json = prefs.getString(_key);
+    if (json == null) return const AppSettings();
+
+    try {
+      return AppSettings.fromJson(json);
+    } catch (_) {
+      return const AppSettings();
+    }
+  }
+
+  /// 通知設定（有効/無効）を更新する。
+  Future<void> setNotificationsEnabled(bool value) async {
+    final current = state.valueOrNull ?? const AppSettings();
+    final updated = current.copyWith(isNotificationsEnabled: value);
+
+    state = AsyncValue.data(updated);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, updated.toJson());
+  }
+
+  /// 週の開始日（0:日, 1:月）を更新する。
+  Future<void> setFirstDayOfWeek(int value) async {
+    final current = state.valueOrNull ?? const AppSettings();
+    final updated = current.copyWith(firstDayOfWeek: value);
+
+    state = AsyncValue.data(updated);
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, updated.toJson());
   }

@@ -5,6 +5,7 @@ import 'package:birthday_calendar/shared/constants/japanese_holiday.dart';
 import 'package:birthday_calendar/shared/providers/app_state_providers.dart';
 import 'package:birthday_calendar/features/calendar/models/event_model.dart';
 import 'package:birthday_calendar/features/calendar/providers/event_providers.dart';
+import 'package:birthday_calendar/features/settings/models/app_settings.dart';
 import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
 import 'package:birthday_calendar/shared/constants/event_color.dart';
 
@@ -87,13 +88,20 @@ class _MonthGrid extends ConsumerWidget {
 
   const _MonthGrid({required this.month});
 
-  List<DateTime> _getVisibleDates() {
+  List<DateTime> _getVisibleDates(int firstDayOfWeek) {
     final firstDay = DateTime(month.year, month.month, 1);
     final lastDay = DateTime(month.year, month.month + 1, 0);
 
     // DateTime.weekday: Mon=1, Tue=2, ... Sun=7
-    // 日曜日開始にするためのオフセット計算 (Sun=0, Mon=1, ... Sat=6)
-    final offset = firstDay.weekday % 7;
+    // オフセット計算を週の開始日の設定（0:日, 1:月）に合わせて動的に行う
+    int offset;
+    if (firstDayOfWeek == 0) {
+      // 日曜日開始 (Sun=0, Mon=1, ... Sat=6)
+      offset = firstDay.weekday % 7;
+    } else {
+      // 月曜日開始 (Mon=0, Tue=1, ... Sun=6)
+      offset = firstDay.weekday - 1;
+    }
     final startDate = firstDay.subtract(Duration(days: offset));
 
     final totalDays = lastDay.day + offset;
@@ -110,7 +118,8 @@ class _MonthGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dates = _getVisibleDates();
+    final settings = ref.watch(appSettingsProvider).valueOrNull ?? const AppSettings();
+    final dates = _getVisibleDates(settings.firstDayOfWeek);
     final weeks = dates.length ~/ 7;
 
     final eventsAsync = ref.watch(eventsByMonthProvider);
@@ -118,7 +127,7 @@ class _MonthGrid extends ConsumerWidget {
 
     return Column(
       children: [
-        _buildWeekHeader(),
+        _buildWeekHeader(settings.firstDayOfWeek),
         ...List.generate(weeks, (weekIndex) {
           final weekDates = dates.sublist(weekIndex * 7, (weekIndex + 1) * 7);
           final weeklyLanes = _calculateWeeklyLanes(weekDates, events);
@@ -217,9 +226,12 @@ class _MonthGrid extends ConsumerWidget {
     return result;
   }
 
-  /// 曜日行を描画（日曜日から土曜日）
-  Widget _buildWeekHeader() {
-    final weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+  /// 曜日行を描画
+  Widget _buildWeekHeader(int firstDayOfWeek) {
+    final baseWeekdays = ['日', '月', '火', '水', '木', '金', '土'];
+    // 開始曜日に合わせてリストをシフト
+    final weekdays = List.generate(7, (i) => baseWeekdays[(i + firstDayOfWeek) % 7]);
+
     return Container(
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: Colors.grey.shade300, width: 1)),

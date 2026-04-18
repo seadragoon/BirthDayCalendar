@@ -4,6 +4,7 @@ import 'package:birthday_calendar/shared/providers/theme_provider.dart';
 import 'package:birthday_calendar/shared/widgets/theme_selection_modal.dart';
 import 'package:birthday_calendar/features/birthday/views/tag_management_view.dart';
 import 'package:birthday_calendar/features/settings/widgets/birthday_display_settings_modal.dart';
+import 'package:birthday_calendar/features/settings/widgets/basic_settings_modal.dart';
 
 /// アプリのドロワー（サイドメニュー）。
 ///
@@ -45,6 +46,19 @@ class CustomDrawer extends ConsumerWidget {
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text('アプリ設定', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings_outlined),
+            title: const Text('基本設定'),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const BasicSettingsModal(),
+                  fullscreenDialog: true,
+                ),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.palette_outlined),
