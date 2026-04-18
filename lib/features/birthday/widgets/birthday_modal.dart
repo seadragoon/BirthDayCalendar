@@ -45,8 +45,8 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
       _isYearSet = !b.isYearUnknown;
       _notifications = List.from(b.notifications);
     } else {
-      // 新規作成時のデフォルトは 2000年6月15日
-      _date = DateTime(2000, 6, 15);
+      // 新規作成時のデフォルトは 今日
+      _date = DateTime.now();
       _isYearSet = false; // デフォルトは年を設定しない（月日のみ）
     }
 
