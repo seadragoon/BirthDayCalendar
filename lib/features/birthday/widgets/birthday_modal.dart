@@ -230,6 +230,7 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
     return BaseModal(
       title: isEditMode ? '誕生日の編集' : '誕生日の追加',
       isEditMode: isEditMode,
+      leadingIcon: isEditMode ? Icons.arrow_back : Icons.close,
       isSaveActionEnabled: isSaveEnabled,
       onSave: _onSave,
       onDelete: _onDelete,

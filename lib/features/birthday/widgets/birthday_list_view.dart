@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
 import 'package:birthday_calendar/features/birthday/providers/birthday_providers.dart';
-import 'package:birthday_calendar/features/birthday/widgets/birthday_modal.dart';
+import 'package:birthday_calendar/features/birthday/widgets/birthday_detail_modal.dart';
 
 /// 誕生日データをリスト形式で表示するコンポーネント。
 class BirthdayListView extends ConsumerWidget {
@@ -102,7 +102,7 @@ class BirthdayListView extends ConsumerWidget {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => BirthdayModal(existingBirthday: birthday),
+                    builder: (_) => BirthdayDetailModal(birthday: birthday),
                     fullscreenDialog: true,
                   ),
                 );

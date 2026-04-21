@@ -27,6 +27,12 @@ class BaseModal extends ConsumerWidget {
   /// 編集モードかどうか（削除ボタンなどの表示判定に利用）
   final bool isEditMode;
 
+  /// 追加のアクションボタン（削除・保存の左側に並ぶ）
+  final List<Widget>? customActions;
+
+  /// 左上のアイコン（デフォルトは閉じるマーク）
+  final IconData leadingIcon;
+
   const BaseModal({
     super.key,
     required this.title,
@@ -35,6 +41,8 @@ class BaseModal extends ConsumerWidget {
     this.isSaveActionEnabled = true,
     this.onDelete,
     this.isEditMode = false,
+    this.customActions,
+    this.leadingIcon = Icons.close,
   });
 
   @override
@@ -62,9 +70,9 @@ class BaseModal extends ConsumerWidget {
         ),
         iconTheme: IconThemeData(color: appTheme.onPrimaryColor),
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: Icon(leadingIcon),
           onPressed: () => Navigator.of(context).pop(),
-          tooltip: '閉じる',
+          tooltip: leadingIcon == Icons.close ? '閉じる' : '戻る',
         ),
         title: Text(
           title,
@@ -74,6 +82,7 @@ class BaseModal extends ConsumerWidget {
           ),
         ),
         actions: [
+          if (customActions != null) ...customActions!,
           if (isEditMode && onDelete != null)
             IconButton(
               icon: Icon(Icons.delete, color: appTheme.onPrimaryColor.withValues(alpha: 0.8)),

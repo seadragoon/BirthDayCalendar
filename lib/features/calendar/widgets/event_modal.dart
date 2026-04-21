@@ -182,6 +182,7 @@ class _EventModalState extends ConsumerState<EventModal> {
     return BaseModal(
       title: isEditMode ? '予定を編集' : '予定を追加',
       isEditMode: isEditMode,
+      leadingIcon: isEditMode ? Icons.arrow_back : Icons.close,
       isSaveActionEnabled: isSaveEnabled,
       onSave: _onSave,
       onDelete: _onDelete,

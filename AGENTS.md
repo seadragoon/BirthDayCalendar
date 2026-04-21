@@ -1,7 +1,7 @@
 # AGENTS.md — AI向けプロジェクトリファレンス
 
 > **このファイルはAIアシスタントがセッション開始時に最初に読むべきドキュメントです。**
-> 最終更新: 2026-04-18
+> 最終更新: 2026-04-21
 
 ---
 
@@ -109,8 +109,9 @@ lib/
 │   │   │   └── schedule_view.dart               # Schedule画面（MonthView + EventList統合）
 │   │   └── widgets/
 │   │       ├── custom_month_view.dart           # 横スワイプ可能・可変高さのカスタムカレンダー
+│   │       ├── event_detail_modal.dart          # イベント詳細表示モーダル（読み取り専用）
 │   │       ├── event_list_view.dart             # 選択日付のイベントリスト
-│   │       ├── event_modal.dart                 # イベント追加/編集/表示モーダル
+│   │       ├── event_modal.dart                 # イベント追加/編集モーダル
 │   │       └── today_bar.dart                   # 選択日付表示バー
 │   │
 │   ├── birthday/                                # ── 誕生日機能 ──
@@ -124,6 +125,7 @@ lib/
 │   │   ├── views/
 │   │   │   └── birthday_view.dart               # Birthday画面（タグフィルタ + リスト統合）
 │   │   └── widgets/
+│   │       ├── birthday_detail_modal.dart       # 誕生日詳細表示モーダル（読み取り専用）
 │   │       ├── birthday_list_view.dart          # 誕生日リスト表示
 │   │       ├── birthday_modal.dart              # 誕生日追加/編集モーダル
 │   │       └── tag_filter_bar.dart              # タグフィルターバー
@@ -313,7 +315,9 @@ CREATE TABLE tags (
 ### Full Screen Modal 一覧
 | モーダル | ファイル | 操作 |
 |---------|--------|------|
-| イベント追加/編集/表示 | `event_modal.dart` | CRUD + 12色選択 + バリデーション |
+| イベント詳細表示 | `event_detail_modal.dart` | 予定の閲覧 / 編集モーダルへ遷移 / 削除 |
+| イベント追加/編集 | `event_modal.dart` | CRUD + 12色選択 + バリデーション |
+| 誕生日詳細表示 | `birthday_detail_modal.dart`| 誕生日の閲覧 / 編集モーダルへ遷移 / 削除 |
 | 誕生日追加/編集 | `birthday_modal.dart` | CRUD + タグ選択グリッド + 生まれ年不明 |
 | タグ管理 | `tag_management_view.dart` | タグの一覧表示・追加・削除（フルスクリーン） |
 | 検索 | `custom_search_delegate.dart` | リアルタイム横断検索 |
