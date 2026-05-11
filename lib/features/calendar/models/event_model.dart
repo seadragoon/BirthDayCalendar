@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:birthday_calendar/shared/constants/event_color.dart';
 import 'package:birthday_calendar/shared/constants/notification_type.dart';
 import 'package:birthday_calendar/shared/constants/recurrence_type.dart';
+import 'package:birthday_calendar/features/calendar/models/custom_recurrence.dart';
 
 /// カレンダーに表示するイベント（予定）のデータモデル。
 ///
@@ -16,6 +17,8 @@ class EventModel {
   final bool isAllDay;
   final EventColor colorIndex;
   final RecurrenceType recurrence;
+  final CustomRecurrence? customRecurrence;
+  final List<DateTime> exceptionDates;
   final List<NotificationType> notifications;
   final String comment;
   final bool isBirthday;
@@ -28,8 +31,10 @@ class EventModel {
     required this.startDate,
     required this.endDate,
     this.isAllDay = false,
-    this.colorIndex = EventColor.peacock,
+    this.colorIndex = EventColor.lavender,
     this.recurrence = RecurrenceType.none,
+    this.customRecurrence,
+    this.exceptionDates = const [],
     this.notifications = const [NotificationType.none],
     this.comment = '',
     this.isBirthday = false,
@@ -52,6 +57,15 @@ class EventModel {
       }
     }
 
+    // exceptionDatesの解析
+    List<DateTime> parsedExceptions = [];
+    if (map['exception_dates'] != null && (map['exception_dates'] as String).isNotEmpty) {
+      try {
+        final decoded = jsonDecode(map['exception_dates'] as String) as List<dynamic>;
+        parsedExceptions = decoded.map((e) => DateTime.fromMillisecondsSinceEpoch(e as int)).toList();
+      } catch (_) {}
+    }
+
     return EventModel(
       id: map['id'] as int?,
       title: (map['title'] as String?) ?? 'タイトルなし',
@@ -60,6 +74,10 @@ class EventModel {
       isAllDay: (map['is_all_day'] as num?)?.toInt() == 1,
       colorIndex: EventColor.fromIndex((map['color_index'] as num?)?.toInt() ?? 6),
       recurrence: RecurrenceType.fromIndex((map['recurrence'] as num?)?.toInt() ?? 0),
+      customRecurrence: map['custom_recurrence'] != null && (map['custom_recurrence'] as String).isNotEmpty
+          ? CustomRecurrence.fromJson(map['custom_recurrence'] as String)
+          : null,
+      exceptionDates: parsedExceptions,
       notifications: parsedNotifications,
       comment: (map['comment'] as String?) ?? '',
       isBirthday: (map['is_birthday'] as num?)?.toInt() == 1,
@@ -82,6 +100,8 @@ class EventModel {
       'is_all_day': isAllDay ? 1 : 0,
       'color_index': colorIndex.index,
       'recurrence': recurrence.index,
+      'custom_recurrence': customRecurrence?.toJson(),
+      'exception_dates': jsonEncode(exceptionDates.map((e) => e.millisecondsSinceEpoch).toList()),
       'notification': jsonEncode(notifications.map((e) => e.index).toList()),
       'comment': comment,
       'is_birthday': isBirthday ? 1 : 0,
@@ -103,6 +123,8 @@ class EventModel {
     bool? isAllDay,
     EventColor? colorIndex,
     RecurrenceType? recurrence,
+    CustomRecurrence? customRecurrence,
+    List<DateTime>? exceptionDates,
     List<NotificationType>? notifications,
     String? comment,
     bool? isBirthday,
@@ -117,6 +139,8 @@ class EventModel {
       isAllDay: isAllDay ?? this.isAllDay,
       colorIndex: colorIndex ?? this.colorIndex,
       recurrence: recurrence ?? this.recurrence,
+      customRecurrence: customRecurrence ?? this.customRecurrence,
+      exceptionDates: exceptionDates ?? this.exceptionDates,
       notifications: notifications ?? this.notifications,
       comment: comment ?? this.comment,
       isBirthday: isBirthday ?? this.isBirthday,

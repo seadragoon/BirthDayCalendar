@@ -17,7 +17,7 @@ class DatabaseHelper {
   static const String _databaseName = 'birthday_calendar.db';
 
   /// データベースバージョン（スキーマ変更時にインクリメント）
-  static const int _databaseVersion = 5;
+  static const int _databaseVersion = 6;
 
   // テーブル名
   static const String tableEvents = 'events';
@@ -55,8 +55,10 @@ class DatabaseHelper {
         start_date INTEGER NOT NULL,
         end_date INTEGER NOT NULL,
         is_all_day INTEGER NOT NULL DEFAULT 0,
-        color_index INTEGER NOT NULL DEFAULT 6,
+        color_index INTEGER NOT NULL DEFAULT 8,
         recurrence INTEGER NOT NULL DEFAULT 0,
+        custom_recurrence TEXT,
+        exception_dates TEXT,
         notification TEXT NOT NULL DEFAULT '[0]',
         comment TEXT DEFAULT '',
         is_birthday INTEGER NOT NULL DEFAULT 0,
@@ -153,6 +155,12 @@ class DatabaseHelper {
     if (oldVersion < 5) {
       // birthdays テーブルに comment カラムを追加
       await db.execute('ALTER TABLE $tableBirthdays ADD COLUMN comment TEXT DEFAULT ""');
+    }
+
+    if (oldVersion < 6) {
+      // events テーブルに custom_recurrence, exception_dates カラムを追加
+      await db.execute('ALTER TABLE $tableEvents ADD COLUMN custom_recurrence TEXT');
+      await db.execute('ALTER TABLE $tableEvents ADD COLUMN exception_dates TEXT');
     }
   }
 

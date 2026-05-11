@@ -27,10 +27,10 @@ enum EventColor {
   final String label;
 
   /// 整数値（index）から [EventColor] に変換する。
-  /// 不正な値の場合はデフォルトとして [peacock] を返す。
+  /// 不正な値の場合はデフォルトとして [lavender] を返す。
   static EventColor fromIndex(int index) {
     if (index < 0 || index >= EventColor.values.length) {
-      return EventColor.peacock;
+      return EventColor.lavender;
     }
     return EventColor.values[index];
   }

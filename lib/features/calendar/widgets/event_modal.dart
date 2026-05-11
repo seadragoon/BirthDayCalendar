@@ -10,6 +10,9 @@ import 'package:birthday_calendar/shared/constants/recurrence_type.dart';
 import 'package:birthday_calendar/shared/widgets/base_modal.dart';
 import 'package:birthday_calendar/shared/widgets/multi_select_dialog.dart';
 import 'package:birthday_calendar/shared/constants/japanese_holiday.dart';
+import 'package:birthday_calendar/features/calendar/models/edit_scope.dart';
+import 'package:birthday_calendar/features/calendar/models/custom_recurrence.dart';
+import 'package:birthday_calendar/features/calendar/widgets/custom_recurrence_modal.dart';
 
 /// スケジュール（イベント）の追加・編集を行うフルスクリーンモーダル。
 class EventModal extends ConsumerStatefulWidget {
@@ -19,10 +22,18 @@ class EventModal extends ConsumerStatefulWidget {
   /// 新規作成時にあらかじめ設定しておく日付（タップされた日付など）。
   final DateTime? initialDate;
 
+  /// 編集する際のスコープ
+  final EditScope editScope;
+
+  /// 編集時、既存イベントの親（オリジナル）のイベントデータ
+  final EventModel? originalParentEvent;
+
   const EventModal({
     super.key,
     this.existingEvent,
     this.initialDate,
+    this.editScope = EditScope.all,
+    this.originalParentEvent,
   });
 
   @override
@@ -38,8 +49,9 @@ class _EventModalState extends ConsumerState<EventModal> {
   late DateTime _startDate;
   late DateTime _endDate;
   bool _isSelectingStart = true; // 現在開始・終了のどちらを操作しているか
-  EventColor _selectedColor = EventColor.peacock;
+  EventColor _selectedColor = EventColor.lavender;
   RecurrenceType _recurrence = RecurrenceType.none;
+  CustomRecurrence? _customRecurrence;
   bool _isEndDateManuallyChanged = false;
   List<NotificationType> _notifications = [NotificationType.none];
 
@@ -48,16 +60,34 @@ class _EventModalState extends ConsumerState<EventModal> {
     super.initState();
     _initForm();
 
-    // 画面表示後、選択中のカラーまでスクロール
+    // 画面表示後、選択中のカラーが隠れている場合のみスクロール
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_colorScrollController.hasClients) {
-        // 画面に入りきっていない（スクロール可能）な場合のみ、選択中のカラーまでスクロール
         if (_colorScrollController.position.maxScrollExtent > 0) {
           final index = EventColor.values.indexOf(_selectedColor);
           if (index >= 0) {
-            // 各カラーアイテムの幅(40) + マージン(12) = 52
-            // 少し左側に余裕を持たせるか、中央付近に来るように調整（ここでは単純に位置へジャンプ）
-            _colorScrollController.jumpTo(index * 52.0);
+            // 各カラーアイテムの幅(40) + 右マージン(12) = 52
+            // 最後のアイテムの場合はマージンがないが、大まかに計算
+            double itemLeft = index * 52.0;
+            double itemRight = itemLeft + 40.0;
+            double viewport = _colorScrollController.position.viewportDimension;
+            double currentOffset = _colorScrollController.offset;
+            double targetOffset = currentOffset;
+
+            if (itemLeft < currentOffset) {
+               targetOffset = itemLeft;
+            } else if (itemRight > currentOffset + viewport) {
+               targetOffset = itemRight - viewport;
+               // 最後の要素以外は、さらに0.5要素分（約26px）ずらして次の色がチラ見えするようにする
+               if (index < EventColor.values.length - 1) {
+                 targetOffset += 26.0;
+               }
+            }
+            
+            if (targetOffset != currentOffset) {
+               targetOffset = targetOffset.clamp(0.0, _colorScrollController.position.maxScrollExtent);
+               _colorScrollController.jumpTo(targetOffset);
+            }
           }
         }
       }
@@ -74,6 +104,11 @@ class _EventModalState extends ConsumerState<EventModal> {
       _endDate = event.endDate;
       _selectedColor = event.colorIndex;
       _recurrence = event.recurrence;
+      _customRecurrence = event.customRecurrence;
+      if (widget.editScope == EditScope.thisEvent) {
+        _recurrence = RecurrenceType.none;
+        _customRecurrence = null;
+      }
       _notifications = List.from(event.notifications);
       _isEndDateManuallyChanged = true; // 編集時は同期しない
     } else {
@@ -132,13 +167,14 @@ class _EventModalState extends ConsumerState<EventModal> {
     if (title.isEmpty) return;
 
     final newEvent = EventModel(
-      id: widget.existingEvent?.id,
+      id: widget.editScope == EditScope.all ? widget.existingEvent?.id : null,
       title: title,
       startDate: _startDate,
       endDate: _endDate,
       isAllDay: _isAllDay,
       colorIndex: _selectedColor,
       recurrence: _recurrence,
+      customRecurrence: _customRecurrence,
       notifications: _notifications,
       comment: _commentController.text.trim(),
     );
@@ -147,8 +183,33 @@ class _EventModalState extends ConsumerState<EventModal> {
       // 新規追加
       await ref.read(eventsByDateProvider.notifier).addEvent(newEvent);
     } else {
-      // 更新
-      await ref.read(eventsByDateProvider.notifier).updateEvent(newEvent);
+      if (widget.editScope == EditScope.thisEvent && widget.originalParentEvent != null) {
+         // 元の予定に対する例外日を追加
+         final DateTime occDate = DateTime(widget.existingEvent!.startDate.year, widget.existingEvent!.startDate.month, widget.existingEvent!.startDate.day);
+         final newParent = widget.originalParentEvent!.copyWith(
+           exceptionDates: [...widget.originalParentEvent!.exceptionDates, occDate]
+         );
+         await ref.read(eventsByDateProvider.notifier).updateEvent(newParent);
+         // 単発の新しい予定を追加
+         await ref.read(eventsByDateProvider.notifier).addEvent(newEvent);
+      } else if (widget.editScope == EditScope.followingEvents && widget.originalParentEvent != null) {
+         // 元の予定を前日に終了させる
+         final endBefore = widget.existingEvent!.startDate.subtract(const Duration(days: 1));
+         EventModel newParent = widget.originalParentEvent!;
+         if (newParent.recurrence != RecurrenceType.none && newParent.recurrence != RecurrenceType.custom) {
+            final converted = CustomRecurrence.fromStandard(newParent.recurrence, untilDate: endBefore);
+            newParent = newParent.copyWith(recurrence: RecurrenceType.custom, customRecurrence: converted);
+         } else if (newParent.customRecurrence != null) {
+            newParent = newParent.copyWith(customRecurrence: newParent.customRecurrence!.copyWith(endType: CustomEndType.date, endDate: endBefore));
+         }
+         await ref.read(eventsByDateProvider.notifier).updateEvent(newParent);
+         
+         // 新しい繰り返し予定を追加
+         await ref.read(eventsByDateProvider.notifier).addEvent(newEvent);
+      } else {
+         // 通常の更新 (EditScope.all または単発予定の編集)
+         await ref.read(eventsByDateProvider.notifier).updateEvent(newEvent);
+      }
     }
 
     // 月カレンダーも更新指令
@@ -280,7 +341,11 @@ class _EventModalState extends ConsumerState<EventModal> {
             const SizedBox(height: 8),
             ListTile(
               title: const Text('繰り返し', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
-              subtitle: Text(_recurrence.label, style: const TextStyle(fontSize: 16, color: Colors.black)),
+              subtitle: Text(
+                _recurrence == RecurrenceType.custom && _customRecurrence != null
+                    ? _customRecurrence!.toReadableString()
+                    : _recurrence.label,
+                style: const TextStyle(fontSize: 16, color: Colors.black)),
               trailing: const Icon(Icons.arrow_drop_down),
               contentPadding: EdgeInsets.zero,
               onTap: () async {
@@ -301,7 +366,35 @@ class _EventModalState extends ConsumerState<EventModal> {
                   },
                 );
                 if (result != null) {
-                  setState(() => _recurrence = result);
+                  if (result == RecurrenceType.custom) {
+                    if (!context.mounted) return;
+                    final customResult = await Navigator.of(context).push<CustomRecurrence>(
+                      MaterialPageRoute(
+                        builder: (_) => CustomRecurrenceModal(
+                          startDate: _startDate,
+                          initialRecurrence: _customRecurrence,
+                        ),
+                        fullscreenDialog: true,
+                      ),
+                    );
+                    if (customResult != null) {
+                      final standard = customResult.toStandardType(_startDate);
+                      setState(() {
+                        if (standard != RecurrenceType.custom) {
+                          _recurrence = standard;
+                          _customRecurrence = null;
+                        } else {
+                          _recurrence = RecurrenceType.custom;
+                          _customRecurrence = customResult;
+                        }
+                      });
+                    }
+                  } else {
+                    setState(() {
+                      _recurrence = result;
+                      _customRecurrence = null;
+                    });
+                  }
                 }
               },
             ),

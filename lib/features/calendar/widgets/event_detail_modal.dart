@@ -9,6 +9,8 @@ import 'package:birthday_calendar/shared/widgets/base_modal.dart';
 import 'package:birthday_calendar/shared/providers/repository_providers.dart';
 import 'package:birthday_calendar/shared/constants/recurrence_type.dart';
 import 'package:birthday_calendar/shared/constants/notification_type.dart';
+import 'package:birthday_calendar/features/calendar/models/edit_scope.dart';
+import 'package:birthday_calendar/features/calendar/models/custom_recurrence.dart';
 
 /// 予定の詳細を表示する読み取り専用モーダル
 class EventDetailModal extends ConsumerStatefulWidget {
@@ -34,10 +36,68 @@ class _EventDetailModalState extends ConsumerState<EventDetailModal> {
       final updatedEvent = await ref.read(eventRepositoryProvider).getEventById(_currentEvent.id!);
       if (updatedEvent != null && mounted) {
         setState(() {
-          _currentEvent = updatedEvent;
+          if (updatedEvent.recurrence == RecurrenceType.none && updatedEvent.customRecurrence == null) {
+            // 単発予定の場合は、日付変更なども含めてすべてそのまま反映する
+            _currentEvent = updatedEvent;
+          } else {
+            // 繰り返し予定の場合、表示中の「特定の発生日」を維持しながら、時間・終日設定・その他のメタデータを反映する
+            final newStart = DateTime(
+              _currentEvent.startDate.year,
+              _currentEvent.startDate.month,
+              _currentEvent.startDate.day,
+              updatedEvent.startDate.hour,
+              updatedEvent.startDate.minute,
+            );
+            final duration = updatedEvent.endDate.difference(updatedEvent.startDate);
+            final newEnd = newStart.add(duration);
+
+            _currentEvent = _currentEvent.copyWith(
+              title: updatedEvent.title,
+              isAllDay: updatedEvent.isAllDay,
+              startDate: newStart,
+              endDate: newEnd,
+              colorIndex: updatedEvent.colorIndex,
+              recurrence: updatedEvent.recurrence,
+              customRecurrence: updatedEvent.customRecurrence,
+              notifications: updatedEvent.notifications,
+              comment: updatedEvent.comment,
+            );
+          }
         });
       }
     }
+  }
+
+  Future<EditScope?> _showEditScopeDialog(String actionTitle) async {
+    return showModalBottomSheet<EditScope>(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(actionTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+              ListTile(
+                title: const Text('この予定のみ'),
+                onTap: () => Navigator.pop(context, EditScope.thisEvent),
+              ),
+              ListTile(
+                title: const Text('以降の予定'),
+                onTap: () => Navigator.pop(context, EditScope.followingEvents),
+              ),
+              ListTile(
+                title: const Text('全ての予定'),
+                onTap: () => Navigator.pop(context, EditScope.all),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -48,27 +108,125 @@ class _EventDetailModalState extends ConsumerState<EventDetailModal> {
     return BaseModal(
       title: titleDateStr,
       isEditMode: true,
-      onDelete: () async {
-        if (_currentEvent.id != null) {
-          await ref.read(eventsByDateProvider.notifier).deleteEvent(_currentEvent.id!);
-          ref.read(eventsByMonthProvider.notifier).refresh();
-          if (!context.mounted) return;
-          Navigator.of(context).pop();
-        }
-      },
       customActions: [
         IconButton(
           icon: const Icon(Icons.edit),
           tooltip: '編集',
           onPressed: () async {
+            EditScope scope = EditScope.all;
+            EventModel? originalParent;
+            
+            if (_currentEvent.recurrence != RecurrenceType.none || _currentEvent.customRecurrence != null) {
+              final repo = ref.read(eventRepositoryProvider);
+              originalParent = await repo.getEventById(_currentEvent.id!);
+              if (originalParent != null) {
+                final selectedScope = await _showEditScopeDialog('予定の変更');
+                if (selectedScope == null) return;
+                scope = selectedScope;
+              }
+            }
+
+            if (!context.mounted) return;
+            
             await Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => EventModal(existingEvent: _currentEvent),
+                builder: (_) => EventModal(
+                  existingEvent: (scope == EditScope.all && originalParent != null) ? originalParent : _currentEvent,
+                  originalParentEvent: originalParent,
+                  editScope: scope,
+                ),
                 fullscreenDialog: true,
               ),
             );
             // 編集から戻ったら最新情報を取得
-            _refreshEvent();
+            // ※「以降の予定」などを選んだ場合はIDが変わるため、Detailを閉じるかリフレッシュするか微妙ですが、
+            //   ここでは簡便のためポップします（リストビューに戻る）
+            if (scope != EditScope.all && context.mounted) {
+               Navigator.of(context).pop();
+            } else {
+               _refreshEvent();
+            }
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete),
+          tooltip: '削除',
+          onPressed: () async {
+            if (_currentEvent.id == null) return;
+
+            EditScope scope = EditScope.all;
+            EventModel? originalParent;
+            
+            if (_currentEvent.recurrence != RecurrenceType.none || _currentEvent.customRecurrence != null) {
+              final repo = ref.read(eventRepositoryProvider);
+              originalParent = await repo.getEventById(_currentEvent.id!);
+              if (originalParent != null) {
+                final selectedScope = await _showEditScopeDialog('予定の削除');
+                if (selectedScope == null) return; // cancelled
+                scope = selectedScope;
+              }
+            }
+
+            if (!context.mounted) return;
+
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('確認'),
+                content: const Text('本当に削除しますか？'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('キャンセル'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('削除', style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ),
+            );
+
+            if (confirm != true) return;
+
+            if (scope == EditScope.all) {
+               await ref.read(eventsByDateProvider.notifier).deleteEvent(_currentEvent.id!);
+            } else if (scope == EditScope.thisEvent && originalParent != null) {
+               final occDate = DateTime(_currentEvent.startDate.year, _currentEvent.startDate.month, _currentEvent.startDate.day);
+               
+               if (!hasFollowingOccurrences(originalParent, occDate)) {
+                 // 最後の予定なら「以降の予定」削除と同様に終了日を前倒しする（実質的に例外日ではなくシリーズの打ち切りとする）
+                 final endBefore = _currentEvent.startDate.subtract(const Duration(days: 1));
+                 EventModel newParent = originalParent;
+                 if (newParent.recurrence != RecurrenceType.none && newParent.recurrence != RecurrenceType.custom) {
+                    final converted = CustomRecurrence.fromStandard(newParent.recurrence, untilDate: endBefore);
+                    newParent = newParent.copyWith(recurrence: RecurrenceType.custom, customRecurrence: converted);
+                 } else if (newParent.customRecurrence != null) {
+                    newParent = newParent.copyWith(customRecurrence: newParent.customRecurrence!.copyWith(endType: CustomEndType.date, endDate: endBefore));
+                 }
+                 await ref.read(eventsByDateProvider.notifier).updateEvent(newParent);
+               } else {
+                 // 通常の例外日追加
+                 final newParent = originalParent.copyWith(
+                   exceptionDates: [...originalParent.exceptionDates, occDate]
+                 );
+                 await ref.read(eventsByDateProvider.notifier).updateEvent(newParent);
+               }
+            } else if (scope == EditScope.followingEvents && originalParent != null) {
+               final endBefore = _currentEvent.startDate.subtract(const Duration(days: 1));
+               EventModel newParent = originalParent;
+               if (newParent.recurrence != RecurrenceType.none && newParent.recurrence != RecurrenceType.custom) {
+                  final converted = CustomRecurrence.fromStandard(newParent.recurrence, untilDate: endBefore);
+                  newParent = newParent.copyWith(recurrence: RecurrenceType.custom, customRecurrence: converted);
+               } else if (newParent.customRecurrence != null) {
+                  newParent = newParent.copyWith(customRecurrence: newParent.customRecurrence!.copyWith(endType: CustomEndType.date, endDate: endBefore));
+               }
+               await ref.read(eventsByDateProvider.notifier).updateEvent(newParent);
+            }
+
+            ref.read(eventsByMonthProvider.notifier).refresh();
+            if (!context.mounted) return;
+            Navigator.of(context).pop();
           },
         ),
       ],
@@ -114,11 +272,16 @@ class _EventDetailModalState extends ConsumerState<EventDetailModal> {
             const Divider(),
 
             // 繰り返し
-            if (_currentEvent.recurrence != RecurrenceType.none) ...[
+            if (_currentEvent.recurrence != RecurrenceType.none || _currentEvent.customRecurrence != null) ...[
               _buildDetailRow(
                 icon: Icons.repeat,
                 title: '繰り返し',
-                content: Text(_currentEvent.recurrence.label, style: const TextStyle(fontSize: 16)),
+                content: Text(
+                  _currentEvent.recurrence == RecurrenceType.custom && _currentEvent.customRecurrence != null
+                      ? _currentEvent.customRecurrence!.toReadableString()
+                      : _currentEvent.recurrence.label,
+                  style: const TextStyle(fontSize: 16),
+                ),
               ),
               const Divider(),
             ],

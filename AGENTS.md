@@ -1,7 +1,7 @@
 # AGENTS.md — AI向けプロジェクトリファレンス
 
 > **このファイルはAIアシスタントがセッション開始時に最初に読むべきドキュメントです。**
-> 最終更新: 2026-04-21
+> 最終更新: 2026-04-27
 
 ---
 
@@ -136,7 +136,7 @@ lib/
     ├── constants/
     │   ├── event_color.dart                     # EventColor enum（12色）
     │   ├── japanese_holiday.dart                # 日本の祝日判定ユーティリティ
-    │   ├── recurrence_type.dart                 # RecurrenceType enum（none/daily/weekly/monthly/yearly/weekday）
+    │   ├── recurrence_type.dart                 # RecurrenceType enum（none/daily/weekly/monthly/yearly/weekday/custom）
     │   ├── notification_type.dart               # NotificationType enum（none〜1週間前）
     │   └── view_type.dart                       # ViewType enum（schedule/birthday）
     ├── db/
@@ -171,8 +171,10 @@ lib/
 | startDate | `DateTime` | (必須) | start_date | 開始日時（ミリ秒） |
 | endDate | `DateTime` | (必須) | end_date | 終了日時（ミリ秒） |
 | isAllDay | `bool` | false | is_all_day | 終日フラグ |
-| colorIndex | `EventColor` | peacock | color_index | 12色enum |
-| recurrence | `RecurrenceType` | none | recurrence | 繰り返し（なし/毎日/毎週/毎月/毎年/平日） |
+| colorIndex | `EventColor` | lavender | color_index | 12色enum |
+| recurrence | `RecurrenceType` | none | recurrence | 繰り返し（なし/毎日/毎週/毎月/毎年/平日/カスタム） |
+| customRecurrence | `CustomRecurrence?` | null | custom_recurrence | カスタム繰り返し詳細（JSON） |
+| exceptionDates | `List<DateTime>` | [] | exception_dates | 繰り返し除外日リスト（JSON） |
 | notifications | `List<NotificationType>` | [none] | notification | 通知設定（JSON形式） |
 | comment | `String` | '' | comment | コメント |
 | isBirthday | `bool` | false | is_birthday | 誕生日紐づきフラグ |
@@ -241,8 +243,10 @@ CREATE TABLE events (
   start_date INTEGER NOT NULL,      -- ミリ秒エポック
   end_date INTEGER NOT NULL,        -- ミリ秒エポック
   is_all_day INTEGER NOT NULL DEFAULT 0,
-  color_index INTEGER NOT NULL DEFAULT 6,  -- EventColor.peacock
+  color_index INTEGER NOT NULL DEFAULT 8,  -- EventColor.lavender
   recurrence INTEGER NOT NULL DEFAULT 0,
+  custom_recurrence TEXT,           -- カスタム繰り返し条件（JSON形式）
+  exception_dates TEXT,             -- 繰り返し例外日（JSON配列）
   notification TEXT NOT NULL DEFAULT '[0]', -- 通知タイミング（JSON配列）
   comment TEXT DEFAULT '',
   is_birthday INTEGER NOT NULL DEFAULT 0,
@@ -276,9 +280,14 @@ CREATE TABLE tags (
 );
 ```
 
-- **DBバージョン:** 3
+- **DBバージョン:** 6
 - **DBファイル名:** `birthday_calendar.db`
-- **マイグレーション:** notification の JSON化 (v2) および tags テーブル追加 + デフォルトデータ投入 (v3)
+- **マイグレーション履歴:** 
+  - v2: notification の JSON化
+  - v3: tags テーブル追加 + デフォルトデータ投入
+  - v4: ... (UI設定マイグレーション等)
+  - v5: birthdays に comment カラム追加
+  - v6: events に custom_recurrence と exception_dates カラム追加
 
 ---
 
@@ -337,9 +346,10 @@ CREATE TABLE tags (
 | 6 | Birthday View | ✅ 完了 |
 | 7 | Full Screen Modal | ✅ 完了 |
 | 8 | きせかえ機能 | ✅ 完了 |
-| 9 | 仕上げ（検索/About/静的解析） | ✅ 完了 |
+| 9 | 仕上げ（検索/設定/静的解析） | ✅ 完了 |
+| 10 | 繰り返し予定の大幅拡張 | ✅ 完了 |
 
-**全体進捗: 100%** — 全フェーズ実装完了済み
+**全体進捗: 100%** — 拡張機能も含め実装完了済み
 
 ---
 
@@ -349,11 +359,10 @@ CREATE TABLE tags (
 |------|------|---------|
 | テーマ永続化 | オンメモリのみ | SharedPreferencesで永続化 |
 | 通知機能 | UI設定のみ（実際の通知は未実装） | `flutter_local_notifications` 統合 |
-| settings機能 | `features/settings/` ディレクトリは空 | 設定画面の実装 |
+| 設定機能 | 実装済み | 実装済み |
 | テスト | `test/` ディレクトリは空 | Unit/Widget テスト追加 |
 | プッシュ通知 | 未実装 | Firebase Cloud Messaging |
 | データバックアップ | 未実装 | Google Drive / iCloud 連携 |
-| 繰り返しイベント | DB保存のみ（実際の繰り返し展開は未実装） | 繰り返しイベント（平日を含む）の日付展開ロジック |
 
 ---
 
