@@ -8,6 +8,8 @@ import 'package:birthday_calendar/features/birthday/widgets/birthday_modal.dart'
 import 'package:birthday_calendar/shared/widgets/base_modal.dart';
 import 'package:birthday_calendar/shared/providers/repository_providers.dart';
 import 'package:birthday_calendar/shared/constants/notification_type.dart';
+import 'package:birthday_calendar/shared/constants/event_color.dart';
+import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
 
 /// 誕生日詳細を表示する読み取り専用モーダル
 class BirthdayDetailModal extends ConsumerStatefulWidget {
@@ -42,6 +44,12 @@ class _BirthdayDetailModalState extends ConsumerState<BirthdayDetailModal> {
   @override
   Widget build(BuildContext context) {
     const headerTitle = '誕生日の詳細';
+
+    final birthdaySettingsAsync = ref.watch(birthdayDisplaySettingsProvider);
+    final birthdayColor = birthdaySettingsAsync.maybeWhen(
+      data: (settings) => EventColor.fromIndex(settings.colorIndex).color,
+      orElse: () => EventColor.fromIndex(5).color,
+    );
 
     return BaseModal(
       title: headerTitle,
@@ -78,7 +86,7 @@ class _BirthdayDetailModalState extends ConsumerState<BirthdayDetailModal> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Icon(Icons.cake, color: Colors.pinkAccent, size: 28),
+                Icon(Icons.cake, color: birthdayColor, size: 28),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -98,7 +106,7 @@ class _BirthdayDetailModalState extends ConsumerState<BirthdayDetailModal> {
             _buildDetailRow(
               icon: Icons.calendar_today,
               title: '誕生日',
-              content: _buildBirthdayText(),
+              content: _buildBirthdayText(birthdayColor),
             ),
             const Divider(),
 
@@ -160,7 +168,7 @@ class _BirthdayDetailModalState extends ConsumerState<BirthdayDetailModal> {
     );
   }
 
-  Widget _buildBirthdayText() {
+  Widget _buildBirthdayText(Color highlightColor) {
     final dateFormat = _currentBirthday.isYearUnknown
         ? DateFormat('M月d日')
         : DateFormat('yyyy年M月d日', 'ja_JP');
@@ -188,7 +196,7 @@ class _BirthdayDetailModalState extends ConsumerState<BirthdayDetailModal> {
           countdownStr,
           style: TextStyle(
             fontSize: 13,
-            color: daysUntil == 0 ? Colors.pinkAccent : Colors.grey.shade600,
+            color: daysUntil == 0 ? highlightColor : Colors.grey.shade600,
             fontWeight: daysUntil == 0 ? FontWeight.bold : FontWeight.normal,
           ),
         ),
