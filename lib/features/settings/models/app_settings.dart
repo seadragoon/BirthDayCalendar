@@ -8,18 +8,24 @@ class AppSettings {
   /// 週の開始日（0: 日曜日, 1: 月曜日）
   final int firstDayOfWeek;
 
+  /// テーマモード (0: system, 1: light, 2: dark)
+  final int themeMode;
+
   const AppSettings({
     this.isNotificationsEnabled = true,
     this.firstDayOfWeek = 0, // デフォルト: 日曜日
+    this.themeMode = 1, // デフォルト: オフ（ライト）
   });
 
   AppSettings copyWith({
     bool? isNotificationsEnabled,
     int? firstDayOfWeek,
+    int? themeMode,
   }) {
     return AppSettings(
       isNotificationsEnabled: isNotificationsEnabled ?? this.isNotificationsEnabled,
       firstDayOfWeek: firstDayOfWeek ?? this.firstDayOfWeek,
+      themeMode: themeMode ?? this.themeMode,
     );
   }
 
@@ -27,6 +33,7 @@ class AppSettings {
     return {
       'isNotificationsEnabled': isNotificationsEnabled,
       'firstDayOfWeek': firstDayOfWeek,
+      'themeMode': themeMode,
     };
   }
 
@@ -34,6 +41,7 @@ class AppSettings {
     return AppSettings(
       isNotificationsEnabled: map['isNotificationsEnabled'] as bool? ?? true,
       firstDayOfWeek: (map['firstDayOfWeek'] as num?)?.toInt() ?? 0,
+      themeMode: (map['themeMode'] as num?)?.toInt() ?? 1,
     );
   }
 

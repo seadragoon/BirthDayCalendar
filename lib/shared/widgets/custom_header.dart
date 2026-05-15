@@ -29,12 +29,15 @@ class CustomHeader extends ConsumerWidget implements PreferredSizeWidget {
         ? DateFormat('yyyy年M月').format(currentMonth)
         : '誕生日';
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final onPrimaryColor = isDark ? appTheme.darkOnPrimaryColor : appTheme.onPrimaryColor;
+
     return AppBar(
       title: Text(
         title,
         style: TextStyle(
           fontWeight: FontWeight.bold,
-          color: appTheme.onPrimaryColor,
+          color: onPrimaryColor,
         ),
       ),
       centerTitle: true,
@@ -55,7 +58,7 @@ class CustomHeader extends ConsumerWidget implements PreferredSizeWidget {
               : null,
         ),
       ),
-      iconTheme: IconThemeData(color: appTheme.onPrimaryColor),
+      iconTheme: IconThemeData(color: onPrimaryColor),
       actions: [
         IconButton(
           icon: const Icon(Icons.search),
@@ -72,7 +75,7 @@ class CustomHeader extends ConsumerWidget implements PreferredSizeWidget {
             icon: Container(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               decoration: BoxDecoration(
-                border: Border.all(color: appTheme.onPrimaryColor, width: 1.5),
+                border: Border.all(color: onPrimaryColor, width: 1.5),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -80,7 +83,7 @@ class CustomHeader extends ConsumerWidget implements PreferredSizeWidget {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: appTheme.onPrimaryColor,
+                  color: onPrimaryColor,
                   height: 1.2,
                 ),
               ),

@@ -24,7 +24,7 @@ class ThemeSelectionModal extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // カラー変更セクション
-              _buildSectionHeader('カラー変更'),
+              _buildSectionHeader(context, 'カラー変更'),
               const SizedBox(height: 16),
               Center(
                 child: GridView.count(
@@ -61,7 +61,7 @@ class ThemeSelectionModal extends ConsumerWidget {
               const SizedBox(height: 48),
 
               // きせかえセクション
-              _buildSectionHeader('きせかえ'),
+              _buildSectionHeader(context, 'きせかえ'),
               const SizedBox(height: 16),
               _buildThemeOption(
                 context: context,
@@ -110,7 +110,8 @@ class ThemeSelectionModal extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -119,7 +120,7 @@ class ThemeSelectionModal extends ConsumerWidget {
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.2),
         ),
         const SizedBox(height: 8),
-        Divider(color: Colors.grey.shade200),
+        Divider(color: isDark ? Colors.grey.shade700 : Colors.grey.shade200),
       ],
     );
   }
@@ -134,6 +135,16 @@ class ThemeSelectionModal extends ConsumerWidget {
   }) {
     final isSelected = currentType == type;
     final themeColor = Theme.of(context).primaryColor;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final unselectedCardColor = isDark ? Colors.grey.shade800 : Colors.white;
+    final selectedCardColor = isDark ? themeColor.withValues(alpha: 0.25) : themeColor.withValues(alpha: 0.08);
+    final unselectedBorderColor = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
+    final selectedBorderColor = isDark ? themeColor.withValues(alpha: 0.8) : themeColor;
+    final unselectedTextColor = isDark ? Colors.white70 : Colors.black87;
+    // ダークモード時は、選択中の文字色も視認性のため少し明るめのテーマ色や白系にする
+    final selectedTextColor = isDark ? Colors.white : themeColor;
+    final checkIconColor = isDark ? Colors.white : themeColor;
 
     return InkWell(
       onTap: () => ref.read(themeProvider.notifier).setThemeType(type),
@@ -144,13 +155,13 @@ class ThemeSelectionModal extends ConsumerWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? themeColor : Colors.grey.shade200,
+            color: isSelected ? selectedBorderColor : unselectedBorderColor,
             width: 2.5,
           ),
-          color: isSelected ? themeColor.withValues(alpha: 0.08) : Colors.white,
+          color: isSelected ? selectedCardColor : unselectedCardColor,
           boxShadow: isSelected ? [
             BoxShadow(
-              color: themeColor.withValues(alpha: 0.1),
+              color: isDark ? Colors.black.withValues(alpha: 0.3) : themeColor.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             )
@@ -180,12 +191,12 @@ class ThemeSelectionModal extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 18, 
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? themeColor : Colors.black87,
+                  color: isSelected ? selectedTextColor : unselectedTextColor,
                 ),
               ),
             ),
             if (isSelected)
-              Icon(Icons.check_circle, color: themeColor, size: 28),
+              Icon(Icons.check_circle, color: checkIconColor, size: 28),
           ],
         ),
       ),

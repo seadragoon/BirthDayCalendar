@@ -127,7 +127,7 @@ class _MonthGrid extends ConsumerWidget {
 
     return Column(
       children: [
-        _buildWeekHeader(settings.firstDayOfWeek),
+        _buildWeekHeader(context, settings.firstDayOfWeek),
         ...List.generate(weeks, (weekIndex) {
           final weekDates = dates.sublist(weekIndex * 7, (weekIndex + 1) * 7);
           final weeklyLanes = _calculateWeeklyLanes(weekDates, events);
@@ -227,10 +227,13 @@ class _MonthGrid extends ConsumerWidget {
   }
 
   /// 曜日行を描画
-  Widget _buildWeekHeader(int firstDayOfWeek) {
+  Widget _buildWeekHeader(BuildContext context, int firstDayOfWeek) {
     final baseWeekdays = ['日', '月', '火', '水', '木', '金', '土'];
     // 開始曜日に合わせてリストをシフト
     final weekdays = List.generate(7, (i) => baseWeekdays[(i + firstDayOfWeek) % 7]);
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white70 : Colors.black;
 
     return Container(
       decoration: BoxDecoration(
@@ -244,9 +247,9 @@ class _MonthGrid extends ConsumerWidget {
               child: Text(
                 weekdays[index],
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12, // 日付と同じサイズ
-                  color: Colors.black, // 土日も黒色
+                  color: textColor, // 土日も黒色（または白系）
                 ),
               ),
             ),
@@ -290,10 +293,12 @@ class _DayCell extends ConsumerWidget {
         ? EventColor.fromIndex(settings.colorIndex).color
         : EventColor.basil.color;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     // 日付文字色
-    Color dateColor = Colors.black;
+    Color dateColor = isDark ? Colors.white70 : Colors.black;
     if (!isCurrentMonth) {
-      dateColor = Colors.grey.shade400; // 本月以外は薄く
+      dateColor = isDark ? Colors.grey.shade600 : Colors.grey.shade400; // 本月以外は薄く
     } else if (JapaneseHoliday.isHoliday(date)) {
       dateColor = Colors.red;
     } else if (date.weekday == DateTime.sunday) {

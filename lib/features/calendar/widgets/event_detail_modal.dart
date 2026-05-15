@@ -102,6 +102,9 @@ class _EventDetailModalState extends ConsumerState<EventDetailModal> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white70 : null;
+
     final dateFormat = DateFormat('M月d日(E)', 'ja_JP');
     final titleDateStr = dateFormat.format(_currentEvent.startDate);
 
@@ -252,9 +255,10 @@ class _EventDetailModalState extends ConsumerState<EventDetailModal> {
                 Expanded(
                   child: Text(
                     _currentEvent.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      color: titleColor,
                     ),
                   ),
                 ),

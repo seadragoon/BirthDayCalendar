@@ -234,6 +234,9 @@ class _EventModalState extends ConsumerState<EventModal> {
   Widget build(BuildContext context) {
     final isEditMode = widget.existingEvent != null;
     final isSaveEnabled = _titleController.text.trim().isNotEmpty;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white70 : null;
+    final textColor = isDark ? Colors.white : Colors.black;
 
     // 通知名の連結
     final notificationLabel = _notifications.isEmpty || (_notifications.length == 1 && _notifications.first == NotificationType.none)
@@ -260,7 +263,7 @@ class _EventModalState extends ConsumerState<EventModal> {
                 border: InputBorder.none,
                 hintStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey.shade400),
               ),
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: titleColor),
               autofocus: !isEditMode,
             ),
             const Divider(),
@@ -345,7 +348,7 @@ class _EventModalState extends ConsumerState<EventModal> {
                 _recurrence == RecurrenceType.custom && _customRecurrence != null
                     ? _customRecurrence!.toReadableString()
                     : _recurrence.label,
-                style: const TextStyle(fontSize: 16, color: Colors.black)),
+                style: TextStyle(fontSize: 16, color: textColor)),
               trailing: const Icon(Icons.arrow_drop_down),
               contentPadding: EdgeInsets.zero,
               onTap: () async {
@@ -404,7 +407,7 @@ class _EventModalState extends ConsumerState<EventModal> {
             const SizedBox(height: 8),
             ListTile(
               title: const Text('通知', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
-              subtitle: Text(notificationLabel, style: const TextStyle(fontSize: 16, color: Colors.black)),
+              subtitle: Text(notificationLabel, style: TextStyle(fontSize: 16, color: textColor)),
               trailing: const Icon(Icons.arrow_drop_down),
               contentPadding: EdgeInsets.zero,
               onTap: () async {
@@ -433,13 +436,13 @@ class _EventModalState extends ConsumerState<EventModal> {
             Container(
               decoration: BoxDecoration(
                 color: Colors.grey.withValues(alpha: 0.05),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TextField(
                 controller: _commentController,
                 decoration: const InputDecoration(
-                  hintText: '詳細を入力...',
+                  hintText: 'メモを入力…',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.all(12),
                 ),
@@ -463,6 +466,9 @@ class _EventModalState extends ConsumerState<EventModal> {
     final dateFormat = DateFormat('M月d日');
     final weekdayFormat = DateFormat('E', 'ja_JP');
     final timeFormat = DateFormat('HH:mm');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white70 : Colors.black;
+    final timeColor = isDark ? Colors.white60 : Colors.black87;
 
     return Expanded(
       child: InkWell(
@@ -493,10 +499,10 @@ class _EventModalState extends ConsumerState<EventModal> {
                 children: [
                   Text(
                     dateFormat.format(dateTime),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: textColor,
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -513,10 +519,10 @@ class _EventModalState extends ConsumerState<EventModal> {
                 const SizedBox(height: 4),
                 Text(
                   timeFormat.format(dateTime),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: timeColor,
                   ),
                 ),
               ],

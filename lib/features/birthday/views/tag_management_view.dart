@@ -14,6 +14,7 @@ class TagManagementView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tagListAsync = ref.watch(tagListProvider);
     final appTheme = ref.watch(themeProvider).requireValue;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -51,30 +52,37 @@ class TagManagementView extends ConsumerWidget {
           ),
         ],
       ),
-      body: tagListAsync.when(
-        data: (tags) {
-          if (tags.isEmpty) {
-            return const Center(
-              child: Text('タグが登録されていません', style: TextStyle(color: Colors.grey)),
-            );
-          }
-          return ListView.separated(
-            itemCount: tags.length,
-            separatorBuilder: (context, index) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final tag = tags[index];
-              return ListTile(
-                title: Text(tag.name),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  onPressed: () => _showDeleteConfirmDialog(context, ref, tag.id!, tag.name),
-                ),
-              );
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => Center(child: Text('エラーが発生しました: $e')),
+      body: SizedBox.expand(
+        child: Container(
+          color: isDark ? appTheme.darkSurfaceColor : appTheme.surfaceColor,
+          child: SafeArea(
+            child: tagListAsync.when(
+              data: (tags) {
+                if (tags.isEmpty) {
+                  return const Center(
+                    child: Text('タグが登録されていません', style: TextStyle(color: Colors.grey)),
+                  );
+                }
+                return ListView.separated(
+                  itemCount: tags.length,
+                  separatorBuilder: (context, index) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final tag = tags[index];
+                    return ListTile(
+                      title: Text(tag.name),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () => _showDeleteConfirmDialog(context, ref, tag.id!, tag.name),
+                      ),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, st) => Center(child: Text('エラーが発生しました: $e')),
+            ),
+          ),
+        ),
       ),
     );
   }

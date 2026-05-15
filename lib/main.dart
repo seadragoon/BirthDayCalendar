@@ -11,6 +11,8 @@ import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'package:birthday_calendar/shared/providers/theme_provider.dart';
+import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
+import 'package:birthday_calendar/features/settings/models/app_settings.dart';
 import 'package:birthday_calendar/shared/widgets/app_shell.dart';
 
 void main() async {
@@ -55,19 +57,39 @@ class BirthdayCalendarApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // 選択中のテーマを監視 (非同期対応)
     final appThemeAsync = ref.watch(themeProvider);
+    final appSettingsAsync = ref.watch(appSettingsProvider);
 
     return appThemeAsync.when(
-      data: (appTheme) => MaterialApp(
-        title: 'BirthDay Calendar',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: appTheme.primaryColor,
+      data: (appTheme) {
+        final appSettings = appSettingsAsync.valueOrNull ?? const AppSettings();
+        final themeModeMap = {
+          0: ThemeMode.system,
+          1: ThemeMode.light,
+          2: ThemeMode.dark,
+        };
+        final themeMode = themeModeMap[appSettings.themeMode] ?? ThemeMode.light;
+
+        return MaterialApp(
+          title: 'BirthDay Calendar',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: appTheme.primaryColor,
+              brightness: Brightness.light,
+            ),
+            scaffoldBackgroundColor: appTheme.backgroundColor,
+            useMaterial3: true,
           ),
-          scaffoldBackgroundColor: appTheme.backgroundColor,
-          useMaterial3: true,
-        ),
-        localizationsDelegates: const [
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: appTheme.primaryColor,
+              brightness: Brightness.dark,
+            ),
+            scaffoldBackgroundColor: appTheme.darkBackgroundColor,
+            useMaterial3: true,
+          ),
+          themeMode: themeMode,
+          localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
@@ -81,7 +103,8 @@ class BirthdayCalendarApp extends ConsumerWidget {
           );
         },
         home: const AppShell(),
-      ),
+        );
+      },
       loading: () => const MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(

@@ -51,6 +51,9 @@ class _BirthdayDetailModalState extends ConsumerState<BirthdayDetailModal> {
       orElse: () => EventColor.fromIndex(5).color,
     );
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white70 : null;
+
     return BaseModal(
       title: headerTitle,
       isEditMode: true,
@@ -91,9 +94,10 @@ class _BirthdayDetailModalState extends ConsumerState<BirthdayDetailModal> {
                 Expanded(
                   child: Text(
                     _currentBirthday.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      color: titleColor,
                     ),
                   ),
                 ),

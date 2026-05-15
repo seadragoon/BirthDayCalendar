@@ -5,6 +5,8 @@ import 'package:birthday_calendar/shared/widgets/theme_selection_modal.dart';
 import 'package:birthday_calendar/features/birthday/views/tag_management_view.dart';
 import 'package:birthday_calendar/features/settings/widgets/birthday_display_settings_modal.dart';
 import 'package:birthday_calendar/features/settings/widgets/basic_settings_modal.dart';
+import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
+import 'package:birthday_calendar/features/settings/widgets/theme_mode_dialog.dart';
 
 /// アプリのドロワー（サイドメニュー）。
 ///
@@ -15,11 +17,32 @@ class CustomDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentTheme = ref.watch(themeProvider).requireValue;
+    final appSettingsAsync = ref.watch(appSettingsProvider);
+    final themeMode = appSettingsAsync.valueOrNull?.themeMode ?? 1;
+
+    IconData getThemeModeIcon() {
+      switch (themeMode) {
+        case 0:
+          return Icons.brightness_auto;
+        case 1:
+          return Icons.light_mode;
+        case 2:
+          return Icons.dark_mode;
+        default:
+          return Icons.light_mode;
+      }
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final onPrimaryColor = isDark ? currentTheme.darkOnPrimaryColor : currentTheme.onPrimaryColor;
 
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
+      child: Column(
         children: [
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
           DrawerHeader(
             decoration: BoxDecoration(
               color: currentTheme.primaryColor,
@@ -37,7 +60,7 @@ class CustomDrawer extends ConsumerWidget {
             child: Text(
               '設定メニュー',
               style: TextStyle(
-                color: currentTheme.onPrimaryColor,
+                color: onPrimaryColor,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -125,6 +148,30 @@ class CustomDrawer extends ConsumerWidget {
                 ],
               );
             },
+          ),
+        ],
+            ),
+          ),
+          const Divider(height: 1),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(getThemeModeIcon()),
+                    tooltip: 'ダークモード設定',
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => const ThemeModeDialog(),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

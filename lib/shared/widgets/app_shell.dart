@@ -23,12 +23,14 @@ class AppShell extends ConsumerWidget {
     final viewType = ref.watch(viewTypeProvider);
     final appTheme = ref.watch(themeProvider).requireValue;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SizedBox.expand(
       child: Scaffold(
         appBar: const CustomHeader(),
         drawer: const CustomDrawer(),
         body: Container(
-          color: appTheme.surfaceColor,
+          color: isDark ? appTheme.darkSurfaceColor : appTheme.surfaceColor,
           child: SafeArea(
             child: _buildBody(viewType),
           ),

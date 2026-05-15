@@ -130,7 +130,16 @@ lib/
 │   │       ├── birthday_modal.dart              # 誕生日追加/編集モーダル
 │   │       └── tag_filter_bar.dart              # タグフィルターバー
 │   │
-│   └── settings/                                # ── 設定機能 ──（現在空）
+│   └── settings/                                # ── 設定機能 ──
+│       ├── models/
+│       │   ├── app_settings.dart                # AppSettings（themeMode 等）
+│       │   └── birthday_display_settings.dart   # BirthdayDisplaySettings
+│       ├── providers/
+│       │   └── settings_providers.dart          # AppSettingsNotifier 等
+│       └── widgets/
+│           ├── basic_settings_modal.dart        # 基本設定モーダル
+│           ├── birthday_display_settings_modal.dart # 誕生日表示設定モーダル
+│           └── theme_mode_dialog.dart           # ダークモード切り替えダイアログ
 │
 └── shared/                                      # ── 共通部品 ──
     ├── constants/
@@ -348,6 +357,7 @@ CREATE TABLE tags (
 | 8 | きせかえ機能 | ✅ 完了 |
 | 9 | 仕上げ（検索/設定/静的解析） | ✅ 完了 |
 | 10 | 繰り返し予定の大幅拡張 | ✅ 完了 |
+| 11 | ダークモード対応 | ✅ 完了 |
 
 **全体進捗: 100%** — 拡張機能も含め実装完了済み
 

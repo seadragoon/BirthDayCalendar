@@ -52,7 +52,6 @@ class TagFilterBar extends ConsumerWidget {
                   onSelected: (selected) {
                     ref.read(selectedTagProvider.notifier).state = item.tagValue;
                   },
-                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   selectedColor: Theme.of(context).colorScheme.primaryContainer,
                   showCheckmark: false,
                 ),

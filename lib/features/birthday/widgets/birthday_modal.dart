@@ -223,6 +223,9 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
   Widget build(BuildContext context) {
     final isEditMode = widget.existingBirthday != null;
     final isSaveEnabled = _nameController.text.trim().isNotEmpty;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white70 : null;
+    final textColor = isDark ? Colors.white70 : Colors.black;
 
     // 年を設定しない場合は月日のみ表示
     final dateFormat = !_isYearSet ? DateFormat('M月d日') : DateFormat('yyyy年M月d日', 'ja_JP');
@@ -247,7 +250,7 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
                 border: InputBorder.none,
                 hintStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey.shade400),
               ),
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: titleColor),
               autofocus: !isEditMode,
             ),
             const Divider(),
@@ -267,7 +270,7 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
                 ),
                 child: Row(
                   children: [
-                    Text(dateFormat.format(_date), style: const TextStyle(fontSize: 20)),
+                    Text(dateFormat.format(_date), style: TextStyle(fontSize: 20, color: textColor)),
                     const Spacer(),
                     const Icon(Icons.calendar_today, size: 20, color: Colors.grey),
                   ],
@@ -304,7 +307,7 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
                 _notifications.isEmpty || (_notifications.length == 1 && _notifications.first == NotificationType.none)
                     ? 'なし'
                     : _notifications.map((e) => e.label).join(', '),
-                style: const TextStyle(fontSize: 16, color: Colors.black),
+                style: TextStyle(fontSize: 16, color: textColor),
               ),
               trailing: const Icon(Icons.arrow_drop_down),
               contentPadding: EdgeInsets.zero,
@@ -332,18 +335,21 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
             const SizedBox(height: 16),
             const Text('メモ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
             const SizedBox(height: 8),
-            TextField(
-              controller: _commentController,
-              maxLines: null,
-              minLines: 3,
-              decoration: InputDecoration(
-                hintText: 'メモを入力...',
-                fillColor: Colors.grey.withValues(alpha: 0.05),
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.05),
+                border: Border.all(color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: TextField(
+                controller: _commentController,
+                decoration: const InputDecoration(
+                  hintText: 'メモを入力…',
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.all(12),
                 ),
+                maxLines: 5,
+                minLines: 3,
               ),
             ),
             const SizedBox(height: 16),
@@ -374,6 +380,8 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
             return FilterChip(
               label: Text(tag),
               selected: isSelected,
+              selectedColor: Theme.of(context).colorScheme.primaryContainer,
+              showCheckmark: false,
               onSelected: (selected) {
                 setState(() {
                   if (selected) {

@@ -48,6 +48,8 @@ class BaseModal extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appTheme = ref.watch(themeProvider).requireValue;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final onPrimaryColor = isDark ? appTheme.darkOnPrimaryColor : appTheme.onPrimaryColor;
 
     return Scaffold(
       appBar: AppBar(
@@ -68,7 +70,7 @@ class BaseModal extends ConsumerWidget {
                 : null,
           ),
         ),
-        iconTheme: IconThemeData(color: appTheme.onPrimaryColor),
+        iconTheme: IconThemeData(color: onPrimaryColor),
         leading: IconButton(
           icon: Icon(leadingIcon),
           onPressed: () => Navigator.of(context).pop(),
@@ -78,14 +80,14 @@ class BaseModal extends ConsumerWidget {
           title,
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: appTheme.onPrimaryColor,
+            color: onPrimaryColor,
           ),
         ),
         actions: [
           if (customActions != null) ...customActions!,
           if (isEditMode && onDelete != null)
             IconButton(
-              icon: Icon(Icons.delete, color: appTheme.onPrimaryColor.withValues(alpha: 0.8)),
+              icon: Icon(Icons.delete, color: onPrimaryColor.withValues(alpha: 0.8)),
               tooltip: '削除',
               onPressed: () async {
                 final confirm = await showDialog<bool>(
@@ -122,15 +124,20 @@ class BaseModal extends ConsumerWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: isSaveActionEnabled ? appTheme.onPrimaryColor : appTheme.onPrimaryColor.withValues(alpha: 0.5),
+                  color: isSaveActionEnabled ? onPrimaryColor : onPrimaryColor.withValues(alpha: 0.5),
                 ),
               ),
             ),
           const SizedBox(width: 8),
         ],
       ),
-      body: SafeArea(
-        child: body,
+      body: SizedBox.expand(
+        child: Container(
+          color: isDark ? appTheme.darkSurfaceColor : appTheme.surfaceColor,
+          child: SafeArea(
+            child: body,
+          ),
+        ),
       ),
     );
   }

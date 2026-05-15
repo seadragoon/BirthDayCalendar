@@ -115,4 +115,15 @@ class AppSettingsNotifier extends AsyncNotifier<AppSettings> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, updated.toJson());
   }
+
+  /// ダークモード設定（0: system, 1: light, 2: dark）を更新する。
+  Future<void> setThemeMode(int value) async {
+    final current = state.valueOrNull ?? const AppSettings();
+    final updated = current.copyWith(themeMode: value);
+
+    state = AsyncValue.data(updated);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, updated.toJson());
+  }
 }
