@@ -405,5 +405,46 @@ final eventSearchProvider =
     FutureProvider.family<List<EventModel>, String>((ref, query) async {
   if (query.isEmpty) return [];
   final repository = ref.watch(eventRepositoryProvider);
-  return repository.searchEvents(query);
+  final events = await repository.searchEvents(query);
+
+  // 誕生日設定を取得し、スケジュール表示がONの場合は誕生日も検索対象に含める
+  final settingsAsync = ref.watch(birthdayDisplaySettingsProvider);
+  final birthdayRepo = ref.watch(birthdayRepositoryProvider);
+  final settings = settingsAsync.valueOrNull;
+
+  if (settings != null && settings.isShowOnSchedule) {
+    final matchingBirthdays = await birthdayRepo.searchBirthdays(query);
+
+    // 除外タグのフィルタリング
+    final filteredBirthdays = matchingBirthdays.where((b) {
+      if (b.tags.isEmpty) {
+        return !settings.excludedTags.contains('');
+      } else {
+        return !b.tags.any((tag) => settings.excludedTags.contains(tag));
+      }
+    }).toList();
+
+    final now = DateTime.now();
+    final birthdayEvents = <EventModel>[];
+    for (final b in filteredBirthdays) {
+      // 検索結果として今年（直近）の誕生日イベントを生成
+      final bDate = DateTime(now.year, b.date.month, b.date.day);
+      birthdayEvents.add(EventModel(
+        id: -(b.id ?? 0) * 10000 - now.year,
+        title: '🎂 ${b.name}の誕生日',
+        startDate: bDate,
+        endDate: DateTime(now.year, b.date.month, b.date.day, 23, 59, 59),
+        isAllDay: true,
+        colorIndex: EventColor.fromIndex(settings.colorIndex),
+        isBirthday: true,
+      ));
+    }
+
+    final merged = [...events, ...birthdayEvents];
+    merged.sort((a, b) => a.startDate.compareTo(b.startDate));
+    return merged;
+  }
+
+  return events;
 });
+

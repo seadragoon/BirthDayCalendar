@@ -33,7 +33,9 @@ class BirthdayDisplaySettingsModal extends ConsumerWidget {
                 value: settings.isShowOnSchedule,
                 contentPadding: EdgeInsets.zero,
                 onChanged: (val) {
-                  ref.read(birthdayDisplaySettingsProvider.notifier).setShowOnSchedule(val);
+                  ref
+                      .read(birthdayDisplaySettingsProvider.notifier)
+                      .setShowOnSchedule(val);
                 },
               ),
               const SizedBox(height: 32),
@@ -55,11 +57,14 @@ class BirthdayDisplaySettingsModal extends ConsumerWidget {
                           itemCount: EventColor.values.length,
                           itemBuilder: (context, index) {
                             final color = EventColor.values[index];
-                            final isSelected = settings.colorIndex == color.index;
+                            final isSelected =
+                                settings.colorIndex == color.index;
                             return GestureDetector(
                               onTap: () {
                                 ref
-                                    .read(birthdayDisplaySettingsProvider.notifier)
+                                    .read(
+                                      birthdayDisplaySettingsProvider.notifier,
+                                    )
                                     .setBirthdayColor(color);
                               },
                               child: Container(
@@ -70,20 +75,29 @@ class BirthdayDisplaySettingsModal extends ConsumerWidget {
                                   color: color.color,
                                   shape: BoxShape.circle,
                                   border: isSelected
-                                      ? Border.all(color: Colors.white, width: 3)
+                                      ? Border.all(
+                                          color: Colors.white,
+                                          width: 3,
+                                        )
                                       : null,
                                   boxShadow: isSelected
                                       ? [
                                           BoxShadow(
-                                            color: Colors.black.withValues(alpha: 0.3),
+                                            color: Colors.black.withValues(
+                                              alpha: 0.3,
+                                            ),
                                             blurRadius: 4,
                                             spreadRadius: 1,
-                                          )
+                                          ),
                                         ]
                                       : null,
                                 ),
                                 child: isSelected
-                                    ? const Icon(Icons.check, color: Colors.white, size: 20)
+                                    ? const Icon(
+                                        Icons.check,
+                                        color: Colors.white,
+                                        size: 20,
+                                      )
                                     : null,
                               ),
                             );
@@ -96,7 +110,7 @@ class BirthdayDisplaySettingsModal extends ConsumerWidget {
               ),
               const SizedBox(height: 32),
 
-              // 大項目: タグ毎に設定 (全体設定がOFFの時はグレーアウト)
+              // 大項目: タグ毎に表示設定 (全体設定がOFFの時はグレーアウト)
               Opacity(
                 opacity: settings.isShowOnSchedule ? 1.0 : 0.4,
                 child: IgnorePointer(
@@ -104,7 +118,7 @@ class BirthdayDisplaySettingsModal extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionHeader('タグ毎に設定'),
+                      _buildSectionHeader('タグ毎に表示設定'),
                       const SizedBox(height: 8),
                       _buildTagList(ref, settings),
                     ],
@@ -161,7 +175,9 @@ class BirthdayDisplaySettingsModal extends ConsumerWidget {
               value: isVisible,
               contentPadding: EdgeInsets.zero,
               onChanged: (val) {
-                ref.read(birthdayDisplaySettingsProvider.notifier).toggleTagVisibility(tag, val);
+                ref
+                    .read(birthdayDisplaySettingsProvider.notifier)
+                    .toggleTagVisibility(tag, val);
               },
             );
           },
