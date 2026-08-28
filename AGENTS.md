@@ -1,7 +1,7 @@
 # AGENTS.md — AI向けプロジェクトリファレンス
 
 > **このファイルはAIアシスタントがセッション開始時に最初に読むべきドキュメントです。**
-> 最終更新: 2026-05-11
+> 最終更新: 2026-08-29
 
 ---
 
@@ -42,7 +42,7 @@
 | 項目 | 内容 |
 |------|------|
 | **アプリ名** | BirthDay Calendar |
-| **目的** | Yahoo!カレンダー（Y!カレンダー）のUI/UXをベースとした、シンプルかつ拡張性の高いカレンダーアプリ |
+| **目的** | Yahoo!カレンダー（Y!カレンダー）のUI/UXをベースとした、シンプルかつ拡張性の高いカレンダー＆誕生日管理アプリ |
 | **プラットフォーム** | Android / iOS / Windows / Web（主にAndroid向け） |
 | **画面方向** | 縦向き固定 |
 | **言語** | Dart (Null Safety) |
@@ -56,13 +56,14 @@
 | カテゴリ | パッケージ | バージョン | 用途 |
 |----------|-----------|-----------|------|
 | 状態管理 | `flutter_riverpod` | ^2.6.1 | Provider / Notifier による状態管理 |
-| カレンダーUI | `calendar_view` | ^1.2.0 | MonthView、日付跨ぎバー表示 |
-| 日付処理 | `intl` | ^0.19.0 | 日本語(ja_JP)フォーマット |
+| カレンダーUI | `calendar_view` | ^1.2.0 | MonthView、日付跨ぎバー表示（一部カスタム実装） |
+| 日付処理 | `intl` | ^0.20.2 | 日本語(ja_JP)フォーマット |
 | ローカルDB | `sqflite` | ^2.4.1 | CRUD操作 |
 | DB (デスクトップ) | `sqflite_common_ffi` | ^2.4.0+2 | Windows/Linux対応 |
 | DB (Web) | `sqflite_common_ffi_web` | ^1.1.1 | Web対応 |
 | パス操作 | `path` | ^1.9.1 | DBファイルパス構築 |
 | 祝日判定 | `holiday_jp` | ^0.0.8 | 日本の祝日データと判定論理 |
+| ローカル永続化 | `shared_preferences` | ^2.5.5 | アプリ設定・誕生日表示設定・テーマ永続化 |
 | ローカル通知 | `flutter_local_notifications` | ^18.0.1 | 予定・誕生日のローカル通知スケジュール |
 | タイムゾーン | `timezone` | ^0.9.4 | 日時のタイムゾーン制御 |
 
@@ -71,7 +72,7 @@
 ## 3. アーキテクチャ
 
 ### 3.1 設計方針
-- **Feature-based ディレクトリ構成**: 機能ごとにディレクトリを分離
+- **Feature-based ディレクトリ構成**: 機能ごとにディレクトリを分離 (`calendar`, `birthday`, `settings`, `shared`)
 - **疎結合**: UI → Provider → Repository → DB の一方向依存
 - **ロジック分離**: Widget内にビジネスロジックを書かず、Notifierに集約
 
@@ -101,74 +102,82 @@ lib/
 ├── features/
 │   ├── calendar/                                # ── スケジュール機能 ──
 │   │   ├── models/
+│   │   │   ├── custom_recurrence.dart           # CustomRecurrence（高度な繰り返しルールモデル）
+│   │   │   ├── edit_scope.dart                  # EditScope enum（all/thisEvent/followingEvents）
 │   │   │   └── event_model.dart                 # EventModel（toMap/fromMap/copyWith）
 │   │   ├── repositories/
 │   │   │   ├── event_repository.dart            # EventRepository 抽象クラス
 │   │   │   └── sqflite_event_repository.dart    # sqflite実装
 │   │   ├── providers/
-│   │   │   └── event_providers.dart             # EventsByDate/Month Notifier, 検索Provider
+│   │   │   └── event_providers.dart             # EventsByDate/Month Notifier, 繰り返し展開, 検索Provider
 │   │   ├── views/
 │   │   │   └── schedule_view.dart               # Schedule画面（MonthView + EventList統合）
 │   │   └── widgets/
-│   │       ├── custom_month_view.dart           # 横スワイプ可能・可変高さのカスタムカレンダー
-│   │       ├── event_detail_modal.dart          # イベント詳細表示モーダル（読み取り専用）
+│   │       ├── custom_month_view.dart           # 横スワイプ可能・可変高さ・複数日バーのカスタムカレンダー
+│   │       ├── custom_recurrence_modal.dart     # カスタム繰り返し設定モーダル
+│   │       ├── event_detail_modal.dart          # イベント詳細表示モーダル（読み取り専用・範囲選択編集/削除）
 │   │       ├── event_list_view.dart             # 選択日付のイベントリスト
 │   │       ├── event_modal.dart                 # イベント追加/編集モーダル
 │   │       └── today_bar.dart                   # 選択日付表示バー
 │   │
 │   ├── birthday/                                # ── 誕生日機能 ──
 │   │   ├── models/
-│   │   │   └── birthday_model.dart              # BirthdayModel（age計算, daysUntil）
+│   │   │   ├── birthday_model.dart              # BirthdayModel（age計算, daysUntilNextBirthday）
+│   │   │   └── tag_model.dart                   # TagModel（タグ管理用データモデル）
 │   │   ├── repositories/
 │   │   │   ├── birthday_repository.dart         # BirthdayRepository 抽象クラス
-│   │   │   └── sqflite_birthday_repository.dart # sqflite実装
+│   │   │   ├── sqflite_birthday_repository.dart # sqflite実装
+│   │   │   ├── tag_repository.dart              # TagRepository 抽象クラス
+│   │   │   └── sqflite_tag_repository.dart      # sqfliteタグ管理実装
 │   │   ├── providers/
-│   │   │   └── birthday_providers.dart          # BirthdayList Notifier, タグフィルタ, 検索
+│   │   │   └── birthday_providers.dart          # BirthdayList Notifier, TagList, タグフィルタ, 検索
 │   │   ├── views/
-│   │   │   └── birthday_view.dart               # Birthday画面（タグフィルタ + リスト統合）
+│   │   │   ├── birthday_view.dart               # Birthday画面（タグフィルタ + リスト統合）
+│   │   │   └── tag_management_view.dart         # タグ管理画面（追加・削除・一覧）
 │   │   └── widgets/
-│   │       ├── birthday_detail_modal.dart       # 誕生日詳細表示モーダル（読み取り専用）
-│   │       ├── birthday_list_view.dart          # 誕生日リスト表示
+│   │       ├── birthday_detail_modal.dart       # 誕生日詳細表示モーダル（読み取り専用・編集/削除）
+│   │       ├── birthday_list_view.dart          # 誕生日リスト表示（ソート・カウント対応）
 │   │       ├── birthday_modal.dart              # 誕生日追加/編集モーダル
 │   │       └── tag_filter_bar.dart              # タグフィルターバー
 │   │
 │   └── settings/                                # ── 設定機能 ──
 │       ├── models/
-│       │   ├── app_settings.dart                # AppSettings（themeMode 等）
-│       │   └── birthday_display_settings.dart   # BirthdayDisplaySettings
+│       │   ├── app_settings.dart                # AppSettings（通知有効/週の開始日/themeMode 等）
+│       │   └── birthday_display_settings.dart   # BirthdayDisplaySettings（スケジュール連動・タグ除外・カラー）
 │       ├── providers/
-│       │   └── settings_providers.dart          # AppSettingsNotifier 等
+│       │   └── settings_providers.dart          # AppSettingsNotifier, BirthdayDisplaySettingsNotifier
 │       └── widgets/
-│           ├── basic_settings_modal.dart        # 基本設定モーダル
-│           ├── birthday_display_settings_modal.dart # 誕生日表示設定モーダル
-│           └── theme_mode_dialog.dart           # ダークモード切り替えダイアログ
+│           ├── basic_settings_modal.dart        # 基本設定モーダル（通知一括/週開始日）
+│           ├── birthday_display_settings_modal.dart # 誕生日カレンダー表示設定モーダル
+│           └── theme_mode_dialog.dart           # ダークモード切り替えダイアログ（システム/ライト/ダーク）
 │
 └── shared/                                      # ── 共通部品 ──
     ├── constants/
     │   ├── event_color.dart                     # EventColor enum（12色）
-    │   ├── japanese_holiday.dart                # 日本の祝日判定ユーティリティ
+    │   ├── japanese_holiday.dart                # 日本の祝日判定ユーティリティ（振替休日/国民の休日対応）
+    │   ├── notification_type.dart               # NotificationType enum（なし/当日/1日前/2日前/3日前/1週間前）
     │   ├── recurrence_type.dart                 # RecurrenceType enum（none/daily/weekly/monthly/yearly/weekday/custom）
-    │   ├── notification_type.dart               # NotificationType enum（none〜1週間前）
     │   └── view_type.dart                       # ViewType enum（schedule/birthday）
     ├── services/
-    │   └── notification_service.dart            # 通知の初期化・スケジュール制御
+    │   └── notification_service.dart            # 通知の初期化・スケジュール制御（ローカル通知）
     ├── db/
-    │   └── database_helper.dart                 # DatabaseHelper シングルトン（テーブル定義）
+    │   └── database_helper.dart                 # DatabaseHelper シングルトン（v6 スキーマ・マイグレーション）
     ├── providers/
-    │   ├── repository_providers.dart            # EventRepository / BirthdayRepository Provider
     │   ├── app_state_providers.dart             # selectedDate / currentMonth / viewType
-    │   └── theme_provider.dart                  # ThemeNotifier（きせかえ状態管理）
+    │   ├── repository_providers.dart            # EventRepository / BirthdayRepository / TagRepository Provider
+    │   └── theme_provider.dart                  # ThemeNotifier（きせかえテーマ＆カラー永続化管理）
     ├── theme/
     │   └── app_theme.dart                       # AppThemeData / AppThemeType enum（standard/sakura/night）
     └── widgets/
         ├── app_shell.dart                       # Scaffold統合（Header + Main + Footer + FAB）
         ├── base_modal.dart                      # 共通Full Screen Modalヘッダー
-        ├── custom_header.dart                   # ヘッダー（タイトル/メニュー/検索/今日ボタン）
-        ├── custom_footer.dart                   # フッター（スケジュール/誕生日 切り替え）
+        ├── custom_drawer.dart                   # ドロワー（きせかえ/設定/タグ管理/About）
         ├── custom_fab.dart                      # FAB（ViewType連動、モーダル起動）
-        ├── custom_drawer.dart                   # ドロワー（テーマ切り替え/About）
-        ├── custom_search_delegate.dart          # 検索モーダル（リアルタイム検索）
-        └── multi_select_dialog.dart             # 汎用複数選択ダイアログ
+        ├── custom_footer.dart                   # フッター（スケジュール/誕生日 切り替え）
+        ├── custom_header.dart                   # ヘッダー（タイトル/メニュー/検索/今日ボタン）
+        ├── custom_search_delegate.dart          # 検索モーダル（予定・誕生日 リアルタイム横断検索）
+        ├── multi_select_dialog.dart             # 汎用複数選択ダイアログ
+        └── theme_selection_modal.dart           # きせかえテーマ選択モーダル
 ```
 
 ---
@@ -189,8 +198,8 @@ lib/
 | customRecurrence | `CustomRecurrence?` | null | custom_recurrence | カスタム繰り返し詳細（JSON） |
 | exceptionDates | `List<DateTime>` | [] | exception_dates | 繰り返し除外日リスト（JSON） |
 | notifications | `List<NotificationType>` | [none] | notification | 通知設定（JSON形式） |
-| comment | `String` | '' | comment | コメント |
-| isBirthday | `bool` | false | is_birthday | 誕生日紐づきフラグ |
+| comment | `String` | '' | comment | コメント / メモ |
+| isBirthday | `bool` | false | is_birthday | 誕生日紐づきフラグ（カレンダー展開用仮想フラグ） |
 | createdAt | `DateTime` | startDate | created_at | 作成日時 |
 | updatedAt | `DateTime` | startDate | updated_at | 更新日時 |
 
@@ -204,6 +213,7 @@ lib/
 | isYearUnknown | `bool` | false | is_year_unknown | 生まれ年不明フラグ |
 | tags | `List<String>` | [] | tags | タグ（JSON文字列保存） |
 | notifications | `List<NotificationType>` | [none] | notification | 通知設定（JSON形式） |
+| comment | `String` | '' | comment | コメント / メモ |
 | createdAt | `DateTime` | date | created_at | 作成日時 |
 | updatedAt | `DateTime` | date | updated_at | 更新日時 |
 
@@ -211,6 +221,37 @@ lib/
 - `int? age` — 満年齢（isYearUnknown時はnull）
 - `int? ageThisYear` — 今年の誕生日に迎える（または迎えた）年齢（isYearUnknown時はnull）
 - `int daysUntilNextBirthday` — 次の誕生日までの日数
+
+### 5.3 TagModel (`features/birthday/models/tag_model.dart`)
+
+| フィールド | 型 | デフォルト | DB列名 | 説明 |
+|-----------|-----|---------|--------|------|
+| id | `int?` | null (AUTOINCREMENT) | id | 主キー |
+| name | `String` | (必須) | name | タグ名（UNIQUE） |
+| createdAt | `DateTime` | (必須) | created_at | 作成日時（ミリ秒） |
+
+### 5.4 CustomRecurrence (`features/calendar/models/custom_recurrence.dart`)
+
+| フィールド | 型 | デフォルト | 説明 |
+|-----------|-----|---------|------|
+| interval | `int` | 1 | 繰り返す間隔（例: 2週間ごと） |
+| unit | `CustomRecurrenceUnit` | days | 単位 (days, weeks, months, years) |
+| daysOfWeek | `List<int>?` | null | 曜日指定 (1=月 〜 7=日) |
+| monthType | `CustomMonthType?` | null | 月指定種別 (dayOfMonth: 日付指定, nthWeekday: 第N曜日) |
+| isWeekday | `bool` | false | 平日のみ（日本の祝日を除く）フラグ |
+| endType | `CustomEndType` | none | 終了条件 (none: 期限なし, date: 日付指定, count: 回数指定) |
+| endDate | `DateTime?` | null | 終了日 |
+| count | `int?` | null | 終了回数 |
+
+### 5.5 AppSettings (`features/settings/models/app_settings.dart`)
+- `isNotificationsEnabled`: 全体通知の有効/無効
+- `firstDayOfWeek`: 週の開始日（0: 日曜日, 1: 月曜日）
+- `themeMode`: テーマモード（0: システム設定, 1: ライト, 2: ダーク）
+
+### 5.6 BirthdayDisplaySettings (`features/settings/models/birthday_display_settings.dart`)
+- `isShowOnSchedule`: スケジュール画面に誕生日を表示するか
+- `excludedTags`: 表示から除外するタグのリスト（空文字 '' は「未設定」）
+- `colorIndex`: スケジュール表示時の帯カラー（EventColor）
 
 ---
 
@@ -223,16 +264,17 @@ lib/
 | `selectedDateProvider` | `StateProvider<DateTime>` | カレンダーで選択中の日付 |
 | `currentMonthProvider` | `StateProvider<DateTime>` | 表示中の月 |
 | `viewTypeProvider` | `StateProvider<ViewType>` | 表示モード（schedule/birthday） |
-| `eventRepositoryProvider` | `Provider<EventRepository>` | EventRepositoryインスタンス |
-| `birthdayRepositoryProvider` | `Provider<BirthdayRepository>` | BirthdayRepositoryインスタンス |
-| `themeProvider` | `NotifierProvider<ThemeNotifier, AppThemeData>` | きせかえテーマ |
+| `eventRepositoryProvider` | `Provider<EventRepository>` | EventRepository インスタンス |
+| `birthdayRepositoryProvider` | `Provider<BirthdayRepository>` | BirthdayRepository インスタンス |
+| `tagRepositoryProvider` | `Provider<TagRepository>` | TagRepository インスタンス |
+| `themeProvider` | `AsyncNotifierProvider<ThemeNotifier, AppThemeData>` | きせかえテーマ＆カラー永続化管理 |
 
 ### 6.2 イベント関連 (`features/calendar/providers/`)
 
 | Provider名 | 型 | 役割 |
 |------------|-----|------|
-| `eventsByDateProvider` | `AsyncNotifierProvider<..., List<EventModel>>` | 選択日付のイベント一覧 |
-| `eventsByMonthProvider` | `AsyncNotifierProvider<..., List<EventModel>>` | 表示月のイベント一覧（カレンダーバー表示用） |
+| `eventsByDateProvider` | `AsyncNotifierProvider<..., List<EventModel>>` | 選択日付のイベント一覧（誕生日連携含む） |
+| `eventsByMonthProvider` | `AsyncNotifierProvider<..., List<EventModel>>` | 表示月のイベント一覧（カレンダーバー表示用、展開済み） |
 | `eventSearchProvider` | `FutureProvider.family<..., String>` | イベント検索結果 |
 
 ### 6.3 誕生日関連 (`features/birthday/providers/`)
@@ -240,10 +282,18 @@ lib/
 | Provider名 | 型 | 役割 |
 |------------|-----|------|
 | `birthdayListProvider` | `AsyncNotifierProvider<..., List<BirthdayModel>>` | 全誕生日リスト |
+| `tagListProvider` | `AsyncNotifierProvider<..., List<TagModel>>` | 管理タグリスト |
 | `selectedTagProvider` | `StateProvider<String?>` | 選択中のタグフィルタ（null=すべて, ''=未設定） |
 | `filteredBirthdaysProvider` | `Provider<AsyncValue<List<BirthdayModel>>>` | フィルタ済み誕生日リスト |
 | `allTagsProvider` | `Provider<AsyncValue<List<String>>>` | 登録済みユニークタグ一覧 |
 | `birthdaySearchProvider` | `FutureProvider.family<..., String>` | 誕生日検索結果 |
+
+### 6.4 設定関連 (`features/settings/providers/`)
+
+| Provider名 | 型 | 役割 |
+|------------|-----|------|
+| `appSettingsProvider` | `AsyncNotifierProvider<..., AppSettings>` | アプリ全体設定（通知・週開始日・ダークモード） |
+| `birthdayDisplaySettingsProvider` | `AsyncNotifierProvider<..., BirthdayDisplaySettings>` | 誕生日カレンダー表示設定 |
 
 ---
 
@@ -279,6 +329,7 @@ CREATE TABLE birthdays (
   is_year_unknown INTEGER NOT NULL DEFAULT 0,
   tags TEXT DEFAULT '[]',           -- JSON文字列
   notification TEXT NOT NULL DEFAULT '[0]', -- 通知タイミング（JSON配列）
+  comment TEXT DEFAULT '',
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
@@ -299,22 +350,22 @@ CREATE TABLE tags (
 - **マイグレーション履歴:** 
   - v2: notification の JSON化
   - v3: tags テーブル追加 + デフォルトデータ投入
-  - v4: ... (UI設定マイグレーション等)
+  - v4: 初期タグの投入補正
   - v5: birthdays に comment カラム追加
   - v6: events に custom_recurrence と exception_dates カラム追加
 
 ---
 
-## 8. きせかえテーマ
+## 8. きせかえテーマ & ダークモード
 
 | テーマ名 | `AppThemeType` | primaryColor | 背景画像 |
 |---------|---------------|-------------|---------|
-| 標準（シンプルホワイト） | `standard` | Blue 400 (`#42A5F5`) | なし |
+| 標準（シンプルホワイト） | `standard` | Lavender (`#7986CB`) または 12色カスタム | なし |
 | 桜（サクラ） | `sakura` | Pink 400 (`#EC407A`) | `assets/images/themes/sakura.png` |
 | 夜空（ナイト） | `night` | Indigo 600 (`#3949AB`) | `assets/images/themes/night.png` |
 
-- テーマ状態はオンメモリ管理（SharedPreferencesでの永続化は未実装）
-- Header/Footerに背景画像を適用、Main Viewは`surfaceColor`による透過
+- **永続化:** `SharedPreferences` で選択テーマおよび標準テーマのカスタムカラーを保存。
+- **ダークモード:** `AppSettings` の `themeMode` (0: システム連動, 1: ライト, 2: ダーク) に連動。きせかえ画像適用時もダークモード用の透過背景色に調整。
 
 ---
 
@@ -335,15 +386,22 @@ CREATE TABLE tags (
                             [FAB]  ← 右下、ViewType連動でモーダル起動
 ```
 
-### Full Screen Modal 一覧
-| モーダル | ファイル | 操作 |
+### 画面・モーダル一覧
+| 画面 / モーダル | ファイル | 操作・用途 |
 |---------|--------|------|
-| イベント詳細表示 | `event_detail_modal.dart` | 予定の閲覧 / 編集モーダルへ遷移 / 削除 |
-| イベント追加/編集 | `event_modal.dart` | CRUD + 12色選択 + バリデーション |
+| スケジュール画面 | `schedule_view.dart` | 月間カレンダー + 選択日イベント一覧 |
+| イベント詳細表示 | `event_detail_modal.dart` | 予定の閲覧 / 繰り返し予定の編集・削除範囲選択 |
+| イベント追加/編集 | `event_modal.dart` | CRUD + 12色選択 + バリデーション + 複数通知 |
+| カスタム繰り返し設定 | `custom_recurrence_modal.dart` | 間隔・曜日・祝日除外平日・月日/週指定・終了条件 |
+| 誕生日一覧画面 | `birthday_view.dart` | タグフィルター + 年齢/日数別リスト |
 | 誕生日詳細表示 | `birthday_detail_modal.dart`| 誕生日の閲覧 / 編集モーダルへ遷移 / 削除 |
-| 誕生日追加/編集 | `birthday_modal.dart` | CRUD + タグ選択グリッド + 生まれ年不明 |
+| 誕生日追加/編集 | `birthday_modal.dart` | CRUD + タグ複数選択 + 生まれ年不明 + メモ |
 | タグ管理 | `tag_management_view.dart` | タグの一覧表示・追加・削除（フルスクリーン） |
-| 検索 | `custom_search_delegate.dart` | リアルタイム横断検索 |
+| 基本設定 | `basic_settings_modal.dart` | 通知一括ON/OFF、週の開始日切り替え |
+| 誕生日表示設定 | `birthday_display_settings_modal.dart` | スケジュール連携ON/OFF、除外タグ、表示カラー |
+| ダークモード切り替え | `theme_mode_dialog.dart` | システム連動 / ライト / ダーク の切替 |
+| きせかえテーマ選択 | `theme_selection_modal.dart` | 標準（カラーパレット12色）・桜・夜空テーマ選択 |
+| 検索 | `custom_search_delegate.dart` | 予定・誕生日のリアルタイム横断検索 |
 | 共通ヘッダー | `base_modal.dart` | ×ボタン / 決定 / 削除 / 編集 |
 
 ---
@@ -361,23 +419,30 @@ CREATE TABLE tags (
 | 7 | Full Screen Modal | ✅ 完了 |
 | 8 | きせかえ機能 | ✅ 完了 |
 | 9 | 仕上げ（検索/設定/静的解析） | ✅ 完了 |
-| 10 | 繰り返し予定の大幅拡張 | ✅ 完了 |
+| 10 | 繰り返し予定の大幅拡張（カスタム繰り返し・編集削除範囲・祝日考慮） | ✅ 完了 |
 | 11 | ダークモード対応 | ✅ 完了 |
+| 12 | タグ管理機能・誕生日カレンダー連動設定・通知スケジュール | ✅ 完了 |
 
-**全体進捗: 100%** — 拡張機能も含め実装完了済み
+**全体進捗: 100%** — 主要機能および拡張機能の実装完了済み
 
 ---
 
 ## 11. 既知の制限・今後の拡張候補
 
+> 詳細な機能アイデア集・ロードマップは [FEATURE_IDEAS.md](file:///d:/FlutterProject/BirthDayCalendar/FEATURE_IDEAS.md) を参照。
+
 | 項目 | 現状 | 改善候補 |
 |------|------|---------|
-| テーマ永続化 | オンメモリのみ | SharedPreferencesで永続化 |
+| テーマ永続化 | ✅ 実装済み | SharedPreferences でテーマ・カスタム色を永続化 |
 | 通知機能 | ✅ 実装済み | flutter_local_notificationsによるローカル通知スケジュール |
-| 設定機能 | 実装済み | 実装済み |
+| 設定機能 | ✅ 実装済み | 基本設定・誕生日表示設定・ダークモード設定 |
+| タグ管理 | ✅ 実装済み | タグ一覧・追加・削除・誕生日紐付け |
+| プレゼント履歴メモ | 未実装 (候補) | 誕生日ごとのプレゼント・お祝い履歴の記録 |
+| 六曜・旧暦表示 | 未実装 (候補) | 大安・友引などのカレンダー表示 |
+| データバックアップ | 未実装 (候補) | JSON/CSVエクスポート・インポート機能 |
+| スタンプ・アイコン | 未実装 (候補) | 予定アイコン・スタンプのカレンダー表示 |
+| ホーム画面ウィジェット | 未実装 (候補) | 次回誕生日カウントダウンウィジェット |
 | テスト | `test/` ディレクトリは空 | Unit/Widget テスト追加 |
-| プッシュ通知 | 未実装 | Firebase Cloud Messaging |
-| データバックアップ | 未実装 | Google Drive / iCloud 連携 |
 
 ---
 
@@ -413,8 +478,10 @@ CREATE TABLE tags (
 
 | ファイル | 説明 |
 |---------|------|
+| `FEATURE_IDEAS.md` | 機能拡張・追加アイデア集 & ロードマップ |
 | `PLANNING.md` | 機能要件・UI仕様の詳細定義 |
 | `PROGRESS.md` | 実装進捗の記録 |
 | `pubspec.yaml` | 依存パッケージ管理 |
 | `analysis_options.yaml` | 静的解析ルール |
 | `sample-ui/yahoo.png` | デザイン参考画像 |
+
