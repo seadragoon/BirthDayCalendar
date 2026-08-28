@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
 import 'package:birthday_calendar/features/birthday/providers/birthday_providers.dart';
 import 'package:birthday_calendar/features/birthday/widgets/birthday_detail_modal.dart';
+import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
+import 'package:birthday_calendar/shared/constants/event_color.dart';
 
 /// 誕生日データをリスト形式で表示するコンポーネント。
 class BirthdayListView extends ConsumerWidget {
@@ -14,6 +16,13 @@ class BirthdayListView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // タグでフィルタリング済みのデータを監視
     final asyncData = ref.watch(filteredBirthdaysProvider);
+
+    // カレンダー側で設定されている誕生日カラーを取得
+    final birthdaySettingsAsync = ref.watch(birthdayDisplaySettingsProvider);
+    final calendarBirthdayColor = birthdaySettingsAsync.maybeWhen(
+      data: (settings) => EventColor.fromIndex(settings.colorIndex).color,
+      orElse: () => EventColor.fromIndex(5).color, // デフォルト: Basil (Green)
+    );
 
     return asyncData.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -30,7 +39,10 @@ class BirthdayListView extends ConsumerWidget {
 
         // 次の誕生日が近い順にソートする（あと何日かで昇順）
         final sortedBirthdays = List<BirthdayModel>.from(birthdays)
-          ..sort((a, b) => a.daysUntilNextBirthday.compareTo(b.daysUntilNextBirthday));
+          ..sort(
+            (a, b) =>
+                a.daysUntilNextBirthday.compareTo(b.daysUntilNextBirthday),
+          );
 
         return ListView.builder(
           itemCount: sortedBirthdays.length,
@@ -38,19 +50,44 @@ class BirthdayListView extends ConsumerWidget {
             final birthday = sortedBirthdays[index];
             final dateFormat = DateFormat('M月d日');
 
-            // 満年齢の表示（生まれ年不明でない場合）
-            String ageText = '';
+            // 年齢の表示
+            String ageText = '年齢未設定';
             if (!birthday.isYearUnknown) {
-              final age = birthday.age;
-              if (age != null) {
-                // 今回迎える（または迎えた）年齢を表示
-                // daysUntilNextBirthday が 0 なら「今日誕生日！」のような演出も可能
+              final turningAge = birthday.ageThisYear;
+              if (turningAge != null) {
                 if (birthday.daysUntilNextBirthday == 0) {
-                  ageText = '今日 $age 歳！';
+                  ageText = '今日 $turningAge 歳！';
                 } else {
-                  ageText = '満 $age 歳';
+                  ageText = '今年 $turningAge 歳';
                 }
               }
+            }
+
+            // バッジのスタイル定義（未設定・通常・当日）
+            final colorScheme = Theme.of(context).colorScheme;
+            final isToday = birthday.daysUntilNextBirthday == 0;
+            final isUnknown = birthday.isYearUnknown;
+
+            final Color badgeBgColor;
+            final Color badgeTextColor;
+            final FontWeight badgeFontWeight;
+
+            if (isUnknown) {
+              badgeBgColor = colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.7,
+              );
+              badgeTextColor = colorScheme.onSurfaceVariant.withValues(
+                alpha: 0.75,
+              );
+              badgeFontWeight = FontWeight.w500;
+            } else if (isToday) {
+              badgeBgColor = colorScheme.primary;
+              badgeTextColor = colorScheme.onPrimary;
+              badgeFontWeight = FontWeight.bold;
+            } else {
+              badgeBgColor = colorScheme.secondaryContainer;
+              badgeTextColor = colorScheme.onSecondaryContainer;
+              badgeFontWeight = FontWeight.bold;
             }
 
             return ListTile(
@@ -58,19 +95,25 @@ class BirthdayListView extends ConsumerWidget {
                 alignment: Alignment.center,
                 children: [
                   CircleAvatar(
-                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    backgroundColor: isToday
+                        ? calendarBirthdayColor.withValues(alpha: 0.2)
+                        : colorScheme.primaryContainer,
                     child: Icon(
                       Icons.cake,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      color: isToday
+                          ? calendarBirthdayColor
+                          : colorScheme.onPrimaryContainer,
                     ),
                   ),
-                  if (birthday.daysUntilNextBirthday == 0)
-                    // 当日の場合はキラキラ等をつける（暫定でオレンジ枠）
+                  if (isToday)
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.orange, width: 2),
+                          border: Border.all(
+                            color: calendarBirthdayColor,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
@@ -80,25 +123,46 @@ class BirthdayListView extends ConsumerWidget {
                 birthday.name,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: Text(
-                '${dateFormat.format(birthday.date)}  (あと ${birthday.daysUntilNextBirthday} 日)',
-              ),
-              trailing: ageText.isNotEmpty
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondaryContainer,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        ageText,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.onSecondaryContainer,
+              subtitle: isToday
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.celebration,
+                          size: 16,
+                          color: Colors.orange,
                         ),
-                      ),
+                        const SizedBox(width: 4),
+                        Text(
+                          dateFormat.format(birthday.date),
+                          style: TextStyle(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     )
-                  : null,
+                  : Text(
+                      '${dateFormat.format(birthday.date)}  (あと ${birthday.daysUntilNextBirthday} 日)',
+                    ),
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: badgeBgColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  ageText,
+                  style: TextStyle(
+                    fontSize: isUnknown ? 12 : 13,
+                    fontWeight: badgeFontWeight,
+                    color: badgeTextColor,
+                  ),
+                ),
+              ),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(

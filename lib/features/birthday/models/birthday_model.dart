@@ -49,6 +49,14 @@ class BirthdayModel {
     return calculatedAge;
   }
 
+  /// 今年の誕生日に迎える（または迎えた）年齢を計算して返す。
+  ///
+  /// [isYearUnknown] が true の場合は null を返す。
+  int? get ageThisYear {
+    if (isYearUnknown) return null;
+    return DateTime.now().year - date.year;
+  }
+
   /// 次の誕生日までの日数を返す。
   /// 当日の場合は 0 を返す。
   int get daysUntilNextBirthday {

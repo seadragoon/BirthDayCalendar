@@ -489,6 +489,7 @@ class _DayCell extends ConsumerWidget {
                     fontWeight: FontWeight.bold,
                   ),
                   maxLines: 1,
+                  softWrap: false,
                   overflow: TextOverflow.clip,
                 )
               : const SizedBox.shrink(),

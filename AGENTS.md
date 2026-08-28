@@ -205,6 +205,7 @@ lib/
 
 **計算プロパティ:**
 - `int? age` — 満年齢（isYearUnknown時はnull）
+- `int? ageThisYear` — 今年の誕生日に迎える（または迎えた）年齢（isYearUnknown時はnull）
 - `int daysUntilNextBirthday` — 次の誕生日までの日数
 
 ---
