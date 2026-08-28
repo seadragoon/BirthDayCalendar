@@ -12,6 +12,7 @@ import 'package:birthday_calendar/shared/constants/event_color.dart';
 import 'package:birthday_calendar/shared/constants/recurrence_type.dart';
 import 'package:birthday_calendar/shared/constants/japanese_holiday.dart';
 import 'package:birthday_calendar/features/calendar/models/custom_recurrence.dart';
+import 'package:birthday_calendar/shared/services/notification_service.dart';
 
 /// 選択中の日付に紐づくイベント一覧を提供するProvider。
 final eventsByDateProvider =
@@ -65,7 +66,9 @@ class EventsByDateNotifier extends AsyncNotifier<List<EventModel>> {
   Future<void> addEvent(EventModel event) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await _repository.insertEvent(event);
+      final id = await _repository.insertEvent(event);
+      final newEvent = event.copyWith(id: id);
+      await NotificationService.instance.scheduleEventNotification(newEvent);
       return build(); // build() を再実行して誕生日込みで取得
     });
   }
@@ -75,6 +78,7 @@ class EventsByDateNotifier extends AsyncNotifier<List<EventModel>> {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await _repository.updateEvent(event);
+      await NotificationService.instance.scheduleEventNotification(event);
       return build();
     });
   }
@@ -84,6 +88,7 @@ class EventsByDateNotifier extends AsyncNotifier<List<EventModel>> {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await _repository.deleteEvent(id);
+      await NotificationService.instance.cancelEventNotifications(id);
       return build();
     });
   }

@@ -14,6 +14,7 @@ import 'package:birthday_calendar/shared/providers/theme_provider.dart';
 import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
 import 'package:birthday_calendar/features/settings/models/app_settings.dart';
 import 'package:birthday_calendar/shared/widgets/app_shell.dart';
+import 'package:birthday_calendar/shared/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +38,9 @@ void main() async {
 
   // 日付フォーマットのロケール初期化 (ja_JP用)
   await initializeDateFormatting('ja_JP');
+
+  // 通知サービスの初期化
+  await NotificationService.instance.initialize();
 
   runApp(
     // Riverpod の ProviderScope でアプリ全体をラップ

@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
 import 'package:birthday_calendar/features/birthday/models/tag_model.dart';
 import 'package:birthday_calendar/features/birthday/repositories/birthday_repository.dart';
 import 'package:birthday_calendar/features/birthday/repositories/tag_repository.dart';
 import 'package:birthday_calendar/shared/providers/repository_providers.dart';
+import 'package:birthday_calendar/shared/services/notification_service.dart';
 
 /// 全誕生日データを管理するProvider。
 ///
@@ -28,7 +28,9 @@ class BirthdayListNotifier extends AsyncNotifier<List<BirthdayModel>> {
   Future<void> addBirthday(BirthdayModel birthday) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await _repository.insertBirthday(birthday);
+      final id = await _repository.insertBirthday(birthday);
+      final newBirthday = birthday.copyWith(id: id);
+      await NotificationService.instance.scheduleBirthdayNotification(newBirthday);
       return _repository.getAllBirthdays();
     });
   }
@@ -38,6 +40,7 @@ class BirthdayListNotifier extends AsyncNotifier<List<BirthdayModel>> {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await _repository.updateBirthday(birthday);
+      await NotificationService.instance.scheduleBirthdayNotification(birthday);
       return _repository.getAllBirthdays();
     });
   }
@@ -47,6 +50,7 @@ class BirthdayListNotifier extends AsyncNotifier<List<BirthdayModel>> {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await _repository.deleteBirthday(id);
+      await NotificationService.instance.cancelBirthdayNotifications(id);
       return _repository.getAllBirthdays();
     });
   }

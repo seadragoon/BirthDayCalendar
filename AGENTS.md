@@ -63,6 +63,8 @@
 | DB (Web) | `sqflite_common_ffi_web` | ^1.1.1 | Web対応 |
 | パス操作 | `path` | ^1.9.1 | DBファイルパス構築 |
 | 祝日判定 | `holiday_jp` | ^0.0.8 | 日本の祝日データと判定論理 |
+| ローカル通知 | `flutter_local_notifications` | ^18.0.1 | 予定・誕生日のローカル通知スケジュール |
+| タイムゾーン | `timezone` | ^0.9.4 | 日時のタイムゾーン制御 |
 
 ---
 
@@ -148,6 +150,8 @@ lib/
     │   ├── recurrence_type.dart                 # RecurrenceType enum（none/daily/weekly/monthly/yearly/weekday/custom）
     │   ├── notification_type.dart               # NotificationType enum（none〜1週間前）
     │   └── view_type.dart                       # ViewType enum（schedule/birthday）
+    ├── services/
+    │   └── notification_service.dart            # 通知の初期化・スケジュール制御
     ├── db/
     │   └── database_helper.dart                 # DatabaseHelper シングルトン（テーブル定義）
     ├── providers/
@@ -369,7 +373,7 @@ CREATE TABLE tags (
 | 項目 | 現状 | 改善候補 |
 |------|------|---------|
 | テーマ永続化 | オンメモリのみ | SharedPreferencesで永続化 |
-| 通知機能 | UI設定のみ（実際の通知は未実装） | `flutter_local_notifications` 統合 |
+| 通知機能 | ✅ 実装済み | flutter_local_notificationsによるローカル通知スケジュール |
 | 設定機能 | 実装済み | 実装済み |
 | テスト | `test/` ディレクトリは空 | Unit/Widget テスト追加 |
 | プッシュ通知 | 未実装 | Firebase Cloud Messaging |
