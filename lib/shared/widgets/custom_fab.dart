@@ -42,7 +42,32 @@ class CustomFab extends ConsumerWidget {
           );
         },
         tooltip: '誕生日を追加',
-        child: const Icon(Icons.cake),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            const Icon(Icons.cake, size: 24),
+            Positioned(
+              right: -6,
+              top: -6,
+              child: Container(
+                padding: const EdgeInsets.all(1.5),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    width: 1.5,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.add,
+                  size: 10,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
       );
     }
   }
