@@ -44,8 +44,14 @@ class BirthdayListView extends ConsumerWidget {
                 a.daysUntilNextBirthday.compareTo(b.daysUntilNextBirthday),
           );
 
-        return ListView.builder(
+        return ListView.separated(
           itemCount: sortedBirthdays.length,
+          separatorBuilder: (context, index) => const Divider(
+            height: 1,
+            indent: 16,
+            endIndent: 16,
+            thickness: 0.5,
+          ),
           itemBuilder: (context, index) {
             final birthday = sortedBirthdays[index];
             final dateFormat = DateFormat('M月d日');
