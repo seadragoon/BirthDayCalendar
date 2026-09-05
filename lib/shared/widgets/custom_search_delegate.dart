@@ -121,7 +121,24 @@ class CustomSearchDelegate extends SearchDelegate<void> {
                               borderRadius: BorderRadius.circular(5),
                             ),
                           ),
-                    title: Text(event.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Row(
+                      children: [
+                        if (event.icon != null && event.icon!.isNotEmpty) ...[
+                          Text(
+                            event.icon!,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        Expanded(
+                          child: Text(
+                            event.title,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                     subtitle: Text(
                       event.isBirthday
                           ? DateFormat('M月d日', 'ja_JP').format(event.startDate)

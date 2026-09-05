@@ -307,8 +307,15 @@ class _DayCell extends ConsumerWidget {
       dateColor = Colors.blue;
     }
 
-
     final isToday = _isSameDay(date, DateTime.now());
+
+    // その日のイベントに設定されているスタンプ・アイコン（ユニーク化して最大3個取得）
+    final dayIcons = lanes
+        .where((e) => e != null && e.icon != null && e.icon!.isNotEmpty)
+        .map((e) => e!.icon!)
+        .toSet()
+        .take(3)
+        .toList();
 
     return GestureDetector(
       onTap: () {
@@ -355,9 +362,9 @@ class _DayCell extends ConsumerWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // 日付テキスト (左寄せ)
+                    // 日付テキスト (左寄せ) ＆ スタンプバッジ
                     Padding(
-                      padding: const EdgeInsets.only(left: 4.0, top: 4.0, bottom: 2.0),
+                      padding: const EdgeInsets.only(left: 4.0, top: 2.0, bottom: 2.0, right: 3.0),
                       child: Row(
                         children: [
                           Text(
@@ -370,16 +377,29 @@ class _DayCell extends ConsumerWidget {
                             ),
                           ),
                           if (hasBirthday) ...[
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 3),
                             Container(
-                              width: 6,
-                              height: 6,
+                              width: 5,
+                              height: 5,
                               decoration: BoxDecoration(
                                 color: birthdayColor,
                                 shape: BoxShape.circle,
                               ),
                             ),
                           ],
+                          const Spacer(),
+                          // 日付の右横にスタンプアイコン（最大2〜3個）をバッジ表示
+                          if (dayIcons.isNotEmpty)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: dayIcons.map((ic) => Padding(
+                                padding: const EdgeInsets.only(left: 1.0),
+                                child: Text(
+                                  ic,
+                                  style: const TextStyle(fontSize: 10, height: 1.0),
+                                ),
+                              )).toList(),
+                            ),
                         ],
                       ),
                     ),
@@ -479,18 +499,31 @@ class _DayCell extends ConsumerWidget {
         ),
         alignment: Alignment.centerLeft,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+          padding: const EdgeInsets.symmetric(horizontal: 3.0),
           child: showText
-              ? Text(
-                  event.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.clip,
+              ? Row(
+                  children: [
+                    if (event.icon != null && event.icon!.isNotEmpty) ...[
+                      Text(
+                        event.icon!,
+                        style: const TextStyle(fontSize: 9, height: 1.0),
+                      ),
+                      const SizedBox(width: 2),
+                    ],
+                    Expanded(
+                      child: Text(
+                        event.title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.clip,
+                      ),
+                    ),
+                  ],
                 )
               : const SizedBox.shrink(),
         ),

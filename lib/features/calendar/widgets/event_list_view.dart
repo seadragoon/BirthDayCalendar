@@ -96,12 +96,26 @@ class EventListView extends ConsumerWidget {
                   isDottedTop: isFromPrevDay,
                   isDottedBottom: isToNextDay,
                 ),
-                title: Text(
-                  event.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
+                title: Row(
+                  children: [
+                    if (event.icon != null && event.icon!.isNotEmpty) ...[
+                      Text(
+                        event.icon!,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Expanded(
+                      child: Text(
+                        event.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
                 subtitle: Text(
                   timeText,

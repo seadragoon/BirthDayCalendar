@@ -1,7 +1,7 @@
 # AGENTS.md — AI向けプロジェクトリファレンス
 
 > **このファイルはAIアシスタントがセッション開始時に最初に読むべきドキュメントです。**
-> 最終更新: 2026-08-29
+> 最終更新: 2026-09-05
 
 ---
 
@@ -104,7 +104,8 @@ lib/
 │   │   ├── models/
 │   │   │   ├── custom_recurrence.dart           # CustomRecurrence（高度な繰り返しルールモデル）
 │   │   │   ├── edit_scope.dart                  # EditScope enum（all/thisEvent/followingEvents）
-│   │   │   └── event_model.dart                 # EventModel（toMap/fromMap/copyWith）
+│   │   │   ├── event_model.dart                 # EventModel（toMap/fromMap/copyWith）
+│   │   │   └── event_stamp.dart                 # EventStamp（スタンプモデル・プリセットカタログ）
 │   │   ├── repositories/
 │   │   │   ├── event_repository.dart            # EventRepository 抽象クラス
 │   │   │   └── sqflite_event_repository.dart    # sqflite実装
@@ -113,12 +114,13 @@ lib/
 │   │   ├── views/
 │   │   │   └── schedule_view.dart               # Schedule画面（MonthView + EventList統合）
 │   │   └── widgets/
-│   │       ├── custom_month_view.dart           # 横スワイプ可能・可変高さ・複数日バーのカスタムカレンダー
+│   │       ├── custom_month_view.dart           # 横スワイプ可能・可変高さ・複数日バーのカスタムカレンダー（アイコン・スタンプ描画対応）
 │   │       ├── custom_recurrence_modal.dart     # カスタム繰り返し設定モーダル
 │   │       ├── event_detail_modal.dart          # イベント詳細表示モーダル（読み取り専用・範囲選択編集/削除）
-│   │       ├── event_list_view.dart             # 選択日付のイベントリスト
-│   │       ├── event_modal.dart                 # イベント追加/編集モーダル
-│   │       └── today_bar.dart                   # 選択日付表示バー
+│   │       ├── event_list_view.dart             # 選択日付のイベントリスト（アイコン表示）
+│   │       ├── event_modal.dart                 # イベント追加/編集モーダル（スタンプ・アイコン選択）
+│   │       ├── stamp_picker_sheet.dart          # スタンプ選択モーダルシート（カテゴリ別タブ・グリッド）
+│   │       └── today_bar.dart                   # 選択日付表示バー（スタンプクイック追加対応）
 │   │
 │   ├── birthday/                                # ── 誕生日機能 ──
 │   │   ├── models/
@@ -199,6 +201,7 @@ lib/
 | exceptionDates | `List<DateTime>` | [] | exception_dates | 繰り返し除外日リスト（JSON） |
 | notifications | `List<NotificationType>` | [none] | notification | 通知設定（JSON形式） |
 | comment | `String` | '' | comment | コメント / メモ |
+| icon | `String?` | null | icon | スタンプ・アイコン（絵文字等） |
 | isBirthday | `bool` | false | is_birthday | 誕生日紐づきフラグ（カレンダー展開用仮想フラグ） |
 | createdAt | `DateTime` | startDate | created_at | 作成日時 |
 | updatedAt | `DateTime` | startDate | updated_at | 更新日時 |
@@ -313,6 +316,7 @@ CREATE TABLE events (
   exception_dates TEXT,             -- 繰り返し例外日（JSON配列）
   notification TEXT NOT NULL DEFAULT '[0]', -- 通知タイミング（JSON配列）
   comment TEXT DEFAULT '',
+  icon TEXT,                        -- スタンプ・アイコン（絵文字等）
   is_birthday INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
@@ -345,7 +349,7 @@ CREATE TABLE tags (
 );
 ```
 
-- **DBバージョン:** 6
+- **DBバージョン:** 7
 - **DBファイル名:** `birthday_calendar.db`
 - **マイグレーション履歴:** 
   - v2: notification の JSON化
@@ -353,6 +357,7 @@ CREATE TABLE tags (
   - v4: 初期タグの投入補正
   - v5: birthdays に comment カラム追加
   - v6: events に custom_recurrence と exception_dates カラム追加
+  - v7: events に icon カラム追加
 
 ---
 
@@ -391,7 +396,8 @@ CREATE TABLE tags (
 |---------|--------|------|
 | スケジュール画面 | `schedule_view.dart` | 月間カレンダー + 選択日イベント一覧 |
 | イベント詳細表示 | `event_detail_modal.dart` | 予定の閲覧 / 繰り返し予定の編集・削除範囲選択 |
-| イベント追加/編集 | `event_modal.dart` | CRUD + 12色選択 + バリデーション + 複数通知 |
+| イベント追加/編集 | `event_modal.dart` | CRUD + 12色選択 + バリデーション + 複数通知 + アイコン選択 |
+| スタンプ選択 | `stamp_picker_sheet.dart` | カテゴリ別スタンプ・アイコン選択モーダル |
 | カスタム繰り返し設定 | `custom_recurrence_modal.dart` | 間隔・曜日・祝日除外平日・月日/週指定・終了条件 |
 | 誕生日一覧画面 | `birthday_view.dart` | タグフィルター + 年齢/日数別リスト |
 | 誕生日詳細表示 | `birthday_detail_modal.dart`| 誕生日の閲覧 / 編集モーダルへ遷移 / 削除 |
@@ -422,6 +428,7 @@ CREATE TABLE tags (
 | 10 | 繰り返し予定の大幅拡張（カスタム繰り返し・編集削除範囲・祝日考慮） | ✅ 完了 |
 | 11 | ダークモード対応 | ✅ 完了 |
 | 12 | タグ管理機能・誕生日カレンダー連動設定・通知スケジュール | ✅ 完了 |
+| 13 | 予定アイコン・スタンプ機能（カレンダー表示・クイック追加） | ✅ 完了 |
 
 **全体進捗: 100%** — 主要機能および拡張機能の実装完了済み
 
@@ -437,10 +444,10 @@ CREATE TABLE tags (
 | 通知機能 | ✅ 実装済み | flutter_local_notificationsによるローカル通知スケジュール |
 | 設定機能 | ✅ 実装済み | 基本設定・誕生日表示設定・ダークモード設定 |
 | タグ管理 | ✅ 実装済み | タグ一覧・追加・削除・誕生日紐付け |
+| スタンプ・アイコン | ✅ 実装済み | 予定アイコン・スタンプのカレンダー表示・クイック追加 |
 | プレゼント履歴メモ | 未実装 (候補) | 誕生日ごとのプレゼント・お祝い履歴の記録 |
 | 六曜・旧暦表示 | 未実装 (候補) | 大安・友引などのカレンダー表示 |
 | データバックアップ | 未実装 (候補) | JSON/CSVエクスポート・インポート機能 |
-| スタンプ・アイコン | 未実装 (候補) | 予定アイコン・スタンプのカレンダー表示 |
 | ホーム画面ウィジェット | 未実装 (候補) | 次回誕生日カウントダウンウィジェット |
 | テスト | `test/` ディレクトリは空 | Unit/Widget テスト追加 |
 

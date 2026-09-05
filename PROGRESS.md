@@ -2,8 +2,16 @@
 
 > このファイルはプロジェクトの実装進捗を管理するものです。
 > セッションを跨いでも現在の状態を把握できるようにしています。
-> 最終更新: 2026-08-29
+> 最終更新: 2026-09-05
 
+- **2026-09-05**: スタンプ追加後の確認モーダルに対象日付バッジ（年月日・曜日・祝日名）を表示し、どの日付に追加されたかを一目で確認できるように改善。
+- **2026-09-05**: カレンダー上部（TodayBar）からのスタンプクイック追加時に、予定詳細の編集確認ダイアログを表示し、ワンタップで時間・メモ・通知などの編集画面（EventModal）へ遷移できる機能を追加。
+- **2026-09-05**: スタンプ選択モーダルの「よく使う（時計マーク）」タブの幅・余白を調整し、窮屈感を解消して押しやすいゆったりとした幅に改善。
+- **2026-09-05**: スタンプの「よく使う（履歴）」への追加タイミングをスタンプ選択時ではなく、予定の「保存」時（予定作成・編集モーダル保存時、およびTodayBarクイック追加保存時）に変更。
+- **2026-09-05**: スタンプ選択モーダルの「よく使う」タブデザイン改善（文字を廃止して時計アイコンのみの省スペース化、右側に縦のグレーボーダー仕切り線を追加）。
+- **2026-09-05**: スタンプ選択の「よく使う」タブの動作改善（初期状態は空、履歴が0件のときは1つ右の「シフト・仕事」がデフォルトで開き、1つでもスタンプを使用すると自動的に「よく使う」がデフォルトで開く仕様へ変更）。
+- **2026-09-05**: 予定スタンプカタログの拡充（各カテゴリ16種類、合計80種類の絵文字スタンプ）および「重要・その他」へのドクロマーク（💀）追加。
+- **2026-09-05**: 予定アイコン・スタンプのカレンダー表示機能（DB v7 マイグレーション、EventStampカタログ、StampPickerSheet、CustomMonthViewでのバー内＆日付横スタンプバッジ描画、TodayBarからのクイックスタンプ追加）を実装。
 - **2026-08-29**: AGENTS.md および PROGRESS.md の全ファイル構成・機能同期更新。
 - **2026-05-11**: ダークモード対応。端末設定・ライト・ダークの3モード切替と、きせかえ適用時のダークデザイン追加。
 - **2026-05-11**: 誕生日詳細画面のケーキアイコンと当日のハイライト色を「誕生日の表示カラー」に連動。
@@ -30,15 +38,16 @@
   - [x] `RecurrenceType`（繰り返し: なし/毎日/毎週/毎月/毎年/平日/カスタム） — `lib/shared/constants/recurrence_type.dart`
   - [x] `NotificationType`（通知） — `lib/shared/constants/notification_type.dart`
 - [x] データモデル
-  - [x] `EventModel`（toMap / fromMap / copyWith） — `lib/features/calendar/models/event_model.dart`
+  - [x] `EventModel`（toMap / fromMap / copyWith / icon） — `lib/features/calendar/models/event_model.dart`
+  - [x] `EventStamp`（スタンプカタログ・プリセット定義） — `lib/features/calendar/models/event_stamp.dart`
   - [x] `CustomRecurrence` — `lib/features/calendar/models/custom_recurrence.dart`
   - [x] `EditScope` — `lib/features/calendar/models/edit_scope.dart`
   - [x] `BirthdayModel`（toMap / fromMap / copyWith / age） — `lib/features/birthday/models/birthday_model.dart`
   - [x] `TagModel` — `lib/features/birthday/models/tag_model.dart`
   - [x] `AppSettings` / `BirthdayDisplaySettings` — `lib/features/settings/models/`
 - [x] DatabaseHelper — `lib/shared/db/database_helper.dart`
-  - [x] シングルトンパターン（DBバージョン 6）
-  - [x] events / birthdays / tags テーブル作成 & マイグレーション
+  - [x] シングルトンパターン（DBバージョン 7）
+  - [x] events / birthdays / tags テーブル作成 & マイグレーション（v7: icon カラム追加）
   - [x] インデックス作成（日付カラム）
 - [x] Repository インターフェース & sqflite実装
   - [x] `EventRepository` & `SqfliteEventRepository`
@@ -102,7 +111,15 @@
 - [x] 基本設定モーダル — `lib/features/settings/widgets/basic_settings_modal.dart`
 - [x] 誕生日カレンダー表示設定モーダル — `lib/features/settings/widgets/birthday_display_settings_modal.dart`
 - [x] ローカル通知スケジュール（NotificationService） — `lib/shared/services/notification_service.dart`
-- [x] パフォーマンス、エラーハンドリング、静的解析の最終確認（エラー・警告ゼロ）
+
+## Phase 13: 予定アイコン・スタンプ機能 ✅ 完了
+- [x] DBスキーマ v7（`events.icon` カラム追加とマイグレーション）
+- [x] スタンプカタログ & プリセット定義（`EventStamp`）
+- [x] スタンプ選択モーダルシート（`StampPickerSheet`）
+- [x] 予定作成・編集モーダルでのアイコン選択 ＆ タイトル自動補完
+- [x] カレンダー（CustomMonthView）でのイベントバー内アイコン表示 ＆ 日付横スタンプバッジ表示
+- [x] TodayBarからのワンタップクイックスタンプ追加
+- [x] 一覧・詳細・検索画面へのアイコン表示連携
 
 ---
 
@@ -112,11 +129,11 @@ lib/
 ├── main.dart                                    # アプリエントリポイント
 ├── features/
 │   ├── calendar/
-│   │   ├── models/ (event_model.dart, custom_recurrence.dart, edit_scope.dart)
+│   │   ├── models/ (event_model.dart, event_stamp.dart, custom_recurrence.dart, edit_scope.dart)
 │   │   ├── repositories/ (event_repository.dart, sqflite_event_repository.dart)
 │   │   ├── providers/ (event_providers.dart)
 │   │   ├── views/ (schedule_view.dart)
-│   │   └── widgets/ (custom_month_view.dart, custom_recurrence_modal.dart, event_detail_modal.dart, event_list_view.dart, event_modal.dart, today_bar.dart)
+│   │   └── widgets/ (custom_month_view.dart, custom_recurrence_modal.dart, event_detail_modal.dart, event_list_view.dart, event_modal.dart, stamp_picker_sheet.dart, today_bar.dart)
 │   ├── birthday/
 │   │   ├── models/ (birthday_model.dart, tag_model.dart)
 │   │   ├── repositories/ (birthday_repository.dart, sqflite_birthday_repository.dart, tag_repository.dart, sqflite_tag_repository.dart)
@@ -135,3 +152,4 @@ lib/
     ├── theme/ (app_theme.dart)
     └── widgets/ (app_shell.dart, base_modal.dart, custom_drawer.dart, custom_fab.dart, custom_footer.dart, custom_header.dart, custom_search_delegate.dart, multi_select_dialog.dart, theme_selection_modal.dart)
 ```
+

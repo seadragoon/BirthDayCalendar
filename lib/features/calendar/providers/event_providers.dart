@@ -62,15 +62,18 @@ class EventsByDateNotifier extends AsyncNotifier<List<EventModel>> {
     return expandedEvents;
   }
 
-  /// イベントを追加し、リストを再取得する。
-  Future<void> addEvent(EventModel event) async {
+  /// イベントを追加し、リストを再取得する。作成された（id付きの）EventModelを返す。
+  Future<EventModel> addEvent(EventModel event) async {
     state = const AsyncValue.loading();
+    EventModel? created;
     state = await AsyncValue.guard(() async {
       final id = await _repository.insertEvent(event);
       final newEvent = event.copyWith(id: id);
+      created = newEvent;
       await NotificationService.instance.scheduleEventNotification(newEvent);
       return build(); // build() を再実行して誕生日込みで取得
     });
+    return created ?? event;
   }
 
   /// イベントを更新し、リストを再取得する。
@@ -392,7 +395,8 @@ List<EventModel> _generateBirthdayEvents(
         results.add(EventModel(
           // DBのIDと衝突しないよう、負の値などを使用（仮想イベント）
           id: -(b.id ?? 0) * 10000 - year, 
-          title: '🎂 ${b.name}の誕生日',
+          title: '${b.name}の誕生日',
+          icon: '🎂',
           startDate: bDate,
           endDate: DateTime(year, b.date.month, b.date.day, 23, 59, 59),
           isAllDay: true,

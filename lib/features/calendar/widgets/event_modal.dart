@@ -13,6 +13,7 @@ import 'package:birthday_calendar/shared/constants/japanese_holiday.dart';
 import 'package:birthday_calendar/features/calendar/models/edit_scope.dart';
 import 'package:birthday_calendar/features/calendar/models/custom_recurrence.dart';
 import 'package:birthday_calendar/features/calendar/widgets/custom_recurrence_modal.dart';
+import 'package:birthday_calendar/features/calendar/widgets/stamp_picker_sheet.dart';
 
 /// スケジュール（イベント）の追加・編集を行うフルスクリーンモーダル。
 class EventModal extends ConsumerStatefulWidget {
@@ -54,6 +55,7 @@ class _EventModalState extends ConsumerState<EventModal> {
   CustomRecurrence? _customRecurrence;
   bool _isEndDateManuallyChanged = false;
   List<NotificationType> _notifications = [NotificationType.none];
+  String? _selectedIcon;
 
   @override
   void initState() {
@@ -103,6 +105,7 @@ class _EventModalState extends ConsumerState<EventModal> {
       _startDate = event.startDate;
       _endDate = event.endDate;
       _selectedColor = event.colorIndex;
+      _selectedIcon = event.icon;
       _recurrence = event.recurrence;
       _customRecurrence = event.customRecurrence;
       if (widget.editScope == EditScope.thisEvent) {
@@ -177,6 +180,7 @@ class _EventModalState extends ConsumerState<EventModal> {
       customRecurrence: _customRecurrence,
       notifications: _notifications,
       comment: _commentController.text.trim(),
+      icon: _selectedIcon,
     );
 
     if (widget.existingEvent == null) {
@@ -210,6 +214,11 @@ class _EventModalState extends ConsumerState<EventModal> {
          // 通常の更新 (EditScope.all または単発予定の編集)
          await ref.read(eventsByDateProvider.notifier).updateEvent(newEvent);
       }
+    }
+
+    // スタンプが設定されている場合、保存時に使用履歴（よく使う）へ記録
+    if (_selectedIcon != null && _selectedIcon!.isNotEmpty) {
+      await StampPickerSheet.recordUsageByIcon(_selectedIcon!);
     }
 
     // 月カレンダーも更新指令
@@ -255,16 +264,69 @@ class _EventModalState extends ConsumerState<EventModal> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // タイトル
-            TextField(
-              controller: _titleController,
-              decoration: InputDecoration(
-                hintText: 'タイトルを入力',
-                border: InputBorder.none,
-                hintStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey.shade400),
-              ),
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: titleColor),
-              autofocus: !isEditMode,
+            // タイトル & スタンプ・アイコン選択
+            Row(
+              children: [
+                InkWell(
+                  onTap: () async {
+                    final stamp = await StampPickerSheet.show(
+                      context,
+                      selectedIcon: _selectedIcon,
+                    );
+                    if (stamp != null) {
+                      setState(() {
+                        if (stamp.id == 'clear' || stamp.icon.isEmpty) {
+                          _selectedIcon = null;
+                        } else {
+                          _selectedIcon = stamp.icon;
+                          // タイトルが空の場合はスタンプのラベルを自動セット
+                          if (_titleController.text.trim().isEmpty && stamp.label.isNotEmpty) {
+                            _titleController.text = stamp.label;
+                          }
+                        }
+                      });
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _selectedIcon != null
+                            ? Theme.of(context).colorScheme.primary
+                            : (isDark ? Colors.grey.shade700 : Colors.grey.shade300),
+                        width: _selectedIcon != null ? 1.5 : 1,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: _selectedIcon != null
+                        ? Text(_selectedIcon!, style: const TextStyle(fontSize: 24))
+                        : Icon(Icons.add_reaction_outlined, color: Colors.grey.shade500, size: 22),
+                  ),
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: _titleController,
+                    decoration: InputDecoration(
+                      hintText: 'タイトルを入力',
+                      border: InputBorder.none,
+                      hintStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.grey.shade400),
+                    ),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: titleColor),
+                    autofocus: !isEditMode && _selectedIcon == null,
+                  ),
+                ),
+                if (_selectedIcon != null)
+                  IconButton(
+                    icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
+                    tooltip: 'アイコンを解除',
+                    onPressed: () => setState(() => _selectedIcon = null),
+                  ),
+              ],
             ),
             const Divider(),
 

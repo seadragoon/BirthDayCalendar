@@ -21,6 +21,7 @@ class EventModel {
   final List<DateTime> exceptionDates;
   final List<NotificationType> notifications;
   final String comment;
+  final String? icon;
   final bool isBirthday;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -37,6 +38,7 @@ class EventModel {
     this.exceptionDates = const [],
     this.notifications = const [NotificationType.none],
     this.comment = '',
+    this.icon,
     this.isBirthday = false,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -80,6 +82,7 @@ class EventModel {
       exceptionDates: parsedExceptions,
       notifications: parsedNotifications,
       comment: (map['comment'] as String?) ?? '',
+      icon: map['icon'] as String?,
       isBirthday: (map['is_birthday'] as num?)?.toInt() == 1,
       createdAt:
           DateTime.fromMillisecondsSinceEpoch((map['created_at'] as num?)?.toInt() ?? 0),
@@ -104,6 +107,7 @@ class EventModel {
       'exception_dates': jsonEncode(exceptionDates.map((e) => e.millisecondsSinceEpoch).toList()),
       'notification': jsonEncode(notifications.map((e) => e.index).toList()),
       'comment': comment,
+      'icon': icon,
       'is_birthday': isBirthday ? 1 : 0,
       'created_at': createdAt.millisecondsSinceEpoch,
       'updated_at': updatedAt.millisecondsSinceEpoch,
@@ -127,6 +131,7 @@ class EventModel {
     List<DateTime>? exceptionDates,
     List<NotificationType>? notifications,
     String? comment,
+    String? icon,
     bool? isBirthday,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -143,6 +148,7 @@ class EventModel {
       exceptionDates: exceptionDates ?? this.exceptionDates,
       notifications: notifications ?? this.notifications,
       comment: comment ?? this.comment,
+      icon: icon ?? this.icon,
       isBirthday: isBirthday ?? this.isBirthday,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -154,7 +160,7 @@ class EventModel {
     return 'EventModel(id: $id, title: $title, '
         'startDate: $startDate, endDate: $endDate, '
         'isAllDay: $isAllDay, colorIndex: $colorIndex, '
-        'isBirthday: $isBirthday)';
+        'icon: $icon, isBirthday: $isBirthday)';
   }
 
   @override

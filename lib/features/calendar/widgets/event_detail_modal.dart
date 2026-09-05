@@ -61,6 +61,7 @@ class _EventDetailModalState extends ConsumerState<EventDetailModal> {
               customRecurrence: updatedEvent.customRecurrence,
               notifications: updatedEvent.notifications,
               comment: updatedEvent.comment,
+              icon: updatedEvent.icon,
             );
           }
         });
@@ -240,10 +241,9 @@ class _EventDetailModalState extends ConsumerState<EventDetailModal> {
           children: [
             // カラー & タイトル
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  margin: const EdgeInsets.only(top: 6),
                   width: 16,
                   height: 16,
                   decoration: BoxDecoration(
@@ -252,6 +252,13 @@ class _EventDetailModalState extends ConsumerState<EventDetailModal> {
                   ),
                 ),
                 const SizedBox(width: 12),
+                if (_currentEvent.icon != null && _currentEvent.icon!.isNotEmpty) ...[
+                  Text(
+                    _currentEvent.icon!,
+                    style: const TextStyle(fontSize: 26),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 Expanded(
                   child: Text(
                     _currentEvent.title,

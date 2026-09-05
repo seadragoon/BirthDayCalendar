@@ -4,10 +4,16 @@ import 'package:intl/intl.dart';
 
 import 'package:birthday_calendar/shared/providers/app_state_providers.dart';
 import 'package:birthday_calendar/shared/constants/japanese_holiday.dart';
+import 'package:birthday_calendar/shared/constants/event_color.dart';
+import 'package:birthday_calendar/features/calendar/models/event_model.dart';
+import 'package:birthday_calendar/features/calendar/providers/event_providers.dart';
+import 'package:birthday_calendar/features/calendar/widgets/stamp_picker_sheet.dart';
+import 'package:birthday_calendar/features/calendar/widgets/event_modal.dart';
 
 /// カレンダーとイベントリストの間に表示する、選択中の日付バー。
 ///
 /// 例: "4月6日 (月)", または祝日の場合は "4月29日（水） 昭和の日" のように表示する。
+/// 右側にスタンプをワンタップでカレンダーに貼れるクイック追加ボタンを配置。
 class TodayBar extends ConsumerWidget {
   const TodayBar({super.key});
 
@@ -32,7 +38,7 @@ class TodayBar extends ConsumerWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         border: Border(
@@ -43,8 +49,6 @@ class TodayBar extends ConsumerWidget {
         ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.baseline,
-        textBaseline: TextBaseline.alphabetic,
         children: [
           // 日付と（
           Text(
@@ -76,15 +80,172 @@ class TodayBar extends ConsumerWidget {
           // 祝日名
           if (isHoliday && holidayName != null) ...[
             const SizedBox(width: 8),
-            Text(
-              holidayName,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: Colors.red,
+            Expanded(
+              child: Text(
+                holidayName,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-          ],
+          ] else
+            const Spacer(),
+
+          // クイックスタンプ追加ボタン
+          InkWell(
+            onTap: () async {
+              final stamp = await StampPickerSheet.show(context);
+              if (stamp != null && stamp.id != 'clear' && stamp.icon.isNotEmpty) {
+                final newEvent = EventModel(
+                  title: stamp.label,
+                  icon: stamp.icon,
+                  startDate: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 0, 0),
+                  endDate: DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 23, 59, 59),
+                  isAllDay: true,
+                  colorIndex: EventColor.lavender,
+                );
+                final savedEvent = await ref.read(eventsByDateProvider.notifier).addEvent(newEvent);
+                await StampPickerSheet.recordUsage(stamp.id);
+                ref.read(eventsByMonthProvider.notifier).refresh();
+
+                if (!context.mounted) return;
+
+                // 編集するかどうかの確認ダイアログを表示
+                final shouldEdit = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) {
+                    final theme = Theme.of(dialogContext);
+                    final dateText = DateFormat('yyyy年M月d日 (E)', 'ja_JP').format(selectedDate);
+
+                    return AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      title: Row(
+                        children: [
+                          Text(stamp.icon, style: const TextStyle(fontSize: 24)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '「${stamp.label}」を追加しました',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 追加された日付の表示バッジ
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: theme.dividerColor.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_outlined,
+                                  size: 16,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: RichText(
+                                    text: TextSpan(
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.colorScheme.onSurface,
+                                      ),
+                                      children: [
+                                        TextSpan(text: dateText),
+                                        if (isHoliday && holidayName != null)
+                                          TextSpan(
+                                            text: ' $holidayName',
+                                            style: const TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            '予定の詳細（時間・メモ・通知など）を編集しますか？',
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(false),
+                          child: const Text('このまま完了'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(true),
+                          child: const Text('編集する'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+
+                if (shouldEdit == true && context.mounted) {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => EventModal(existingEvent: savedEvent),
+                      fullscreenDialog: true,
+                    ),
+                  );
+                }
+              }
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.add_reaction_outlined,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'スタンプ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
