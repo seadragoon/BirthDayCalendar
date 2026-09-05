@@ -77,17 +77,6 @@ class BasicSettingsModal extends ConsumerWidget {
               },
             ),
             const Divider(),
-
-            // カレンダー設定
-            const SizedBox(height: 16),
-            _buildSectionHeader('カレンダー'),
-            ListTile(
-              title: const Text('週の開始日'),
-              subtitle: Text(settings.firstDayOfWeek == 0 ? '日曜日' : '月曜日'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () => _showFirstDayOfWeekDialog(context, ref, settings.firstDayOfWeek),
-            ),
-            const Divider(),
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -107,48 +96,6 @@ class BasicSettingsModal extends ConsumerWidget {
           color: Colors.grey,
         ),
       ),
-    );
-  }
-
-  Future<void> _showFirstDayOfWeekDialog(
-    BuildContext context,
-    WidgetRef ref,
-    int currentValue,
-  ) async {
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('週の開始日を選択'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: const Text('日曜日'),
-                trailing: currentValue == 0 ? const Icon(Icons.check, color: Colors.blue) : null,
-                onTap: () {
-                  ref.read(appSettingsProvider.notifier).setFirstDayOfWeek(0);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: const Text('月曜日'),
-                trailing: currentValue == 1 ? const Icon(Icons.check, color: Colors.blue) : null,
-                onTap: () {
-                  ref.read(appSettingsProvider.notifier).setFirstDayOfWeek(1);
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル'),
-            ),
-          ],
-        );
-      },
     );
   }
 }

@@ -4,6 +4,7 @@
 > セッションを跨いでも現在の状態を把握できるようにしています。
 > 最終更新: 2026-09-06
 
+- **2026-09-06**: ドロワー（サイドメニュー）の構成をユーザーのメンタルモデルに合わせて5大カテゴリ（アプリ設定、カレンダー、誕生日、データ連携・バックアップ、その他）に整理。「基本設定（通知）」と「カレンダー設定（週の開始日：CalendarSettingsModal新設）」を論理的に分離し、サブタイトル付きで直感的なメニュー構成に刷新。
 - **2026-09-06**: 他カレンダー（Googleカレンダー/Yahoo!カレンダー/iPhone等）向けのエクスポートとして、世界標準規格「iCalendar（.ics）形式」での書き出しオプションを実装。予定・誕生日（毎年繰り返し終日イベント）を自動変換し、共有シート経由で他社カレンダーへ一括取り込み可能に。
 - **2026-09-06**: データ保護（バックアップ・復元）機能の実装。SQLiteの全データ（予定・誕生日・タグ）をJSONファイル形式で書き出し、OS共有シート経由でGoogle Driveやメール等に安全に保存・転送可能に。ファイルピッカーからの復元機能（上書き復元・追加復元の選択対応、通知一括再スケジュール）を実装。
 - **2026-09-06**: 端末連絡先（Contacts）からの誕生日一括取り込み機能を実装。連絡帳に生年月日が設定されている連絡先を自動検出し、既存登録との重複判定、一括タグ付け、一括インポートに対応。誕生日リスト0件時のオンボーディングボタンおよびドロワー導線を配置。
@@ -175,7 +176,7 @@ lib/
 │   └── settings/
 │       ├── models/ (app_settings.dart, birthday_display_settings.dart)
 │       ├── providers/ (settings_providers.dart)
-│       └── widgets/ (basic_settings_modal.dart, birthday_display_settings_modal.dart, theme_mode_dialog.dart)
+│       └── widgets/ (basic_settings_modal.dart, calendar_settings_modal.dart, birthday_display_settings_modal.dart, theme_mode_dialog.dart)
 └── shared/
     ├── constants/ (event_color.dart, japanese_holiday.dart, notification_type.dart, recurrence_type.dart, view_type.dart)
     ├── db/ (database_helper.dart)

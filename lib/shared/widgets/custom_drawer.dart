@@ -5,6 +5,7 @@ import 'package:birthday_calendar/shared/widgets/theme_selection_modal.dart';
 import 'package:birthday_calendar/features/birthday/views/tag_management_view.dart';
 import 'package:birthday_calendar/features/settings/widgets/birthday_display_settings_modal.dart';
 import 'package:birthday_calendar/features/settings/widgets/basic_settings_modal.dart';
+import 'package:birthday_calendar/features/settings/widgets/calendar_settings_modal.dart';
 import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
 import 'package:birthday_calendar/features/settings/widgets/theme_mode_dialog.dart';
 import 'package:birthday_calendar/features/backup/views/backup_restore_modal.dart';
@@ -68,6 +69,7 @@ class CustomDrawer extends ConsumerWidget {
               ),
             ),
           ),
+          // 1. アプリ設定
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text('アプリ設定', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
@@ -75,6 +77,7 @@ class CustomDrawer extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.settings_outlined),
             title: const Text('基本設定'),
+            subtitle: const Text('通知のON/OFF', style: TextStyle(fontSize: 12)),
             onTap: () {
               Navigator.of(context).pop();
               Navigator.of(context).push(
@@ -89,7 +92,7 @@ class CustomDrawer extends ConsumerWidget {
             leading: const Icon(Icons.palette_outlined),
             title: const Text('きせかえ（テーマ）'),
             onTap: () {
-              Navigator.of(context).pop(); // ドロワーを閉じる
+              Navigator.of(context).pop();
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const ThemeSelectionModal(),
@@ -99,26 +102,30 @@ class CustomDrawer extends ConsumerWidget {
             },
           ),
           const Divider(),
+
+          // 2. カレンダー
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text('誕生日', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            child: Text('カレンダー', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           ),
           ListTile(
-            leading: const Icon(Icons.sell_outlined),
-            title: const Text('タグ管理'),
+            leading: const Icon(Icons.calendar_month_outlined),
+            title: const Text('カレンダー設定'),
+            subtitle: const Text('週の開始日', style: TextStyle(fontSize: 12)),
             onTap: () {
-              Navigator.of(context).pop(); // まずドロワーを閉じる
+              Navigator.of(context).pop();
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => const TagManagementView(),
+                  builder: (_) => const CalendarSettingsModal(),
                   fullscreenDialog: true,
                 ),
               );
             },
           ),
           ListTile(
-            leading: const Icon(Icons.calendar_view_month_outlined),
-            title: const Text('表示設定'),
+            leading: const Icon(Icons.event_available_outlined),
+            title: const Text('誕生日の表示設定'),
+            subtitle: const Text('カレンダー上の帯表示・色', style: TextStyle(fontSize: 12)),
             onTap: () {
               Navigator.of(context).pop();
               Navigator.of(context).push(
@@ -129,9 +136,30 @@ class CustomDrawer extends ConsumerWidget {
               );
             },
           ),
+          const Divider(),
+
+          // 3. 誕生日
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text('誕生日', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.sell_outlined),
+            title: const Text('タグ管理'),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const TagManagementView(),
+                  fullscreenDialog: true,
+                ),
+              );
+            },
+          ),
           ListTile(
             leading: const Icon(Icons.contacts_outlined),
-            title: const Text('連絡先から取り込み'),
+            title: const Text('誕生日を取り込み'),
+            subtitle: const Text('端末の連絡先から一括追加', style: TextStyle(fontSize: 12)),
             onTap: () {
               Navigator.of(context).pop();
               Navigator.of(context).push(
@@ -143,13 +171,16 @@ class CustomDrawer extends ConsumerWidget {
             },
           ),
           const Divider(),
+
+          // 4. データ連携・バックアップ
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text('データ管理', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            child: Text('データ連携・バックアップ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           ),
           ListTile(
             leading: const Icon(Icons.backup_outlined),
             title: const Text('バックアップと復元'),
+            subtitle: const Text('完全復元・.icsエクスポート', style: TextStyle(fontSize: 12)),
             onTap: () {
               Navigator.of(context).pop();
               Navigator.of(context).push(
@@ -161,6 +192,8 @@ class CustomDrawer extends ConsumerWidget {
             },
           ),
           const Divider(),
+
+          // 5. その他
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Text('その他', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
@@ -169,7 +202,7 @@ class CustomDrawer extends ConsumerWidget {
             leading: const Icon(Icons.info_outline),
             title: const Text('アプリについて'),
             onTap: () {
-              Navigator.of(context).pop(); // まずドロワーを閉じる
+              Navigator.of(context).pop();
               showAboutDialog(
                 context: context,
                 applicationName: 'Birthday Calendar',

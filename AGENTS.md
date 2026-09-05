@@ -166,7 +166,8 @@ lib/
 │       ├── providers/
 │       │   └── settings_providers.dart          # AppSettingsNotifier, BirthdayDisplaySettingsNotifier
 │       └── widgets/
-│           ├── basic_settings_modal.dart        # 基本設定モーダル（通知一括/週開始日）
+│           ├── basic_settings_modal.dart        # 基本設定モーダル（通知一括ON/OFF）
+│           ├── calendar_settings_modal.dart     # カレンダー設定モーダル（週の開始日等）
 │           ├── birthday_display_settings_modal.dart # 誕生日カレンダー表示設定モーダル
 │           └── theme_mode_dialog.dart           # ダークモード切り替えダイアログ（システム/ライト/ダーク）
 │
@@ -421,12 +422,13 @@ CREATE TABLE tags (
 | 誕生日詳細表示 | `birthday_detail_modal.dart`| 誕生日の閲覧 / 編集モーダルへ遷移 / 削除 |
 | 誕生日追加/編集 | `birthday_modal.dart` | CRUD + タグ複数選択 + 生まれ年不明 + メモ |
 | タグ管理 | `tag_management_view.dart` | タグの一覧表示・追加・削除（フルスクリーン） |
-| 基本設定 | `basic_settings_modal.dart` | 通知一括ON/OFF、週の開始日切り替え |
+| 基本設定 | `basic_settings_modal.dart` | 通知一括ON/OFF |
+| カレンダー設定 | `calendar_settings_modal.dart` | 週の開始日切り替え（日曜/月曜） |
 | 誕生日表示設定 | `birthday_display_settings_modal.dart` | スケジュール連携ON/OFF、除外タグ、表示カラー |
 | ダークモード切り替え | `theme_mode_dialog.dart` | システム連動 / ライト / ダーク の切替 |
 | きせかえテーマ選択 | `theme_selection_modal.dart` | 標準（カラーパレット12色）・桜・夜空テーマ選択 |
 | バックアップと復元 | `backup_restore_modal.dart` | データ出力（共有/保存）・復元（上書き/追加） |
-| 連絡先から取り込み | `contact_import_modal.dart` | 連絡先スキャン・誕生日一括インポート・タグ付与 |
+| 誕生日を取り込み | `contact_import_modal.dart` | 連絡先スキャン・誕生日一括インポート・タグ付与 |
 | 検索 | `custom_search_delegate.dart` | 予定・誕生日のリアルタイム横断検索 |
 | 共通ヘッダー | `base_modal.dart` | ×ボタン / 決定 / 削除 / 編集 |
 
