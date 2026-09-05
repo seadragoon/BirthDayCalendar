@@ -70,6 +70,7 @@
 | 共有・外部保存 | `share_plus` | ^10.1.4 | バックアップJSONのOS共有・ファイル保存 |
 | ファイル選択 | `file_picker` | ^8.1.7 | 復元用バックアップJSONファイル選択 |
 | 連絡先連携 | `flutter_contacts` | ^1.1.9 | 端末連絡先からの誕生日スキャン・一括取り込み |
+| 外部カレンダー連携 | `device_calendar` | ^4.3.3 | 端末/Google/iCloudカレンダーの予定取得・一括取り込み |
 
 ---
 
@@ -107,6 +108,7 @@ lib/
 │   ├── calendar/                                # ── スケジュール機能 ──
 │   │   ├── models/
 │   │   │   ├── custom_recurrence.dart           # CustomRecurrence（高度な繰り返しルールモデル）
+│   │   │   ├── device_calendar_entry.dart       # DeviceCalendarEntry（端末/Googleカレンダー予定モデル）
 │   │   │   ├── edit_scope.dart                  # EditScope enum（all/thisEvent/followingEvents）
 │   │   │   ├── event_model.dart                 # EventModel（toMap/fromMap/copyWith）
 │   │   │   └── event_stamp.dart                 # EventStamp（スタンプモデル・プリセットカタログ）
@@ -115,11 +117,14 @@ lib/
 │   │   │   └── sqflite_event_repository.dart    # sqflite実装
 │   │   ├── providers/
 │   │   │   └── event_providers.dart             # EventsByDate/Month Notifier, 繰り返し展開, 検索Provider
+│   │   ├── services/
+│   │   │   └── device_calendar_service.dart     # 端末カレンダー（Google/iCloud）スキャン・予定一括取り込み
 │   │   ├── views/
 │   │   │   └── schedule_view.dart               # Schedule画面（MonthView + EventList統合）
 │   │   └── widgets/
 │   │       ├── custom_month_view.dart           # 横スワイプ可能・可変高さ・複数日バーのカスタムカレンダー（アイコン・スタンプ描画・日付長押し予定作成対応）
 │   │       ├── custom_recurrence_modal.dart     # カスタム繰り返し設定モーダル
+│   │       ├── device_calendar_import_modal.dart# 端末/Googleカレンダー・.ics予定インポートモーダル
 │   │       ├── event_detail_modal.dart          # イベント詳細表示モーダル（読み取り専用・範囲選択編集/削除）
 │   │       ├── event_list_view.dart             # 選択日付のイベントリスト（アイコン表示）
 │   │       ├── event_modal.dart                 # イベント追加/編集モーダル（スタンプ・アイコン選択）
@@ -427,8 +432,9 @@ CREATE TABLE tags (
 | 誕生日表示設定 | `birthday_display_settings_modal.dart` | スケジュール連携ON/OFF、除外タグ、表示カラー |
 | ダークモード切り替え | `theme_mode_dialog.dart` | システム連動 / ライト / ダーク の切替 |
 | きせかえテーマ選択 | `theme_selection_modal.dart` | 標準（カラーパレット12色）・桜・夜空テーマ選択 |
-| バックアップと復元 | `backup_restore_modal.dart` | データ出力（共有/保存）・復元（上書き/追加） |
+| バックアップと復元 | `backup_restore_modal.dart` | データ出力（共有/保存）・復元（上書き/追加）・.ics書き出し |
 | 誕生日を取り込み | `contact_import_modal.dart` | 連絡先スキャン・誕生日一括インポート・タグ付与 |
+| 外部カレンダーから取り込み | `device_calendar_import_modal.dart` | 端末/Google/iCloudカレンダー・.icsファイルの予定スキャン・重複検知・一括インポート |
 | 検索 | `custom_search_delegate.dart` | 予定・誕生日のリアルタイム横断検索 |
 | 共通ヘッダー | `base_modal.dart` | ×ボタン / 決定 / 削除 / 編集 |
 
@@ -452,8 +458,9 @@ CREATE TABLE tags (
 | 12 | タグ管理機能・誕生日カレンダー連動設定・通知スケジュール | ✅ 完了 |
 | 13 | 予定アイコン・スタンプ機能（カレンダー表示・クイック追加） | ✅ 完了 |
 | 14 | データ保護（バックアップ・復元）＆ 連絡先誕生日インポート | ✅ 完了 |
+| 15 | 他カレンダー（Google/iCloud/.ics）からの予定インポート | ✅ 完了 |
 
-**全体進捗: 100%** — 主要機能および拡張機能の実装完了済み
+**全体進捗: 100%** — 主要機能および全拡張機能の実装完了済み
 
 ---
 

@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:birthday_calendar/features/calendar/models/event_model.dart';
+import 'package:birthday_calendar/features/calendar/models/device_calendar_entry.dart';
 import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
 import 'package:birthday_calendar/shared/constants/recurrence_type.dart';
 import 'package:birthday_calendar/shared/db/database_helper.dart';
@@ -150,6 +151,158 @@ class ICalendarService {
     return buffer.toString();
   }
 
+  /// iCalendar形式（.ics）のテキストを解析し、予定エントリ一覧（[DeviceCalendarEntry]）として返す。
+  ///
+  /// 重複判定のため、既存のDBデータと照合して [isDuplicate] を設定する。
+  static Future<List<DeviceCalendarEntry>> parseIcsToEntries(String icsText) async {
+    // 既存のイベントを取得してキーを作成
+    final db = await DatabaseHelper.instance.database;
+    final existingRows = await db.query(DatabaseHelper.tableEvents);
+    final Set<String> existingKeys = existingRows.map((row) {
+      final title = (row['title'] as String? ?? '').trim();
+      final start = row['start_date'] as int;
+      final end = row['end_date'] as int;
+      return '$title-$start-$end';
+    }).toSet();
+
+    // 1. 行のアンフォールディング（行頭が空白やタブの継続行を直前の行と結合）
+    final unfolded = icsText.replaceAll(RegExp(r'\r\n[ \t]'), '').replaceAll(RegExp(r'\n[ \t]'), '');
+    final lines = unfolded.split(RegExp(r'\r?\n'));
+
+    final List<DeviceCalendarEntry> entries = [];
+
+    bool inEvent = false;
+    String? uid;
+    String? summary;
+    String? description;
+    DateTime? dtStart;
+    DateTime? dtEnd;
+    bool isAllDay = false;
+
+    for (var line in lines) {
+      line = line.trim();
+      if (line.isEmpty) continue;
+
+      if (line == 'BEGIN:VEVENT') {
+        inEvent = true;
+        uid = null;
+        summary = null;
+        description = null;
+        dtStart = null;
+        dtEnd = null;
+        isAllDay = false;
+        continue;
+      }
+
+      if (line == 'END:VEVENT') {
+        if (inEvent && dtStart != null) {
+          final title = (summary ?? '（タイトルなし）').trim();
+          final end = dtEnd ?? (isAllDay ? dtStart.add(const Duration(days: 1)) : dtStart);
+          final startMs = dtStart.millisecondsSinceEpoch;
+          final endMs = end.millisecondsSinceEpoch;
+          final checkKey = '$title-$startMs-$endMs';
+          final isDuplicate = existingKeys.contains(checkKey);
+
+          entries.add(
+            DeviceCalendarEntry(
+              eventId: uid ?? 'ics_${entries.length + 1}',
+              calendarId: 'ics_file',
+              title: title,
+              startDate: dtStart,
+              endDate: end,
+              isAllDay: isAllDay,
+              description: description,
+              isDuplicate: isDuplicate,
+            ),
+          );
+        }
+        inEvent = false;
+        continue;
+      }
+
+      if (!inEvent) continue;
+
+      // キーと値の分割 (コロン区切り、ただしパラメータを持つ場合あり DTSTART;VALUE=DATE:...)
+      final colonIndex = line.indexOf(':');
+      if (colonIndex == -1) continue;
+
+      final keyPart = line.substring(0, colonIndex);
+      final valuePart = line.substring(colonIndex + 1);
+      final propName = keyPart.split(';').first.toUpperCase();
+
+      switch (propName) {
+        case 'UID':
+          uid = valuePart;
+          break;
+        case 'SUMMARY':
+          summary = _unescapeText(valuePart);
+          break;
+        case 'DESCRIPTION':
+          description = _unescapeText(valuePart);
+          break;
+        case 'DTSTART':
+          final parsed = _parseIcsDateTime(keyPart, valuePart);
+          if (parsed != null) {
+            dtStart = parsed.dateTime;
+            if (parsed.isDateOnly) isAllDay = true;
+          }
+          break;
+        case 'DTEND':
+          final parsed = _parseIcsDateTime(keyPart, valuePart);
+          if (parsed != null) {
+            dtEnd = parsed.dateTime;
+          }
+          break;
+      }
+    }
+
+    entries.sort((a, b) => a.startDate.compareTo(b.startDate));
+    return entries;
+  }
+
+  /// iCalendarの日時文字列をパースする
+  static _ParsedIcsDateTime? _parseIcsDateTime(String keyPart, String rawValue) {
+    final value = rawValue.trim();
+    final isDateOnly = keyPart.contains('VALUE=DATE') || RegExp(r'^\d{8}$').hasMatch(value);
+
+    try {
+      if (isDateOnly && value.length >= 8) {
+        final y = int.parse(value.substring(0, 4));
+        final m = int.parse(value.substring(4, 6));
+        final d = int.parse(value.substring(6, 8));
+        return _ParsedIcsDateTime(dateTime: DateTime(y, m, d), isDateOnly: true);
+      }
+
+      // YYYYMMDDTHHMMSS または YYYYMMDDTHHMMSSZ
+      if (value.contains('T')) {
+        final cleanValue = value.replaceAll('Z', '');
+        final parts = cleanValue.split('T');
+        if (parts.length == 2 && parts[0].length >= 8 && parts[1].length >= 6) {
+          final y = int.parse(parts[0].substring(0, 4));
+          final m = int.parse(parts[0].substring(4, 6));
+          final d = int.parse(parts[0].substring(6, 8));
+          final hh = int.parse(parts[1].substring(0, 2));
+          final mm = int.parse(parts[1].substring(2, 4));
+          final ss = int.parse(parts[1].substring(4, 6));
+          return _ParsedIcsDateTime(dateTime: DateTime(y, m, d, hh, mm, ss), isDateOnly: false);
+        }
+      }
+    } catch (_) {
+      // パース失敗時はnull
+    }
+    return null;
+  }
+
+  /// iCalendarのエスケープ文字を元に戻す
+  static String _unescapeText(String text) {
+    return text
+        .replaceAll(r'\\', '\\')
+        .replaceAll(r'\;', ';')
+        .replaceAll(r'\,', ',')
+        .replaceAll(r'\n', '\n')
+        .replaceAll(r'\N', '\n');
+  }
+
   /// RecurrenceType を iCalendar の RRULE に変換
   static String? _buildRrule(RecurrenceType type) {
     switch (type) {
@@ -190,3 +343,11 @@ class ICalendarService {
         .replaceAll('\r', '\\n');
   }
 }
+
+class _ParsedIcsDateTime {
+  final DateTime dateTime;
+  final bool isDateOnly;
+
+  _ParsedIcsDateTime({required this.dateTime, required this.isDateOnly});
+}
+

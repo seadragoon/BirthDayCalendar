@@ -68,6 +68,9 @@ dependencies:
   # Contacts
   flutter_contacts: ^1.1.9
 
+  # Device Calendar Import
+  device_calendar: ^4.3.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

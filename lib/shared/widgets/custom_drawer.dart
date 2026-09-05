@@ -10,6 +10,7 @@ import 'package:birthday_calendar/features/settings/providers/settings_providers
 import 'package:birthday_calendar/features/settings/widgets/theme_mode_dialog.dart';
 import 'package:birthday_calendar/features/backup/views/backup_restore_modal.dart';
 import 'package:birthday_calendar/features/birthday/widgets/contact_import_modal.dart';
+import 'package:birthday_calendar/features/calendar/widgets/device_calendar_import_modal.dart';
 
 /// アプリのドロワー（サイドメニュー）。
 ///
@@ -229,6 +230,20 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text('データ連携・バックアップ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.sync_alt_outlined),
+            title: const Text('外部カレンダーから取り込み'),
+            subtitle: const Text('Googleカレンダー/.icsファイル等', style: TextStyle(fontSize: 12)),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const DeviceCalendarImportModal(),
+                  fullscreenDialog: true,
+                ),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.backup_outlined),

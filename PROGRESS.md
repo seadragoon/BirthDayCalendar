@@ -4,6 +4,7 @@
 > セッションを跨いでも現在の状態を把握できるようにしています。
 > 最終更新: 2026-09-06
 
+- **2026-09-06**: 他カレンダー（Googleカレンダー/iCloudカレンダー等）および.icsファイルからの予定インポート機能（DeviceCalendarService, DeviceCalendarImportModal）を実装。端末内カレンダーアカウントの自動検出、期間指定（前後/標準/広範囲/カスタム）、既存登録との重複自動判定（登録済みバッジ）、取り込み時の帯カラー選択、一括取り込み、ドロワーへの導線配置を完了。
 - **2026-09-06**: UI表示およびコード内の表記ゆれ（「スタンプ・アイコン」「アイコン」等）をすべて「スタンプ」へ統一（StampPickerSheetのヘッダータイトルを「スタンプを選択」へ変更、EventModalのツールチップを「スタンプを解除」へ統一）。
 - **2026-09-06**: 設定メニュー（ドロワー）がスクロール可能であることが一目で分かるようにアフォーダンスを大幅強化（Scrollbarの常時表示 `thumbVisibility: true`、DrawerHeaderのスリム化による下部項目の見切れ・チラ見せ効果、下にコンテンツが残っている際の下端グラデーションフェード＆下矢印インジケーター動的表示）。
 - **2026-09-06**: ドロワー（サイドメニュー）の構成をユーザーのメンタルモデルに合わせて5大カテゴリ（アプリ設定、カレンダー、誕生日、データ連携・バックアップ、その他）に整理。「基本設定（通知）」と「カレンダー設定（週の開始日：CalendarSettingsModal新設）」を論理的に分離し、サブタイトル付きで直感的なメニュー構成に刷新。
@@ -151,6 +152,25 @@
   - [x] 検索バー、全選択/全解除、選択カウンター、付与タグ選択チップ
 - [x] 導線統合（CustomDrawerへのメニュー追加、BirthdayListViewの0件時インポートボタン）
 
+## Phase 15: 他カレンダーからの予定インポート ✅ 完了
+- [x] パッケージ導入（device_calendar: ^4.3.3）
+  - [x] AndroidManifest.xml に READ_CALENDAR / WRITE_CALENDAR パーミッション追加
+  - [x] Info.plist に NSCalendarsUsageDescription / NSCalendarsFullAccessUsageDescription 追加
+- [x] カレンダーインポートサービス（DeviceCalendarService）
+  - [x] 端末内のカレンダー一覧（Googleアカウント/iCloud等）の取得
+  - [x] 期間指定・カレンダー指定での予定取得（RetrieveEventsParams）
+  - [x] 既存予定（eventsテーブル）との重複判定キー照合（タイトル・開始・終了）
+  - [x] 選択予定の一括インポート処理（トランザクション）
+- [x] iCalendarパース機能（ICalendarService.parseIcsToEntries）
+  - [x] .ics形式ファイルのテキスト解析・重複判定・エントリ変換
+- [x] カレンダーインポートUI画面（DeviceCalendarImportModal）
+  - [x] カレンダー選択ドロップダウン（端末カレンダー + .icsファイル読み込み）
+  - [x] 取得期間指定（前後/標準/広範囲/日付範囲カスタム指定）
+  - [x] 検索バー、全選択/全解除、重複バッジ表示
+  - [x] 取り込み予定の帯カラー選択（12色パレット）
+  - [x] 一括取り込み実行 ＆ カレンダーProvider自動再読込
+- [x] ドロワー導線統合（CustomDrawerの「データ連携・バックアップ」に追加）
+
 ---
 
 ## ディレクトリ構成（現在の状態）
@@ -159,11 +179,12 @@ lib/
 ├── main.dart                                    # アプリエントリポイント
 ├── features/
 │   ├── calendar/
-│   │   ├── models/ (event_model.dart, event_stamp.dart, custom_recurrence.dart, edit_scope.dart)
+│   │   ├── models/ (event_model.dart, event_stamp.dart, custom_recurrence.dart, edit_scope.dart, device_calendar_entry.dart)
 │   │   ├── repositories/ (event_repository.dart, sqflite_event_repository.dart)
 │   │   ├── providers/ (event_providers.dart)
+│   │   ├── services/ (device_calendar_service.dart)
 │   │   ├── views/ (schedule_view.dart)
-│   │   └── widgets/ (custom_month_view.dart, custom_recurrence_modal.dart, event_detail_modal.dart, event_list_view.dart, event_modal.dart, stamp_picker_sheet.dart, today_bar.dart)
+│   │   └── widgets/ (custom_month_view.dart, custom_recurrence_modal.dart, device_calendar_import_modal.dart, event_detail_modal.dart, event_list_view.dart, event_modal.dart, month_picker_sheet.dart, stamp_picker_sheet.dart, today_bar.dart)
 │   ├── birthday/
 │   │   ├── models/ (birthday_model.dart, tag_model.dart, contact_birthday_entry.dart)
 │   │   ├── repositories/ (birthday_repository.dart, sqflite_birthday_repository.dart, tag_repository.dart, sqflite_tag_repository.dart)
