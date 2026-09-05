@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:birthday_calendar/shared/constants/japanese_holiday.dart';
 import 'package:birthday_calendar/shared/providers/app_state_providers.dart';
 import 'package:birthday_calendar/features/calendar/models/event_model.dart';
 import 'package:birthday_calendar/features/calendar/providers/event_providers.dart';
+import 'package:birthday_calendar/features/calendar/widgets/event_modal.dart';
 import 'package:birthday_calendar/features/settings/models/app_settings.dart';
 import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
 import 'package:birthday_calendar/shared/constants/event_color.dart';
@@ -320,6 +322,21 @@ class _DayCell extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         ref.read(selectedDateProvider.notifier).state = date;
+      },
+      onLongPress: () {
+        // 1. 選択日付を長押しされた日付に更新
+        ref.read(selectedDateProvider.notifier).state = date;
+        // 2. 触覚フィードバック（長押しを感知した振動）
+        HapticFeedback.mediumImpact();
+        // 3. 長押しされた日付（現在時刻の時を引き継ぎ）で予定作成画面を開く
+        final now = DateTime.now();
+        final initialDate = DateTime(date.year, date.month, date.day, now.hour, 0);
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => EventModal(initialDate: initialDate),
+            fullscreenDialog: true,
+          ),
+        );
       },
       child: Container(
         decoration: BoxDecoration(

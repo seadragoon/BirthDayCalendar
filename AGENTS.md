@@ -1,7 +1,7 @@
 # AGENTS.md — AI向けプロジェクトリファレンス
 
 > **このファイルはAIアシスタントがセッション開始時に最初に読むべきドキュメントです。**
-> 最終更新: 2026-09-05
+> 最終更新: 2026-09-06
 
 ---
 
@@ -114,7 +114,7 @@ lib/
 │   │   ├── views/
 │   │   │   └── schedule_view.dart               # Schedule画面（MonthView + EventList統合）
 │   │   └── widgets/
-│   │       ├── custom_month_view.dart           # 横スワイプ可能・可変高さ・複数日バーのカスタムカレンダー（アイコン・スタンプ描画対応）
+│   │       ├── custom_month_view.dart           # 横スワイプ可能・可変高さ・複数日バーのカスタムカレンダー（アイコン・スタンプ描画・日付長押し予定作成対応）
 │   │       ├── custom_recurrence_modal.dart     # カスタム繰り返し設定モーダル
 │   │       ├── event_detail_modal.dart          # イベント詳細表示モーダル（読み取り専用・範囲選択編集/削除）
 │   │       ├── event_list_view.dart             # 選択日付のイベントリスト（アイコン表示）
