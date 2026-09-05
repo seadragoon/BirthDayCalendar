@@ -264,7 +264,7 @@ class _EventModalState extends ConsumerState<EventModal> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // タイトル & スタンプ・アイコン選択
+            // タイトル & スタンプ選択
             Row(
               children: [
                 InkWell(
@@ -323,7 +323,7 @@ class _EventModalState extends ConsumerState<EventModal> {
                 if (_selectedIcon != null)
                   IconButton(
                     icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
-                    tooltip: 'アイコンを解除',
+                    tooltip: 'スタンプを解除',
                     onPressed: () => setState(() => _selectedIcon = null),
                   ),
               ],

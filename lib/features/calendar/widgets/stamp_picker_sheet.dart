@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:birthday_calendar/features/calendar/models/event_stamp.dart';
 
-/// スタンプ・アイコンを選択するためのモーダルボトムシート。
+/// スタンプを選択するためのモーダルボトムシート。
 class StampPickerSheet extends StatefulWidget {
-  /// 現在選択中のアイコン（絵文字）
+  /// 現在選択中のスタンプ（絵文字）
   final String? selectedIcon;
 
   /// 初期表示の最近使ったスタンプリスト
@@ -147,7 +147,7 @@ class _StampPickerSheetState extends State<StampPickerSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'スタンプ・アイコンを選択',
+                    'スタンプを選択',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

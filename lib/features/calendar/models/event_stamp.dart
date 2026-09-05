@@ -1,4 +1,4 @@
-/// 予定に付与できるスタンプ・アイコンのデータモデルおよびプリセット定義。
+/// 予定に付与できるスタンプのデータモデルおよびプリセット定義。
 class EventStamp {
   final String id;
   final String icon; // 絵文字
