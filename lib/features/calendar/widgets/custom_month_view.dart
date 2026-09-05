@@ -311,14 +311,6 @@ class _DayCell extends ConsumerWidget {
 
     final isToday = _isSameDay(date, DateTime.now());
 
-    // その日のイベントに設定されているスタンプ・アイコン（ユニーク化して最大3個取得）
-    final dayIcons = lanes
-        .where((e) => e != null && e.icon != null && e.icon!.isNotEmpty)
-        .map((e) => e!.icon!)
-        .toSet()
-        .take(3)
-        .toList();
-
     return GestureDetector(
       onTap: () {
         ref.read(selectedDateProvider.notifier).state = date;
@@ -379,44 +371,31 @@ class _DayCell extends ConsumerWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // 日付テキスト (左寄せ) ＆ スタンプバッジ
+                    // 日付テキスト (左寄せ) ＆ 誕生日マーク
                     Padding(
-                      padding: const EdgeInsets.only(left: 4.0, top: 2.0, bottom: 2.0, right: 3.0),
+                      padding: const EdgeInsets.only(left: 3.0, top: 2.0, bottom: 2.0, right: 2.0),
                       child: Row(
                         children: [
                           Text(
                             '${date.day}',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11.5,
                               height: 1.0,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                               color: dateColor,
                             ),
                           ),
                           if (hasBirthday) ...[
-                            const SizedBox(width: 3),
+                            const SizedBox(width: 2),
                             Container(
-                              width: 5,
-                              height: 5,
+                              width: 4.5,
+                              height: 4.5,
                               decoration: BoxDecoration(
                                 color: birthdayColor,
                                 shape: BoxShape.circle,
                               ),
                             ),
                           ],
-                          const Spacer(),
-                          // 日付の右横にスタンプアイコン（最大2〜3個）をバッジ表示
-                          if (dayIcons.isNotEmpty)
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: dayIcons.map((ic) => Padding(
-                                padding: const EdgeInsets.only(left: 1.0),
-                                child: Text(
-                                  ic,
-                                  style: const TextStyle(fontSize: 10, height: 1.0),
-                                ),
-                              )).toList(),
-                            ),
                         ],
                       ),
                     ),

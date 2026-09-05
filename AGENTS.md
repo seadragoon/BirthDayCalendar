@@ -119,6 +119,7 @@ lib/
 │   │       ├── event_detail_modal.dart          # イベント詳細表示モーダル（読み取り専用・範囲選択編集/削除）
 │   │       ├── event_list_view.dart             # 選択日付のイベントリスト（アイコン表示）
 │   │       ├── event_modal.dart                 # イベント追加/編集モーダル（スタンプ・アイコン選択）
+│   │       ├── month_picker_sheet.dart          # 月選択ボトムシート（ヘッダータップからの年月ジャンプUI）
 │   │       ├── stamp_picker_sheet.dart          # スタンプ選択モーダルシート（カテゴリ別タブ・グリッド）
 │   │       └── today_bar.dart                   # 選択日付表示バー（スタンプクイック追加対応）
 │   │
@@ -398,6 +399,7 @@ CREATE TABLE tags (
 | イベント詳細表示 | `event_detail_modal.dart` | 予定の閲覧 / 繰り返し予定の編集・削除範囲選択 |
 | イベント追加/編集 | `event_modal.dart` | CRUD + 12色選択 + バリデーション + 複数通知 + アイコン選択 |
 | スタンプ選択 | `stamp_picker_sheet.dart` | カテゴリ別スタンプ・アイコン選択モーダル |
+| 月選択 | `month_picker_sheet.dart` | カレンダーヘッダータップからの年月ジャンプUI（前年/翌年/1〜12月選択） |
 | カスタム繰り返し設定 | `custom_recurrence_modal.dart` | 間隔・曜日・祝日除外平日・月日/週指定・終了条件 |
 | 誕生日一覧画面 | `birthday_view.dart` | タグフィルター + 年齢/日数別リスト |
 | 誕生日詳細表示 | `birthday_detail_modal.dart`| 誕生日の閲覧 / 編集モーダルへ遷移 / 削除 |

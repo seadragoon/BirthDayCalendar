@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'package:birthday_calendar/features/calendar/widgets/month_picker_sheet.dart';
 import 'package:birthday_calendar/shared/constants/view_type.dart';
 import 'package:birthday_calendar/shared/providers/app_state_providers.dart';
 import 'package:birthday_calendar/shared/providers/theme_provider.dart';
@@ -32,14 +33,34 @@ class CustomHeader extends ConsumerWidget implements PreferredSizeWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final onPrimaryColor = isDark ? appTheme.darkOnPrimaryColor : appTheme.onPrimaryColor;
 
-    return AppBar(
-      title: Text(
+    Widget titleWidget;
+    if (viewType == ViewType.schedule) {
+      titleWidget = InkWell(
+        onTap: () => MonthPickerSheet.show(context, ref),
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: onPrimaryColor,
+            ),
+          ),
+        ),
+      );
+    } else {
+      titleWidget = Text(
         title,
         style: TextStyle(
           fontWeight: FontWeight.bold,
           color: onPrimaryColor,
         ),
-      ),
+      );
+    }
+
+    return AppBar(
+      title: titleWidget,
       centerTitle: true,
       elevation: 0,
       backgroundColor: Colors.transparent,
