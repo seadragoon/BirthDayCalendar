@@ -66,6 +66,10 @@
 | ローカル永続化 | `shared_preferences` | ^2.5.5 | アプリ設定・誕生日表示設定・テーマ永続化 |
 | ローカル通知 | `flutter_local_notifications` | ^18.0.1 | 予定・誕生日のローカル通知スケジュール |
 | タイムゾーン | `timezone` | ^0.9.4 | 日時のタイムゾーン制御 |
+| ファイル一時保存 | `path_provider` | ^2.1.5 | バックアップ一時ファイル生成 |
+| 共有・外部保存 | `share_plus` | ^10.1.4 | バックアップJSONのOS共有・ファイル保存 |
+| ファイル選択 | `file_picker` | ^8.1.7 | 復元用バックアップJSONファイル選択 |
+| 連絡先連携 | `flutter_contacts` | ^1.1.9 | 端末連絡先からの誕生日スキャン・一括取り込み |
 
 ---
 
@@ -139,9 +143,21 @@ lib/
 │   │   │   └── tag_management_view.dart         # タグ管理画面（追加・削除・一覧）
 │   │   └── widgets/
 │   │       ├── birthday_detail_modal.dart       # 誕生日詳細表示モーダル（読み取り専用・編集/削除）
-│   │       ├── birthday_list_view.dart          # 誕生日リスト表示（ソート・カウント対応）
+│   │       ├── birthday_list_view.dart          # 誕生日リスト表示（ソート・カウント・0件時インポート導線対応）
 │   │       ├── birthday_modal.dart              # 誕生日追加/編集モーダル
+│   │       ├── contact_import_modal.dart        # 連絡先誕生日インポートモーダル
 │   │       └── tag_filter_bar.dart              # タグフィルターバー
+│   │   └── services/
+│   │       └── contact_import_service.dart      # 端末連絡先アクセス・誕生日抽出・重複照合
+│   │
+│   ├── backup/                                  # ── データ保護・バックアップ機能 ──
+│   │   ├── models/
+│   │   │   └── backup_data.dart                 # BackupData（JSONシリアライズ・スキーマ定義）
+│   │   ├── services/
+│   │   │   ├── backup_service.dart              # バックアップ生成・共有・復元・整合性検証
+│   │   │   └── icalendar_service.dart           # 他カレンダー連携用（.ics形式エクスポート生成）
+│   │   └── views/
+│   │       └── backup_restore_modal.dart        # バックアップ＆復元UI画面（JSON/ICS出力、上書き/追加復元対応）
 │   │
 │   └── settings/                                # ── 設定機能 ──
 │       ├── models/
@@ -409,6 +425,8 @@ CREATE TABLE tags (
 | 誕生日表示設定 | `birthday_display_settings_modal.dart` | スケジュール連携ON/OFF、除外タグ、表示カラー |
 | ダークモード切り替え | `theme_mode_dialog.dart` | システム連動 / ライト / ダーク の切替 |
 | きせかえテーマ選択 | `theme_selection_modal.dart` | 標準（カラーパレット12色）・桜・夜空テーマ選択 |
+| バックアップと復元 | `backup_restore_modal.dart` | データ出力（共有/保存）・復元（上書き/追加） |
+| 連絡先から取り込み | `contact_import_modal.dart` | 連絡先スキャン・誕生日一括インポート・タグ付与 |
 | 検索 | `custom_search_delegate.dart` | 予定・誕生日のリアルタイム横断検索 |
 | 共通ヘッダー | `base_modal.dart` | ×ボタン / 決定 / 削除 / 編集 |
 
@@ -431,6 +449,7 @@ CREATE TABLE tags (
 | 11 | ダークモード対応 | ✅ 完了 |
 | 12 | タグ管理機能・誕生日カレンダー連動設定・通知スケジュール | ✅ 完了 |
 | 13 | 予定アイコン・スタンプ機能（カレンダー表示・クイック追加） | ✅ 完了 |
+| 14 | データ保護（バックアップ・復元）＆ 連絡先誕生日インポート | ✅ 完了 |
 
 **全体進捗: 100%** — 主要機能および拡張機能の実装完了済み
 
@@ -449,9 +468,10 @@ CREATE TABLE tags (
 | スタンプ・アイコン | ✅ 実装済み | 予定アイコン・スタンプのカレンダー表示・クイック追加 |
 | プレゼント履歴メモ | 未実装 (候補) | 誕生日ごとのプレゼント・お祝い履歴の記録 |
 | 六曜・旧暦表示 | 未実装 (候補) | 大安・友引などのカレンダー表示 |
-| データバックアップ | 未実装 (候補) | JSON/CSVエクスポート・インポート機能 |
+| データバックアップ | ✅ 実装済み | JSONエクスポート・共有・上書き/追加復元機能 |
+| 連絡先インポート | ✅ 実装済み | 端末連絡先からの誕生日スキャン・一括取り込み |
 | ホーム画面ウィジェット | 未実装 (候補) | 次回誕生日カウントダウンウィジェット |
-| テスト | `test/` ディレクトリは空 | Unit/Widget テスト追加 |
+| テスト | 基本テスト実装済 | Unit/Widget テスト追加 |
 
 ---
 

@@ -4,6 +4,9 @@
 > セッションを跨いでも現在の状態を把握できるようにしています。
 > 最終更新: 2026-09-06
 
+- **2026-09-06**: 他カレンダー（Googleカレンダー/Yahoo!カレンダー/iPhone等）向けのエクスポートとして、世界標準規格「iCalendar（.ics）形式」での書き出しオプションを実装。予定・誕生日（毎年繰り返し終日イベント）を自動変換し、共有シート経由で他社カレンダーへ一括取り込み可能に。
+- **2026-09-06**: データ保護（バックアップ・復元）機能の実装。SQLiteの全データ（予定・誕生日・タグ）をJSONファイル形式で書き出し、OS共有シート経由でGoogle Driveやメール等に安全に保存・転送可能に。ファイルピッカーからの復元機能（上書き復元・追加復元の選択対応、通知一括再スケジュール）を実装。
+- **2026-09-06**: 端末連絡先（Contacts）からの誕生日一括取り込み機能を実装。連絡帳に生年月日が設定されている連絡先を自動検出し、既存登録との重複判定、一括タグ付け、一括インポートに対応。誕生日リスト0件時のオンボーディングボタンおよびドロワー導線を配置。
 - **2026-09-06**: カレンダー日付マス右上（CustomMonthView）のスタンプバッジ表示をオミット。日付と誕生日マークのみのシンプルで洗練されたデザインに整理し、予定バー内のスタンプ表示へ一本化。
 - **2026-09-06**: カレンダー上のヘッダー日付タップ時に、下から月選択UI（MonthPickerSheet）がアニメーション表示される機能を実装（上部中央に現在の年、左右に「＜前年」「翌年＞」の移動ボタン、1月〜12月のグリッド配置、現在選択中の年月のハイライト表示、月タップによるカレンダーの即時移動と日付整合クランプ処理。不要な装飾・文字被りドットの除去）。
 - **2026-09-06**: 月間カレンダー（CustomMonthView）の日付セルを長押しした際、触覚フィードバック（振動）と共にその日付を初期値とした予定作成モーダル（EventModal）を直接起動するショートカット機能を実装。
@@ -127,8 +130,23 @@
 - [x] スタンプ選択モーダルシート（`StampPickerSheet`）
 - [x] 予定作成・編集モーダルでのアイコン選択 ＆ タイトル自動補完
 - [x] カレンダー（CustomMonthView）でのイベントバー内アイコン表示 ＆ 日付横スタンプバッジ表示
-- [x] TodayBarからのワンタップクイックスタンプ追加
-- [x] 一覧・詳細・検索画面へのアイコン表示連携
+## Phase 14: データ保護（バックアップ・復元）＆ 連絡先誕生日インポート ✅ 完了
+- [x] 依存パッケージ追加（path_provider, share_plus, file_picker, flutter_contacts）
+- [x] AndroidManifest.xml（READ_CONTACTS）＆ Info.plist（NSContactsUsageDescription）権限追加
+- [x] バックアップデータモデル（BackupData）＆ JSONシリアライズ/デシリアライズ
+- [x] バックアップサービス（BackupService）
+  - [x] DB全データ（events, birthdays, tags）のJSONエクスポート ＆ OS共有シート連携
+  - [x] ファイルピッカーからのJSON読み込み・形式検証
+  - [x] 上書き復元 / 追加復元（重複防止）のトランザクション処理
+  - [x] 復元後の通知一括再スケジュール（NotificationService.rescheduleAll）
+- [x] バックアップ＆復元UI画面（BackupRestoreModal）
+- [x] 連絡先インポートサービス（ContactImportService）
+  - [x] 端末連絡先の誕生日スキャン（EventLabel.birthday）
+  - [x] 既存データとの重複判定（登録済みバッジ）
+  - [x] 一括タグ付与 ＆ 一括インポート処理
+- [x] 連絡先誕生日インポートUI画面（ContactImportModal）
+  - [x] 検索バー、全選択/全解除、選択カウンター、付与タグ選択チップ
+- [x] 導線統合（CustomDrawerへのメニュー追加、BirthdayListViewの0件時インポートボタン）
 
 ---
 
@@ -144,11 +162,16 @@ lib/
 │   │   ├── views/ (schedule_view.dart)
 │   │   └── widgets/ (custom_month_view.dart, custom_recurrence_modal.dart, event_detail_modal.dart, event_list_view.dart, event_modal.dart, stamp_picker_sheet.dart, today_bar.dart)
 │   ├── birthday/
-│   │   ├── models/ (birthday_model.dart, tag_model.dart)
+│   │   ├── models/ (birthday_model.dart, tag_model.dart, contact_birthday_entry.dart)
 │   │   ├── repositories/ (birthday_repository.dart, sqflite_birthday_repository.dart, tag_repository.dart, sqflite_tag_repository.dart)
 │   │   ├── providers/ (birthday_providers.dart)
+│   │   ├── services/ (contact_import_service.dart)
 │   │   ├── views/ (birthday_view.dart, tag_management_view.dart)
-│   │   └── widgets/ (birthday_detail_modal.dart, birthday_list_view.dart, birthday_modal.dart, tag_filter_bar.dart)
+│   │   └── widgets/ (birthday_detail_modal.dart, birthday_list_view.dart, birthday_modal.dart, contact_import_modal.dart, tag_filter_bar.dart)
+│   ├── backup/
+│   │   ├── models/ (backup_data.dart)
+│   │   ├── services/ (backup_service.dart, icalendar_service.dart)
+│   │   └── views/ (backup_restore_modal.dart)
 │   └── settings/
 │       ├── models/ (app_settings.dart, birthday_display_settings.dart)
 │       ├── providers/ (settings_providers.dart)

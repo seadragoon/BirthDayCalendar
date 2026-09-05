@@ -178,7 +178,7 @@ class _CustomRecurrenceModalState extends State<CustomRecurrenceModal> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<CustomRecurrenceUnit>(
-                    value: _unit,
+                    initialValue: _unit,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -259,7 +259,7 @@ class _CustomRecurrenceModalState extends State<CustomRecurrenceModal> {
               const Text('月の繰り返し方法', style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               DropdownButtonFormField<CustomMonthType>(
-                value: _monthType,
+                initialValue: _monthType,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -287,76 +287,74 @@ class _CustomRecurrenceModalState extends State<CustomRecurrenceModal> {
             // 終了設定
             const Text('終了設定', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 12),
-            Column(
-              children: [
-                RadioListTile<CustomEndType>(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('期限なし'),
-                  value: CustomEndType.none,
-                  groupValue: _endType,
-                  onChanged: (val) => setState(() => _endType = val!),
-                ),
-                // ignore: deprecated_member_use
-                RadioListTile<CustomEndType>(
-                  contentPadding: EdgeInsets.zero,
-                  title: Row(
-                    children: [
-                      const Text('日付指定'),
-                      const Spacer(),
-                      if (_endType == CustomEndType.date)
-                        TextButton(
-                          onPressed: () async {
-                            final date = await showDatePicker(
-                              context: context,
-                              initialDate: _endDate ?? widget.startDate,
-                              firstDate: widget.startDate,
-                              lastDate: DateTime(2100),
-                            );
-                            if (date != null) {
-                              setState(() {
-                                _endDate = date;
-                              });
-                            }
-                          },
-                          child: Text(
-                            _endDate != null ? DateFormat('yyyy年M月d日').format(_endDate!) : '日付を選択',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ),
-                    ],
+            RadioGroup<CustomEndType>(
+              groupValue: _endType,
+              onChanged: (val) {
+                if (val != null) setState(() => _endType = val);
+              },
+              child: Column(
+                children: [
+                  const RadioListTile<CustomEndType>(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('期限なし'),
+                    value: CustomEndType.none,
                   ),
-                  value: CustomEndType.date,
-                  groupValue: _endType,
-                  onChanged: (val) => setState(() => _endType = val!),
-                ),
-                // ignore: deprecated_member_use
-                RadioListTile<CustomEndType>(
-                  contentPadding: EdgeInsets.zero,
-                  title: Row(
-                    children: [
-                      const Text('回数指定'),
-                      const Spacer(),
-                      if (_endType == CustomEndType.count)
-                        SizedBox(
-                          width: 80,
-                          child: TextField(
-                            controller: _countController,
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            decoration: const InputDecoration(
-                              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                              border: OutlineInputBorder(),
-                              suffixText: '回',
+                  RadioListTile<CustomEndType>(
+                    contentPadding: EdgeInsets.zero,
+                    title: Row(
+                      children: [
+                        const Text('日付指定'),
+                        const Spacer(),
+                        if (_endType == CustomEndType.date)
+                          TextButton(
+                            onPressed: () async {
+                              final date = await showDatePicker(
+                                context: context,
+                                initialDate: _endDate ?? widget.startDate,
+                                firstDate: widget.startDate,
+                                lastDate: DateTime(2100),
+                              );
+                              if (date != null) {
+                                setState(() {
+                                  _endDate = date;
+                                });
+                              }
+                            },
+                            child: Text(
+                              _endDate != null ? DateFormat('yyyy年M月d日').format(_endDate!) : '日付を選択',
+                              style: const TextStyle(fontSize: 16),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
+                    value: CustomEndType.date,
                   ),
-                  value: CustomEndType.count,
-                  groupValue: _endType,
-                  onChanged: (val) => setState(() => _endType = val!),
-                ),
-              ],
+                  RadioListTile<CustomEndType>(
+                    contentPadding: EdgeInsets.zero,
+                    title: Row(
+                      children: [
+                        const Text('回数指定'),
+                        const Spacer(),
+                        if (_endType == CustomEndType.count)
+                          SizedBox(
+                            width: 80,
+                            child: TextField(
+                              controller: _countController,
+                              keyboardType: TextInputType.number,
+                              textAlign: TextAlign.center,
+                              decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                border: OutlineInputBorder(),
+                                suffixText: '回',
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    value: CustomEndType.count,
+                  ),
+                ],
+              ),
             ),
             
             const SizedBox(height: 48), // スクロール余白

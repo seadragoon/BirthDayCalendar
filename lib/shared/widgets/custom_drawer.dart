@@ -7,6 +7,8 @@ import 'package:birthday_calendar/features/settings/widgets/birthday_display_set
 import 'package:birthday_calendar/features/settings/widgets/basic_settings_modal.dart';
 import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
 import 'package:birthday_calendar/features/settings/widgets/theme_mode_dialog.dart';
+import 'package:birthday_calendar/features/backup/views/backup_restore_modal.dart';
+import 'package:birthday_calendar/features/birthday/widgets/contact_import_modal.dart';
 
 /// アプリのドロワー（サイドメニュー）。
 ///
@@ -122,6 +124,37 @@ class CustomDrawer extends ConsumerWidget {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const BirthdayDisplaySettingsModal(),
+                  fullscreenDialog: true,
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.contacts_outlined),
+            title: const Text('連絡先から取り込み'),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const ContactImportModal(),
+                  fullscreenDialog: true,
+                ),
+              );
+            },
+          ),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text('データ管理', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.backup_outlined),
+            title: const Text('バックアップと復元'),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const BackupRestoreModal(),
                   fullscreenDialog: true,
                 ),
               );

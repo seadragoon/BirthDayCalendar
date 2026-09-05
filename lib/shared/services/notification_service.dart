@@ -224,6 +224,22 @@ class NotificationService {
     }
   }
 
+  /// すべての通知をキャンセル
+  Future<void> cancelAllNotifications() async {
+    await _notificationsPlugin.cancelAll();
+  }
+
+  /// 復元時などに全イベントおよび全誕生日の通知を一括再スケジュール
+  Future<void> rescheduleAll(List<EventModel> events, List<BirthdayModel> birthdays) async {
+    await cancelAllNotifications();
+    for (final event in events) {
+      await scheduleEventNotification(event);
+    }
+    for (final birthday in birthdays) {
+      await scheduleBirthdayNotification(birthday);
+    }
+  }
+
   /// 予定（Event）の通知発火時間を計算
   DateTime _calculateNotificationTime(DateTime baseTime, NotificationType type, bool isAllDay) {
     final DateTime targetBase = isAllDay

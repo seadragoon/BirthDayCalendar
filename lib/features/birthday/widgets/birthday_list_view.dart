@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
 import 'package:birthday_calendar/features/birthday/providers/birthday_providers.dart';
 import 'package:birthday_calendar/features/birthday/widgets/birthday_detail_modal.dart';
+import 'package:birthday_calendar/features/birthday/widgets/contact_import_modal.dart';
 import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
 import 'package:birthday_calendar/shared/constants/event_color.dart';
 
@@ -29,10 +30,33 @@ class BirthdayListView extends ConsumerWidget {
       error: (e, st) => Center(child: Text('エラーが発生しました: $e')),
       data: (birthdays) {
         if (birthdays.isEmpty) {
-          return const Center(
-            child: Text(
-              '誕生日リストが空です',
-              style: TextStyle(color: Colors.grey, fontSize: 16),
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.cake_outlined, size: 48, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '誕生日がまだ登録されていません',
+                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ContactImportModal(),
+                          fullscreenDialog: true,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.contacts_outlined),
+                    label: const Text('連絡先から誕生日を取り込む'),
+                  ),
+                ],
+              ),
             ),
           );
         }
