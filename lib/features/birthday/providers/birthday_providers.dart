@@ -5,6 +5,7 @@ import 'package:birthday_calendar/features/birthday/repositories/birthday_reposi
 import 'package:birthday_calendar/features/birthday/repositories/tag_repository.dart';
 import 'package:birthday_calendar/shared/providers/repository_providers.dart';
 import 'package:birthday_calendar/shared/services/notification_service.dart';
+import 'package:birthday_calendar/features/widget/services/widget_sync_service.dart';
 
 /// 全誕生日データを管理するProvider。
 ///
@@ -31,7 +32,9 @@ class BirthdayListNotifier extends AsyncNotifier<List<BirthdayModel>> {
       final id = await _repository.insertBirthday(birthday);
       final newBirthday = birthday.copyWith(id: id);
       await NotificationService.instance.scheduleBirthdayNotification(newBirthday);
-      return _repository.getAllBirthdays();
+      final list = await _repository.getAllBirthdays();
+      WidgetSyncService.updateAllWidgets();
+      return list;
     });
   }
 
@@ -41,7 +44,9 @@ class BirthdayListNotifier extends AsyncNotifier<List<BirthdayModel>> {
     state = await AsyncValue.guard(() async {
       await _repository.updateBirthday(birthday);
       await NotificationService.instance.scheduleBirthdayNotification(birthday);
-      return _repository.getAllBirthdays();
+      final list = await _repository.getAllBirthdays();
+      WidgetSyncService.updateAllWidgets();
+      return list;
     });
   }
 
@@ -51,7 +56,9 @@ class BirthdayListNotifier extends AsyncNotifier<List<BirthdayModel>> {
     state = await AsyncValue.guard(() async {
       await _repository.deleteBirthday(id);
       await NotificationService.instance.cancelBirthdayNotifications(id);
-      return _repository.getAllBirthdays();
+      final list = await _repository.getAllBirthdays();
+      WidgetSyncService.updateAllWidgets();
+      return list;
     });
   }
 }

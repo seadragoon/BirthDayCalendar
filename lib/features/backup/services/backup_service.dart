@@ -13,6 +13,7 @@ import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
 import 'package:birthday_calendar/features/birthday/models/tag_model.dart';
 import 'package:birthday_calendar/shared/db/database_helper.dart';
 import 'package:birthday_calendar/shared/services/notification_service.dart';
+import 'package:birthday_calendar/features/widget/services/widget_sync_service.dart';
 
 /// バックアップと復元に関するビジネスロジックを提供するサービス。
 class BackupService {
@@ -216,6 +217,9 @@ class BackupService {
     final allBirthdays = allBirthdaysMaps.map((m) => BirthdayModel.fromMap(m)).toList();
 
     await NotificationService.instance.rescheduleAll(allEvents, allBirthdays);
+
+    // ウィジェットデータを最新状態に同期
+    WidgetSyncService.updateAllWidgets();
 
     return (
       eventsCount: restoredEvents,

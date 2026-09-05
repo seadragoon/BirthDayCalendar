@@ -4,6 +4,8 @@
 > セッションを跨いでも現在の状態を把握できるようにしています。
 > 最終更新: 2026-09-06
 
+- **2026-09-06**: ホーム画面「予定ウィジェット（Schedule Widget）」を新規追加。今日〜直近の予定を最大4件（時間・タイトル・カラーバー・スタンプ対応、誕生日連動）で一覧表示する 4×2 カード型ウィジェット（ScheduleWidgetProvider, widget_schedule.xml, WidgetScheduleItem）を構築。予定の作成/編集/削除/インポート/復元時および誕生日表示設定変更時の自動データ同期を完備。
+- **2026-09-06**: ホーム画面ウィジェット機能（Android AppWidget / home_widget）を実装。スマートフォンのホーム画面で「もうすぐ誕生日（あと○日、年齢、月日）」をトップにハイライトし、直近2〜3人をすっきり一覧表示するカードデザインを構築。アプリ起動時・誕生日登録/更新/削除時・バックアップ復元・連絡先インポート時の自動データ同期、および基本設定画面での手動同期・設定案内を完備。
 - **2026-09-06**: 他カレンダー（Googleカレンダー/iCloudカレンダー等）および.icsファイルからの予定インポート機能（DeviceCalendarService, DeviceCalendarImportModal）を実装。端末内カレンダーアカウントの自動検出、期間指定（前後/標準/広範囲/カスタム）、既存登録との重複自動判定（登録済みバッジ）、取り込み時の帯カラー選択、一括取り込み、ドロワーへの導線配置を完了。
 - **2026-09-06**: UI表示およびコード内の表記ゆれ（「スタンプ・アイコン」「アイコン」等）をすべて「スタンプ」へ統一（StampPickerSheetのヘッダータイトルを「スタンプを選択」へ変更、EventModalのツールチップを「スタンプを解除」へ統一）。
 - **2026-09-06**: 設定メニュー（ドロワー）がスクロール可能であることが一目で分かるようにアフォーダンスを大幅強化（Scrollbarの常時表示 `thumbVisibility: true`、DrawerHeaderのスリム化による下部項目の見切れ・チラ見せ効果、下にコンテンツが残っている際の下端グラデーションフェード＆下矢印インジケーター動的表示）。
@@ -171,6 +173,25 @@
   - [x] 一括取り込み実行 ＆ カレンダーProvider自動再読込
 - [x] ドロワー導線統合（CustomDrawerの「データ連携・バックアップ」に追加）
 
+## Phase 16: ホーム画面ウィジェット ✅ 完了
+- [x] パッケージ導入（home_widget: ^0.7.0）
+- [x] AndroidネイティブAppWidget基盤構築
+  - [x] birthday_widget_info.xml（初期サイズ4x2、更新間隔30分、home_screen設定）
+  - [x] widget_background.xml, widget_chip_primary.xml, widget_chip_secondary.xml
+  - [x] widget_birthday.xml（ヘッダー、1人目ハイライト、2〜3人目リスト、空状態表示）
+  - [x] BirthdayWidgetProvider.kt（RemoteViews生成、タップ起動PendingIntent、JSONパース・バインド）
+  - [x] AndroidManifest.xml にレシーバー登録
+- [x] Flutter側データモデル＆同期サービス
+  - [x] WidgetBirthdayItem（直近日数判定、名前・年齢・日付ラベル、JSONシリアライズ）
+  - [x] WidgetSyncService（DBから直近誕生日抽出、ソート、home_widget共有領域への保存、再描画トリガー）
+- [x] アプリ内ライフサイクル・更新トリガー連動
+  - [x] アプリ起動時の初期同期（main.dart）
+  - [x] 誕生日の追加・更新・削除時の自動同期（BirthdayListNotifier）
+  - [x] バックアップ復元完了時の自動同期（BackupService）
+  - [x] 連絡先インポート完了時の自動同期（ContactImportService）
+- [x] 設定メニュー導線
+  - [x] 基本設定画面（BasicSettingsModal）に「手動更新ボタン」およびホーム画面配置手順の案内カードを追加
+
 ---
 
 ## ディレクトリ構成（現在の状態）
@@ -192,6 +213,9 @@ lib/
 │   │   ├── services/ (contact_import_service.dart)
 │   │   ├── views/ (birthday_view.dart, tag_management_view.dart)
 │   │   └── widgets/ (birthday_detail_modal.dart, birthday_list_view.dart, birthday_modal.dart, contact_import_modal.dart, tag_filter_bar.dart)
+│   ├── widget/
+│   │   ├── models/ (widget_birthday_item.dart)
+│   │   └── services/ (widget_sync_service.dart)
 │   ├── backup/
 │   │   ├── models/ (backup_data.dart)
 │   │   ├── services/ (backup_service.dart, icalendar_service.dart)

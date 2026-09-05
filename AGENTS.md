@@ -71,6 +71,7 @@
 | ファイル選択 | `file_picker` | ^8.1.7 | 復元用バックアップJSONファイル選択 |
 | 連絡先連携 | `flutter_contacts` | ^1.1.9 | 端末連絡先からの誕生日スキャン・一括取り込み |
 | 外部カレンダー連携 | `device_calendar` | ^4.3.3 | 端末/Google/iCloudカレンダーの予定取得・一括取り込み |
+| ホーム画面ウィジェット | `home_widget` | ^0.7.0 | Android/iOSホーム画面ウィジェット連携・データ同期 |
 
 ---
 
@@ -163,6 +164,13 @@ lib/
 │   │   │   └── icalendar_service.dart           # 他カレンダー連携用（.ics形式エクスポート生成）
 │   │   └── views/
 │   │       └── backup_restore_modal.dart        # バックアップ＆復元UI画面（JSON/ICS出力、上書き/追加復元対応）
+│   │
+│   ├── widget/                                  # ── ホーム画面ウィジェット機能 ──
+│   │   ├── models/
+│   │   │   ├── widget_birthday_item.dart        # WidgetBirthdayItem（誕生日ウィジェット用モデル）
+│   │   │   └── widget_schedule_item.dart        # WidgetScheduleItem（予定ウィジェット用モデル）
+│   │   └── services/
+│   │       └── widget_sync_service.dart         # ホーム画面ウィジェット連携・データ更新サービス（誕生日・予定同期）
 │   │
 │   └── settings/                                # ── 設定機能 ──
 │       ├── models/
@@ -459,8 +467,9 @@ CREATE TABLE tags (
 | 13 | 予定アイコン・スタンプ機能（カレンダー表示・クイック追加） | ✅ 完了 |
 | 14 | データ保護（バックアップ・復元）＆ 連絡先誕生日インポート | ✅ 完了 |
 | 15 | 他カレンダー（Google/iCloud/.ics）からの予定インポート | ✅ 完了 |
+| 16 | ホーム画面ウィジェット（直近誕生日カウントダウン＆直近予定一覧 4×2） | ✅ 完了 |
 
-**全体進捗: 100%** — 主要機能および全拡張機能の実装完了済み
+**全体進捗: 100%** — 主要機能および全拡張機能の実装・実機動作検証完了済み
 
 ---
 

@@ -15,6 +15,7 @@ import 'package:birthday_calendar/features/settings/providers/settings_providers
 import 'package:birthday_calendar/features/settings/models/app_settings.dart';
 import 'package:birthday_calendar/shared/widgets/app_shell.dart';
 import 'package:birthday_calendar/shared/services/notification_service.dart';
+import 'package:birthday_calendar/features/widget/services/widget_sync_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +42,9 @@ void main() async {
 
   // 通知サービスの初期化
   await NotificationService.instance.initialize();
+
+  // ホーム画面ウィジェットのデータ初期同期
+  WidgetSyncService.updateAllWidgets();
 
   runApp(
     // Riverpod の ProviderScope でアプリ全体をラップ

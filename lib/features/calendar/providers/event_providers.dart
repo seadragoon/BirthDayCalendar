@@ -13,6 +13,7 @@ import 'package:birthday_calendar/shared/constants/recurrence_type.dart';
 import 'package:birthday_calendar/shared/constants/japanese_holiday.dart';
 import 'package:birthday_calendar/features/calendar/models/custom_recurrence.dart';
 import 'package:birthday_calendar/shared/services/notification_service.dart';
+import 'package:birthday_calendar/features/widget/services/widget_sync_service.dart';
 
 /// 選択中の日付に紐づくイベント一覧を提供するProvider。
 final eventsByDateProvider =
@@ -33,7 +34,7 @@ class EventsByDateNotifier extends AsyncNotifier<List<EventModel>> {
     final events = await _repository.getEventsByDate(selectedDate);
 
     // 重複を避けるため、繰り返し予定を展開してからマージする
-    final expandedEvents = _expandEvents(events, selectedDate, selectedDate);
+    final expandedEvents = expandEvents(events, selectedDate, selectedDate);
     
     // 誕生日のマージ処理
     final settingsAsync = ref.watch(birthdayDisplaySettingsProvider);
@@ -43,7 +44,7 @@ class EventsByDateNotifier extends AsyncNotifier<List<EventModel>> {
     final birthdays = birthdaysAsync.valueOrNull;
     
     if (settings != null && settings.isShowOnSchedule && birthdays != null) {
-      final birthdayEvents = _generateBirthdayEvents(
+      final birthdayEvents = generateBirthdayEvents(
         birthdays, 
         settings, 
         selectedDate, 
@@ -71,6 +72,7 @@ class EventsByDateNotifier extends AsyncNotifier<List<EventModel>> {
       final newEvent = event.copyWith(id: id);
       created = newEvent;
       await NotificationService.instance.scheduleEventNotification(newEvent);
+      WidgetSyncService.updateScheduleWidgetData();
       return build(); // build() を再実行して誕生日込みで取得
     });
     return created ?? event;
@@ -82,6 +84,7 @@ class EventsByDateNotifier extends AsyncNotifier<List<EventModel>> {
     state = await AsyncValue.guard(() async {
       await _repository.updateEvent(event);
       await NotificationService.instance.scheduleEventNotification(event);
+      WidgetSyncService.updateScheduleWidgetData();
       return build();
     });
   }
@@ -92,6 +95,7 @@ class EventsByDateNotifier extends AsyncNotifier<List<EventModel>> {
     state = await AsyncValue.guard(() async {
       await _repository.deleteEvent(id);
       await NotificationService.instance.cancelEventNotifications(id);
+      WidgetSyncService.updateScheduleWidgetData();
       return build();
     });
   }
@@ -124,7 +128,7 @@ class EventsByMonthNotifier extends AsyncNotifier<List<EventModel>> {
     final events = await _repository.getEventsByDateRange(rangeStart, rangeEnd);
 
     // 繰り返し予定の展開
-    final expandedEvents = _expandEvents(events, rangeStart, rangeEnd);
+    final expandedEvents = expandEvents(events, rangeStart, rangeEnd);
 
     // 誕生日のマージ処理
     final settingsAsync = ref.watch(birthdayDisplaySettingsProvider);
@@ -134,7 +138,7 @@ class EventsByMonthNotifier extends AsyncNotifier<List<EventModel>> {
     final birthdays = birthdaysAsync.valueOrNull;
     
     if (settings != null && settings.isShowOnSchedule && birthdays != null) {
-      final birthdayEvents = _generateBirthdayEvents(birthdays, settings, rangeStart, rangeEnd);
+      final birthdayEvents = generateBirthdayEvents(birthdays, settings, rangeStart, rangeEnd);
       return [...expandedEvents, ...birthdayEvents];
     }
 
@@ -158,12 +162,12 @@ bool hasFollowingOccurrences(EventModel event, DateTime occDate) {
   if (event.customRecurrence?.endType == CustomEndType.none) return true; // 期限なしは無限
   
   // 有限の場合は100年先までを対象に展開して存在をチェックする（展開処理自体は終了条件で早期ブレイクする）
-  final futureEvents = _expandEvents([event], occDate.add(const Duration(days: 1)), occDate.add(const Duration(days: 365 * 100)));
+  final futureEvents = expandEvents([event], occDate.add(const Duration(days: 1)), occDate.add(const Duration(days: 365 * 100)));
   return futureEvents.isNotEmpty;
 }
 
 /// 繰り返し予定を指定された期間に合わせて展開する。
-List<EventModel> _expandEvents(List<EventModel> events, DateTime start, DateTime end) {
+List<EventModel> expandEvents(List<EventModel> events, DateTime start, DateTime end) {
   final results = <EventModel>[];
   final rangeStart = DateTime(start.year, start.month, start.day);
   final rangeEnd = DateTime(end.year, end.month, end.day, 23, 59, 59);
@@ -360,7 +364,7 @@ List<EventModel> _expandEvents(List<EventModel> events, DateTime start, DateTime
 }
 
 /// 誕生日データからカレンダー表示用の EventModel を生成するヘルパー。
-List<EventModel> _generateBirthdayEvents(
+List<EventModel> generateBirthdayEvents(
   List<BirthdayModel> birthdays,
   BirthdayDisplaySettings settings,
   DateTime start,

@@ -7,6 +7,7 @@ import 'package:birthday_calendar/shared/constants/event_color.dart';
 import 'package:birthday_calendar/shared/constants/notification_type.dart';
 import 'package:birthday_calendar/shared/constants/recurrence_type.dart';
 import 'package:birthday_calendar/shared/db/database_helper.dart';
+import 'package:birthday_calendar/features/widget/services/widget_sync_service.dart';
 
 /// 端末のカレンダー（GoogleカレンダーやiCloudカレンダー等）から予定をスキャン・一括取り込みするサービスクラス。
 class DeviceCalendarService {
@@ -141,6 +142,9 @@ class DeviceCalendarService {
 
       await batch.commit(noResult: true);
     });
+
+    // ウィジェットデータを最新状態に同期
+    WidgetSyncService.updateScheduleWidgetData();
 
     return toImport.length;
   }

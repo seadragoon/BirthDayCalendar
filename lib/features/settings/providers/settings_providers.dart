@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:birthday_calendar/features/settings/models/app_settings.dart';
 import 'package:birthday_calendar/features/settings/models/birthday_display_settings.dart';
 import 'package:birthday_calendar/shared/constants/event_color.dart';
+import 'package:birthday_calendar/features/widget/services/widget_sync_service.dart';
 
 /// 誕生日のカレンダー表示設定を管理する Provider。
 final birthdayDisplaySettingsProvider =
@@ -36,6 +37,7 @@ class BirthdayDisplaySettingsNotifier extends AsyncNotifier<BirthdayDisplaySetti
     
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, updated.toJson());
+    WidgetSyncService.updateScheduleWidgetData();
   }
 
   /// 特定のタグの表示/非表示を切り替える。
@@ -57,6 +59,7 @@ class BirthdayDisplaySettingsNotifier extends AsyncNotifier<BirthdayDisplaySetti
     
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, updated.toJson());
+    WidgetSyncService.updateScheduleWidgetData();
   }
 
   /// スケジュール表示時のカラーを変更する。
@@ -68,6 +71,7 @@ class BirthdayDisplaySettingsNotifier extends AsyncNotifier<BirthdayDisplaySetti
     
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, updated.toJson());
+    WidgetSyncService.updateScheduleWidgetData();
   }
 }
 

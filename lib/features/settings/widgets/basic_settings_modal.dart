@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
 import 'package:birthday_calendar/shared/widgets/base_modal.dart';
 import 'package:birthday_calendar/shared/services/notification_service.dart';
+import 'package:birthday_calendar/features/widget/services/widget_sync_service.dart';
 
 /// アプリ全体の基本設定画面。
 class BasicSettingsModal extends ConsumerWidget {
@@ -75,6 +76,51 @@ class BasicSettingsModal extends ConsumerWidget {
                 }
                 await ref.read(appSettingsProvider.notifier).setNotificationsEnabled(value);
               },
+            ),
+            const Divider(),
+
+            // ホーム画面ウィジェット
+            _buildSectionHeader('ホーム画面ウィジェット'),
+            ListTile(
+              leading: const Icon(Icons.widgets_outlined),
+              title: const Text('ウィジェットのデータを手動更新'),
+              subtitle: const Text('ホーム画面の「もうすぐ誕生日」を最新化します', style: TextStyle(fontSize: 12)),
+              trailing: const Icon(Icons.sync, size: 20),
+              onTap: () async {
+                await WidgetSyncService.updateWidgetData();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('ウィジェットのデータを最新状態に更新しました。'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Theme.of(context).dividerColor.withAlpha(80)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, size: 18, color: Theme.of(context).hintColor),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'ホーム画面の何もない場所を長押しし、「ウィジェット」から「BirthDay Calendar」を選択して追加してください。',
+                        style: TextStyle(fontSize: 12, color: Theme.of(context).hintColor, height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             const Divider(),
           ],

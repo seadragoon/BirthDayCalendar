@@ -3,6 +3,7 @@ import 'package:birthday_calendar/features/birthday/models/contact_birthday_entr
 import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
 import 'package:birthday_calendar/shared/constants/notification_type.dart';
 import 'package:birthday_calendar/shared/db/database_helper.dart';
+import 'package:birthday_calendar/features/widget/services/widget_sync_service.dart';
 
 /// 端末の連絡先から誕生日を取得・インポートするサービス。
 class ContactImportService {
@@ -114,6 +115,9 @@ class ContactImportService {
         count++;
       }
     });
+
+    // ウィジェットデータを最新状態に同期
+    WidgetSyncService.updateAllWidgets();
 
     return count;
   }
