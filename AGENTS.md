@@ -161,7 +161,7 @@ lib/
     │   ├── recurrence_type.dart                 # RecurrenceType enum（none/daily/weekly/monthly/yearly/weekday/custom）
     │   └── view_type.dart                       # ViewType enum（schedule/birthday）
     ├── services/
-    │   └── notification_service.dart            # 通知の初期化・スケジュール制御（ローカル通知）
+    │   └── notification_service.dart            # 通知の初期化・スケジュール制御・権限判定/リクエスト（ローカル通知）
     ├── db/
     │   └── database_helper.dart                 # DatabaseHelper シングルトン（v6 スキーマ・マイグレーション）
     ├── providers/

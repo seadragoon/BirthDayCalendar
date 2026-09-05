@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:birthday_calendar/features/calendar/models/event_stamp.dart';
 
@@ -75,6 +76,14 @@ class StampPickerSheet extends StatefulWidget {
     if (stamp != null) {
       await recordUsage(stamp.id);
     }
+  }
+
+  /// 指定したスタンプIDを使用履歴から削除する
+  static Future<void> removeRecentStamp(String stampId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final ids = prefs.getStringList('recent_stamp_ids') ?? [];
+    ids.remove(stampId);
+    await prefs.setStringList('recent_stamp_ids', ids);
   }
 
   @override
@@ -215,9 +224,7 @@ class _StampPickerSheetState extends State<StampPickerSheet> {
               child: TabBarView(
                 children: [
                   // よく使う（上位16件、空の場合は案内表示）
-                  _recentStamps.isEmpty
-                      ? _buildEmptyRecentView(isDark)
-                      : _buildStampGrid(_recentStamps, theme, isDark),
+                  _buildRecentView(theme, isDark),
                   // 各カテゴリのグリッド
                   ...EventStamp.categories.map((category) {
                     final stamps = EventStamp.getStampsByCategory(category);
@@ -230,6 +237,96 @@ class _StampPickerSheetState extends State<StampPickerSheet> {
         ),
       ),
     );
+  }
+
+  /// 「よく使う」タブの表示（リスト表示＋長押し削除のヒント）
+  Widget _buildRecentView(ThemeData theme, bool isDark) {
+    if (_recentStamps.isEmpty) {
+      return _buildEmptyRecentView(isDark);
+    }
+
+    return Column(
+      children: [
+        // 長押し削除のヒント
+        Padding(
+          padding: const EdgeInsets.only(top: 10.0, left: 16.0, right: 16.0),
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 14,
+                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '長押しで履歴から削除できます',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _buildStampGrid(_recentStamps, theme, isDark, isRecent: true),
+        ),
+      ],
+    );
+  }
+
+  /// 「よく使う」からスタンプを削除する確認ダイアログ
+  Future<void> _showDeleteRecentDialog(EventStamp stamp) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Text(stamp.icon, style: const TextStyle(fontSize: 24)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '「${stamp.label}」を履歴から削除',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: const Text('このスタンプを「よく使う」履歴から削除しますか？\n（カタログから消えるわけではありません）'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('削除する'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true && mounted) {
+      await StampPickerSheet.removeRecentStamp(stamp.id);
+      setState(() {
+        _recentStamps.removeWhere((s) => s.id == stamp.id);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${stamp.icon}「${stamp.label}」を履歴から削除しました'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildEmptyRecentView(bool isDark) {
@@ -264,7 +361,12 @@ class _StampPickerSheetState extends State<StampPickerSheet> {
     );
   }
 
-  Widget _buildStampGrid(List<EventStamp> stamps, ThemeData theme, bool isDark) {
+  Widget _buildStampGrid(
+    List<EventStamp> stamps,
+    ThemeData theme,
+    bool isDark, {
+    bool isRecent = false,
+  }) {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -278,36 +380,109 @@ class _StampPickerSheetState extends State<StampPickerSheet> {
         final stamp = stamps[index];
         final isSelected = widget.selectedIcon == stamp.icon;
 
-        return InkWell(
+        return _StampItem(
+          stamp: stamp,
+          isSelected: isSelected,
+          isRecent: isRecent,
           onTap: () => _selectStamp(stamp),
+          onLongPress: isRecent ? () => _showDeleteRecentDialog(stamp) : null,
+        );
+      },
+    );
+  }
+}
+
+/// 押下フィードバック（縮小アニメーション＋触覚フィードバック＋波紋）を持つスタンプセル。
+class _StampItem extends StatefulWidget {
+  final EventStamp stamp;
+  final bool isSelected;
+  final bool isRecent;
+  final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+
+  const _StampItem({
+    required this.stamp,
+    required this.isSelected,
+    required this.isRecent,
+    required this.onTap,
+    this.onLongPress,
+  });
+
+  @override
+  State<_StampItem> createState() => _StampItemState();
+}
+
+class _StampItemState extends State<_StampItem> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return AnimatedScale(
+      scale: _isPressed ? 0.88 : 1.0,
+      duration: const Duration(milliseconds: 100),
+      curve: Curves.easeOutCubic,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            widget.onTap();
+          },
+          onLongPress: widget.onLongPress != null
+              ? () {
+                  HapticFeedback.mediumImpact();
+                  widget.onLongPress!();
+                }
+              : null,
+          onTapDown: (_) => setState(() => _isPressed = true),
+          onTapUp: (_) => setState(() => _isPressed = false),
+          onTapCancel: () => setState(() => _isPressed = false),
           borderRadius: BorderRadius.circular(12),
-          child: Container(
+          splashColor: theme.colorScheme.primary.withValues(alpha: 0.25),
+          highlightColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+          child: Ink(
             decoration: BoxDecoration(
-              color: isSelected
-                  ? theme.colorScheme.primary.withValues(alpha: 0.15)
-                  : (isDark ? Colors.grey.shade800 : Colors.grey.shade100),
+              color: widget.isSelected
+                  ? theme.colorScheme.primary.withValues(alpha: 0.18)
+                  : (_isPressed
+                      ? (isDark ? Colors.grey.shade700 : Colors.grey.shade300)
+                      : (isDark ? Colors.grey.shade800 : Colors.grey.shade100)),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected
+                color: widget.isSelected
                     ? theme.colorScheme.primary
-                    : (isDark ? Colors.grey.shade700 : Colors.grey.shade300),
-                width: isSelected ? 2 : 1,
+                    : (_isPressed
+                        ? theme.colorScheme.primary.withValues(alpha: 0.6)
+                        : (isDark ? Colors.grey.shade700 : Colors.grey.shade300)),
+                width: widget.isSelected || _isPressed ? 2 : 1,
               ),
+              boxShadow: _isPressed
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  stamp.icon,
+                  widget.stamp.icon,
                   style: const TextStyle(fontSize: 28),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  stamp.label,
+                  widget.stamp.label,
                   style: TextStyle(
                     fontSize: 11,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected
+                    fontWeight: widget.isSelected || _isPressed ? FontWeight.bold : FontWeight.normal,
+                    color: widget.isSelected
                         ? theme.colorScheme.primary
                         : (isDark ? Colors.white70 : Colors.black87),
                   ),
@@ -317,8 +492,8 @@ class _StampPickerSheetState extends State<StampPickerSheet> {
               ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

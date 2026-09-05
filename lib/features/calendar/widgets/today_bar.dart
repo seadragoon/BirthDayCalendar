@@ -115,8 +115,9 @@ class TodayBar extends ConsumerWidget {
                 if (!context.mounted) return;
 
                 // 編集するかどうかの確認ダイアログを表示
-                final shouldEdit = await showDialog<bool>(
+                final action = await showDialog<_StampAction>(
                   context: context,
+                  barrierDismissible: false,
                   builder: (dialogContext) {
                     final theme = Theme.of(dialogContext);
                     final dateText = DateFormat('yyyy年M月d日 (E)', 'ja_JP').format(selectedDate);
@@ -192,11 +193,18 @@ class TodayBar extends ConsumerWidget {
                       ),
                       actions: [
                         TextButton(
-                          onPressed: () => Navigator.of(dialogContext).pop(false),
+                          onPressed: () => Navigator.of(dialogContext).pop(_StampAction.cancel),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.redAccent,
+                          ),
+                          child: const Text('キャンセル'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(_StampAction.done),
                           child: const Text('このまま完了'),
                         ),
                         FilledButton(
-                          onPressed: () => Navigator.of(dialogContext).pop(true),
+                          onPressed: () => Navigator.of(dialogContext).pop(_StampAction.edit),
                           child: const Text('編集する'),
                         ),
                       ],
@@ -204,7 +212,23 @@ class TodayBar extends ConsumerWidget {
                   },
                 );
 
-                if (shouldEdit == true && context.mounted) {
+                if (action == _StampAction.cancel) {
+                  // 追加を取り消し（予定削除 ＋ 履歴削除 ＋ 再描画）
+                  if (savedEvent.id != null) {
+                    await ref.read(eventsByDateProvider.notifier).deleteEvent(savedEvent.id!);
+                    await StampPickerSheet.removeRecentStamp(stamp.id);
+                    ref.read(eventsByMonthProvider.notifier).refresh();
+                  }
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${stamp.icon}「${stamp.label}」の追加をキャンセルしました'),
+                        duration: const Duration(seconds: 2),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                } else if (action == _StampAction.edit && context.mounted) {
                   await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => EventModal(existingEvent: savedEvent),
@@ -250,4 +274,16 @@ class TodayBar extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// スタンプ追加確認ダイアログの選択アクション
+enum _StampAction {
+  /// 追加を取り消し（予定削除）
+  cancel,
+
+  /// このまま追加を完了
+  done,
+
+  /// 予定編集画面へ遷移
+  edit,
 }

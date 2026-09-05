@@ -51,35 +51,61 @@ class NotificationService {
         debugPrint('通知がタップされました: ${response.payload}');
       },
     );
-
-    // 起動時に必要な通知権限のリクエストを試行
-    await requestPermissions();
   }
 
-  /// 通知と正確なアラーム権限のリクエスト
-  Future<void> requestPermissions() async {
+  /// 端末側で通知が許可されているか確認する
+  Future<bool> areNotificationsGranted() async {
+    try {
+      // Android
+      final androidImplementation = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      if (androidImplementation != null) {
+        final enabled = await androidImplementation.areNotificationsEnabled();
+        return enabled ?? false;
+      }
+
+      // iOS
+      final iosImplementation = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+      if (iosImplementation != null) {
+        final permissions = await iosImplementation.checkPermissions();
+        return permissions?.isEnabled ?? false;
+      }
+    } catch (e) {
+      debugPrint('通知権限チェックエラー: $e');
+    }
+    return true;
+  }
+
+  /// 通知と正確なアラーム権限のリクエスト（設定画面の起動含む）
+  Future<bool> requestPermissions() async {
+    bool granted = false;
     // Android
     final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
         _notificationsPlugin.resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
-    
+
     if (androidImplementation != null) {
-      await androidImplementation.requestNotificationsPermission();
+      final notifGranted = await androidImplementation.requestNotificationsPermission() ?? false;
       await androidImplementation.requestExactAlarmsPermission();
+      granted = notifGranted;
     }
 
     // iOS
     final iosImplementation =
         _notificationsPlugin.resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>();
-    
+
     if (iosImplementation != null) {
-      await iosImplementation.requestPermissions(
+      final iosGranted = await iosImplementation.requestPermissions(
         alert: true,
         badge: true,
         sound: true,
-      );
+      ) ?? false;
+      granted = iosGranted;
     }
+
+    return granted;
   }
 
   /// 予定（Event）に関する通知のスケジュール登録

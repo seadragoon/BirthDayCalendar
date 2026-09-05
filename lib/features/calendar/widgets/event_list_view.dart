@@ -81,15 +81,16 @@ class EventListView extends ConsumerWidget {
               final timeText = event.isBirthday
                   ? ''
                   : (event.isAllDay
-                      ? '終日'
-                      : '${timeFormat.format(event.startDate)} - ${timeFormat.format(event.endDate)}');
+                        ? '終日'
+                        : '${timeFormat.format(event.startDate)} - ${timeFormat.format(event.endDate)}');
 
               return ListTile(
                 dense: true,
                 visualDensity: const VisualDensity(vertical: -2),
+                minVerticalPadding: 2,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 4,
+                  vertical: 2,
                 ),
                 leading: _EventColorBar(
                   color: event.colorIndex.color,
@@ -99,10 +100,7 @@ class EventListView extends ConsumerWidget {
                 title: Row(
                   children: [
                     if (event.icon != null && event.icon!.isNotEmpty) ...[
-                      Text(
-                        event.icon!,
-                        style: const TextStyle(fontSize: 16),
-                      ),
+                      Text(event.icon!, style: const TextStyle(fontSize: 15)),
                       const SizedBox(width: 6),
                     ],
                     Expanded(
@@ -117,20 +115,21 @@ class EventListView extends ConsumerWidget {
                     ),
                   ],
                 ),
-                subtitle: Text(
-                  timeText,
-                  style: const TextStyle(fontSize: 13),
-                ),
+                subtitle: Text(timeText, style: const TextStyle(fontSize: 12.5)),
                 onTap: () {
                   if (event.isBirthday && event.id != null) {
                     // 仮想IDから元の誕生日IDを抽出: (abs(id) / 10000).floor
                     final originalId = (event.id!.abs() / 10000).floor();
-                    final birthdayList = ref.read(birthdayListProvider).valueOrNull ?? [];
+                    final birthdayList =
+                        ref.read(birthdayListProvider).valueOrNull ?? [];
                     try {
-                      final birthday = birthdayList.firstWhere((b) => b.id == originalId);
+                      final birthday = birthdayList.firstWhere(
+                        (b) => b.id == originalId,
+                      );
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => BirthdayDetailModal(birthday: birthday),
+                          builder: (_) =>
+                              BirthdayDetailModal(birthday: birthday),
                           fullscreenDialog: true,
                         ),
                       );
@@ -177,7 +176,7 @@ class _EventColorBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 4, // 12から4にスリム化
-      height: 40,
+      height: 36, // 項目のバランスに合わせて36に調整
       child: CustomPaint(
         painter: _EventBarPainter(
           color: color,
@@ -245,9 +244,9 @@ class _EventBarPainter extends CustomPainter {
     Color color,
   ) {
     final paint = Paint()..color = color;
-    // 20px の範囲にドットが3つ以上入るよう調整 (3+4+3+4+3 = 17px)
-    const double dashHeight = 3;
-    const double dashSpace = 4;
+    // 16pxの範囲にドットが綺麗に入るよう調整
+    const double dashHeight = 2.5;
+    const double dashSpace = 3.0;
     double currentY = startY;
 
     while (currentY < endY) {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
 import 'package:birthday_calendar/shared/widgets/base_modal.dart';
+import 'package:birthday_calendar/shared/services/notification_service.dart';
 
 /// アプリ全体の基本設定画面。
 class BasicSettingsModal extends ConsumerWidget {
@@ -24,8 +25,55 @@ class BasicSettingsModal extends ConsumerWidget {
               title: const Text('通知を有効にする'),
               subtitle: const Text('誕生日や予定のお知らせを受け取ります'),
               value: settings.isNotificationsEnabled,
-              onChanged: (value) {
-                ref.read(appSettingsProvider.notifier).setNotificationsEnabled(value);
+              onChanged: (value) async {
+                if (value) {
+                  // 端末側で通知が許可されているか確認
+                  final isGranted = await NotificationService.instance.areNotificationsGranted();
+                  if (!isGranted) {
+                    if (!context.mounted) return;
+                    final shouldOpenSettings = await showDialog<bool>(
+                      context: context,
+                      builder: (dialogContext) {
+                        return AlertDialog(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          title: const Row(
+                            children: [
+                              Icon(Icons.notifications_off_outlined, color: Colors.orange, size: 24),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '通知が許可されていません',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                          content: const Text(
+                            '予定や誕生日の通知を受け取るには、端末の設定で通知を許可する必要があります。\n設定画面を開きますか？',
+                            style: TextStyle(fontSize: 14),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(dialogContext).pop(false),
+                              child: const Text('キャンセル'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.of(dialogContext).pop(true),
+                              child: const Text('設定を開く'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+
+                    if (shouldOpenSettings == true) {
+                      await NotificationService.instance.requestPermissions();
+                      await ref.read(appSettingsProvider.notifier).setNotificationsEnabled(true);
+                    }
+                    return;
+                  }
+                }
+                await ref.read(appSettingsProvider.notifier).setNotificationsEnabled(value);
               },
             ),
             const Divider(),
