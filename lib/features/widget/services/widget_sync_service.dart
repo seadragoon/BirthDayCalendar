@@ -14,8 +14,16 @@ import 'package:birthday_calendar/shared/db/database_helper.dart';
 
 /// ホーム画面ウィジェットとのデータ同期および更新管理サービス。
 class WidgetSyncService {
-  static const String _androidBirthdayWidgetName = 'BirthdayWidgetProvider';
-  static const String _androidScheduleWidgetName = 'ScheduleWidgetProvider';
+  static const List<String> _androidBirthdayWidgetNames = [
+    'BirthdayWidgetProvider',
+    'BirthdayWidget2x2Provider',
+    'BirthdayWidget2x3Provider',
+  ];
+  static const List<String> _androidScheduleWidgetNames = [
+    'ScheduleWidgetProvider',
+    'ScheduleWidget2x2Provider',
+    'ScheduleWidget2x3Provider',
+  ];
   static const String _birthdayDataKey = 'birthday_widget_data';
   static const String _scheduleDataKey = 'schedule_widget_data';
   static const String _scheduleDateHeaderKey = 'schedule_widget_date_header';
@@ -55,11 +63,13 @@ class WidgetSyncService {
       // ウィジェット共有ストレージに保存
       await HomeWidget.saveWidgetData<String>(_birthdayDataKey, jsonString);
 
-      // ウィジェットの再描画を要求
-      await HomeWidget.updateWidget(
-        name: _androidBirthdayWidgetName,
-        androidName: _androidBirthdayWidgetName,
-      );
+      // 全サイズの誕生日ウィジェットの再描画を要求
+      for (final widgetName in _androidBirthdayWidgetNames) {
+        await HomeWidget.updateWidget(
+          name: widgetName,
+          androidName: widgetName,
+        );
+      }
     } catch (e) {
       debugPrint('[WidgetSyncService] 誕生日ウィジェット更新エラー: $e');
     }
@@ -125,11 +135,13 @@ class WidgetSyncService {
       await HomeWidget.saveWidgetData<String>(_scheduleDataKey, jsonString);
       await HomeWidget.saveWidgetData<String>(_scheduleDateHeaderKey, dateHeader);
 
-      // 7. 予定ウィジェットの再描画を要求
-      await HomeWidget.updateWidget(
-        name: _androidScheduleWidgetName,
-        androidName: _androidScheduleWidgetName,
-      );
+      // 7. 全サイズの予定ウィジェットの再描画を要求
+      for (final widgetName in _androidScheduleWidgetNames) {
+        await HomeWidget.updateWidget(
+          name: widgetName,
+          androidName: widgetName,
+        );
+      }
     } catch (e) {
       debugPrint('[WidgetSyncService] 予定ウィジェット更新エラー: $e');
     }

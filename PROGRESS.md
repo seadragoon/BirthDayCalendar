@@ -4,6 +4,7 @@
 > セッションを跨いでも現在の状態を把握できるようにしています。
 > 最終更新: 2026-09-06
 
+- **2026-09-06**: ホーム画面ウィジェットに新サイズ（2×2 正方形・2×3 縦長スリム）を追加実装。誕生日ウィジェット（BirthdayWidget2x2Provider, BirthdayWidget2x3Provider）および予定ウィジェット（ScheduleWidget2x2Provider, ScheduleWidget2x3Provider）の計4プロバイダー・XMLレイアウト・メタデータを新設。WidgetSyncService で全6種（4×2, 2×2, 2×3）への一括自動同期を完了。エミュレータ実機にてウィジェット一覧・ホーム画面並列配置（予定2×2＋誕生日2×2）の動作検証完了。
 - **2026-09-06**: ホーム画面「予定ウィジェット（Schedule Widget）」を新規追加。今日〜直近の予定を最大4件（時間・タイトル・カラーバー・スタンプ対応、誕生日連動）で一覧表示する 4×2 カード型ウィジェット（ScheduleWidgetProvider, widget_schedule.xml, WidgetScheduleItem）を構築。予定の作成/編集/削除/インポート/復元時および誕生日表示設定変更時の自動データ同期を完備。
 - **2026-09-06**: ホーム画面ウィジェット機能（Android AppWidget / home_widget）を実装。スマートフォンのホーム画面で「もうすぐ誕生日（あと○日、年齢、月日）」をトップにハイライトし、直近2〜3人をすっきり一覧表示するカードデザインを構築。アプリ起動時・誕生日登録/更新/削除時・バックアップ復元・連絡先インポート時の自動データ同期、および基本設定画面での手動同期・設定案内を完備。
 - **2026-09-06**: 他カレンダー（Googleカレンダー/iCloudカレンダー等）および.icsファイルからの予定インポート機能（DeviceCalendarService, DeviceCalendarImportModal）を実装。端末内カレンダーアカウントの自動検出、期間指定（前後/標準/広範囲/カスタム）、既存登録との重複自動判定（登録済みバッジ）、取り込み時の帯カラー選択、一括取り込み、ドロワーへの導線配置を完了。
@@ -175,20 +176,25 @@
 
 ## Phase 16: ホーム画面ウィジェット ✅ 完了
 - [x] パッケージ導入（home_widget: ^0.7.0）
-- [x] AndroidネイティブAppWidget基盤構築
-  - [x] birthday_widget_info.xml（初期サイズ4x2、更新間隔30分、home_screen設定）
-  - [x] widget_background.xml, widget_chip_primary.xml, widget_chip_secondary.xml
-  - [x] widget_birthday.xml（ヘッダー、1人目ハイライト、2〜3人目リスト、空状態表示）
-  - [x] BirthdayWidgetProvider.kt（RemoteViews生成、タップ起動PendingIntent、JSONパース・バインド）
-  - [x] AndroidManifest.xml にレシーバー登録
+- [x] 誕生日ウィジェット基盤構築（4×2, 2×2, 2×3）
+  - [x] `birthday_widget_info.xml`（4×2）, `birthday_widget_2x2_info.xml`, `birthday_widget_2x3_info.xml`
+  - [x] `widget_background.xml`, `widget_chip_primary.xml`, `widget_chip_secondary.xml`
+  - [x] `widget_birthday.xml`（4×2）, `widget_birthday_2x2.xml`（2×2 特大1人表示）, `widget_birthday_2x3.xml`（2×3 縦並び3人表示）
+  - [x] `BirthdayWidgetProvider.kt`, `BirthdayWidget2x2Provider.kt`, `BirthdayWidget2x3Provider.kt`
+- [x] 予定ウィジェット基盤構築（4×2, 2×2, 2×3）
+  - [x] `schedule_widget_info.xml`（4×2）, `schedule_widget_2x2_info.xml`, `schedule_widget_2x3_info.xml`
+  - [x] `widget_schedule.xml`（4×2 今日＋明日以降）, `widget_schedule_2x2.xml`（2×2 コンパクト1〜2件）, `widget_schedule_2x3.xml`（2×3 縦並び3〜4件）
+  - [x] `ScheduleWidgetProvider.kt`, `ScheduleWidget2x2Provider.kt`, `ScheduleWidget2x3Provider.kt`
+- [x] AndroidManifest.xml に全6種のレシーバー登録（ラベル付き）
 - [x] Flutter側データモデル＆同期サービス
-  - [x] WidgetBirthdayItem（直近日数判定、名前・年齢・日付ラベル、JSONシリアライズ）
-  - [x] WidgetSyncService（DBから直近誕生日抽出、ソート、home_widget共有領域への保存、再描画トリガー）
+  - [x] `WidgetBirthdayItem`（直近日数判定、名前・年齢・日付ラベル、JSONシリアライズ）
+  - [x] `WidgetScheduleItem`（今日/明日/日付ラベル、終日/時刻判定、カラーバー色、スタンプ対応、JSONシリアライズ）
+  - [x] `WidgetSyncService`（誕生日・予定抽出、全6種プロバイダーへの一括保存＆再描画トリガー）
 - [x] アプリ内ライフサイクル・更新トリガー連動
   - [x] アプリ起動時の初期同期（main.dart）
-  - [x] 誕生日の追加・更新・削除時の自動同期（BirthdayListNotifier）
-  - [x] バックアップ復元完了時の自動同期（BackupService）
-  - [x] 連絡先インポート完了時の自動同期（ContactImportService）
+  - [x] 予定の追加・編集・削除・インポート・復元時の自動同期（EventProviders, DeviceCalendarService, BackupService）
+  - [x] 誕生日の追加・更新・削除・インポート・復元時の自動同期（BirthdayListNotifier, ContactImportService, BackupService）
+  - [x] 誕生日表示設定（カレンダー連動・除外タグ・カラー）変更時の自動同期（BirthdayDisplaySettingsNotifier）
 - [x] 設定メニュー導線
   - [x] 基本設定画面（BasicSettingsModal）に「手動更新ボタン」およびホーム画面配置手順の案内カードを追加
 
@@ -214,7 +220,7 @@ lib/
 │   │   ├── views/ (birthday_view.dart, tag_management_view.dart)
 │   │   └── widgets/ (birthday_detail_modal.dart, birthday_list_view.dart, birthday_modal.dart, contact_import_modal.dart, tag_filter_bar.dart)
 │   ├── widget/
-│   │   ├── models/ (widget_birthday_item.dart)
+│   │   ├── models/ (widget_birthday_item.dart, widget_schedule_item.dart)
 │   │   └── services/ (widget_sync_service.dart)
 │   ├── backup/
 │   │   ├── models/ (backup_data.dart)
