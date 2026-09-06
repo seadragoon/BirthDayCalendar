@@ -74,6 +74,8 @@
 | 外部カレンダー連携 | `device_calendar` | ^4.3.3 | 端末/Google/iCloudカレンダーの予定取得・一括取り込み |
 | ホーム画面ウィジェット | `home_widget` | ^0.7.0 | Android/iOSホーム画面ウィジェット連携・データ同期 |
 | 外部リンク・メーラー | `url_launcher` | ^6.3.1 | お問い合わせメーラー起動（mailto:）およびURLオープン |
+| 生体認証 | `local_auth` | ^2.3.0 | 指紋認証 / 顔認証 (Face ID / BiometricPrompt) |
+| 暗号化・ハッシュ | `crypto` | ^3.0.6 | パスコードのSHA-256ソルト付きハッシュ化 |
 
 ---
 
@@ -187,6 +189,18 @@ lib/
 │   │   │   └── legal_document_modal.dart        # 規約・ポリシー閲覧モーダル（全文コピー対応）
 │   │   └── widgets/
 │   │       └── contact_dialog.dart              # お問い合わせ・ご意見ダイアログ（メーラー起動/メアドコピー）
+│   │
+│   ├── security/                                # ── セキュリティ・パスコード・生体認証機能 ──
+│   │   ├── models/
+│   │   │   └── security_settings.dart           # SecuritySettings（パスコードハッシュ/ソルト/生体認証有効フラグ）
+│   │   ├── services/
+│   │   │   └── security_service.dart            # 暗号ソルト/SHA-256ハッシュ化/生体認証制御
+│   │   ├── providers/
+│   │   │   └── security_providers.dart          # SecuritySettingsNotifier, AppLockNotifier
+│   │   └── widgets/
+│   │       ├── app_lock_wrapper.dart            # アプリライフサイクル連動ロック＆タスクスイッチャー目隠しシールド
+│   │       ├── passcode_screen.dart             # 4桁PINテンキー入力・シェイクアニメーション・生体認証UI
+│   │       └── security_settings_modal.dart     # セキュリティ設定画面（ON/OFF、変更、生体認証、自動ロック時間）
 │   │
 │   └── settings/                                # ── 設定機能 ──
 │       ├── models/
@@ -306,6 +320,13 @@ lib/
 - `excludedTags`: 表示から除外するタグのリスト（空文字 '' は「未設定」）
 - `colorIndex`: スケジュール表示時の帯カラー（EventColor）
 
+### 5.7 SecuritySettings (`features/security/models/security_settings.dart`)
+- `isPasscodeEnabled`: パスコードロック有効フラグ
+- `passcodeHash`: SHA-256でハッシュ化されたPIN
+- `passcodeSalt`: 暗号ソルト
+- `isBiometricEnabled`: 生体認証（指紋・顔認証）有効フラグ
+- `autoLockIntervalSeconds`: 自動再ロック間隔（0: 即時, 60: 1分, 300: 5分）
+
 ---
 
 ## 6. Provider / 状態管理マップ
@@ -347,6 +368,13 @@ lib/
 |------------|-----|------|
 | `appSettingsProvider` | `AsyncNotifierProvider<..., AppSettings>` | アプリ全体設定（通知・週開始日・ダークモード） |
 | `birthdayDisplaySettingsProvider` | `AsyncNotifierProvider<..., BirthdayDisplaySettings>` | 誕生日カレンダー表示設定 |
+
+### 6.5 セキュリティ関連 (`features/security/providers/`)
+
+| Provider名 | 型 | 役割 |
+|------------|-----|------|
+| `securitySettingsProvider` | `AsyncNotifierProvider<..., SecuritySettings>` | セキュリティ設定永続化管理 |
+| `appLockStateProvider` | `StateNotifierProvider<AppLockNotifier, bool>` | 現在のアプリロック状態・ライフサイクル連動再ロック |
 
 ---
 

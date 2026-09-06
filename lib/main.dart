@@ -16,6 +16,7 @@ import 'package:birthday_calendar/features/settings/models/app_settings.dart';
 import 'package:birthday_calendar/shared/widgets/app_shell.dart';
 import 'package:birthday_calendar/shared/services/notification_service.dart';
 import 'package:birthday_calendar/features/widget/services/widget_sync_service.dart';
+import 'package:birthday_calendar/features/security/widgets/app_lock_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -106,8 +107,10 @@ class BirthdayCalendarApp extends ConsumerWidget {
           Locale('ja', 'JP'),
         ],
         builder: (context, child) {
-          return Center(
-            child: child ?? const SizedBox.shrink(),
+          return AppLockWrapper(
+            child: Center(
+              child: child ?? const SizedBox.shrink(),
+            ),
           );
         },
         home: const AppShell(),

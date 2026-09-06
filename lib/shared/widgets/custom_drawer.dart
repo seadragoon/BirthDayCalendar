@@ -14,6 +14,7 @@ import 'package:birthday_calendar/features/calendar/widgets/device_calendar_impo
 import 'package:birthday_calendar/features/legal/models/legal_texts.dart';
 import 'package:birthday_calendar/features/legal/views/legal_document_modal.dart';
 import 'package:birthday_calendar/features/legal/widgets/contact_dialog.dart';
+import 'package:birthday_calendar/features/security/widgets/security_settings_modal.dart';
 
 /// アプリのドロワー（サイドメニュー）。
 ///
@@ -153,6 +154,20 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const ThemeSelectionModal(),
+                  fullscreenDialog: true,
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.security_outlined),
+            title: const Text('セキュリティ設定'),
+            subtitle: const Text('パスコード・生体認証ロック', style: TextStyle(fontSize: 12)),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const SecuritySettingsModal(),
                   fullscreenDialog: true,
                 ),
               );

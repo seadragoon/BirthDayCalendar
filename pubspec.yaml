@@ -57,6 +57,10 @@ dependencies:
   qreki_dart: ^1.1.2
   shared_preferences: ^2.5.5
 
+  # Security & Biometrics
+  local_auth: ^2.3.0
+  crypto: ^3.0.6
+
   # Local notifications
   flutter_local_notifications: ^18.0.1
   timezone: ^0.9.4
