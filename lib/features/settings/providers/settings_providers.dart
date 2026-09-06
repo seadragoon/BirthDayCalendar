@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:birthday_calendar/features/settings/models/app_settings.dart';
 import 'package:birthday_calendar/features/settings/models/birthday_display_settings.dart';
 import 'package:birthday_calendar/shared/constants/event_color.dart';
+import 'package:birthday_calendar/shared/constants/notification_type.dart';
 import 'package:birthday_calendar/features/widget/services/widget_sync_service.dart';
 
 /// 誕生日のカレンダー表示設定を管理する Provider。
@@ -135,6 +136,39 @@ class AppSettingsNotifier extends AsyncNotifier<AppSettings> {
   Future<void> setShowRokuyo(bool value) async {
     final current = state.valueOrNull ?? const AppSettings();
     final updated = current.copyWith(showRokuyo: value);
+
+    state = AsyncValue.data(updated);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, updated.toJson());
+  }
+
+  /// 予定作成時のデフォルト終日設定を更新する。
+  Future<void> setDefaultIsAllDay(bool value) async {
+    final current = state.valueOrNull ?? const AppSettings();
+    final updated = current.copyWith(defaultIsAllDay: value);
+
+    state = AsyncValue.data(updated);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, updated.toJson());
+  }
+
+  /// 予定作成時のデフォルトカラー番号を更新する。
+  Future<void> setDefaultColorIndex(int value) async {
+    final current = state.valueOrNull ?? const AppSettings();
+    final updated = current.copyWith(defaultColorIndex: value);
+
+    state = AsyncValue.data(updated);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, updated.toJson());
+  }
+
+  /// 予定作成時のデフォルト通知タイミングを更新する。
+  Future<void> setDefaultNotifications(List<NotificationType> value) async {
+    final current = state.valueOrNull ?? const AppSettings();
+    final updated = current.copyWith(defaultNotifications: value);
 
     state = AsyncValue.data(updated);
 

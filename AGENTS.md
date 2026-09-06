@@ -333,6 +333,9 @@ lib/
 - `firstDayOfWeek`: 週の開始日（0: 日曜日, 1: 月曜日）
 - `themeMode`: テーマモード（0: システム設定, 1: ライト, 2: ダーク）
 - `showRokuyo`: 六曜（大安・友引など）表示フラグ（デフォルト: false）
+- `defaultIsAllDay`: 予定新規登録時の終日デフォルトON/OFF（デフォルト: false）
+- `defaultColorIndex`: 予定新規登録時のデフォルトカラーindex（デフォルト: 8 / ラベンダー）
+- `defaultNotifications`: 予定新規登録時のデフォルト通知タイミング（デフォルト: [none]）
 
 ### 5.6 BirthdayDisplaySettings (`features/settings/models/birthday_display_settings.dart`)
 - `isShowOnSchedule`: スケジュール画面に誕生日を表示するか
@@ -521,7 +524,7 @@ CREATE TABLE gifts (
 | 誕生日追加/編集 | `birthday_modal.dart` | CRUD + タグ複数選択 + 生まれ年不明 + メモ |
 | タグ管理 | `tag_management_view.dart` | タグの一覧表示・追加・削除（フルスクリーン） |
 | 基本設定 | `basic_settings_modal.dart` | 通知一括ON/OFF |
-| カレンダー設定 | `calendar_settings_modal.dart` | 週の開始日切り替え（日曜/月曜） |
+| カレンダー設定 | `calendar_settings_modal.dart` | 週の開始日切り替え（日曜/月曜）、六曜表示、予定登録の初期設定（終日ON/OFF・既定カラー・既定通知） |
 | 誕生日表示設定 | `birthday_display_settings_modal.dart` | スケジュール連携ON/OFF、除外タグ、表示カラー |
 | ダークモード切り替え | `theme_mode_dialog.dart` | システム連動 / ライト / ダーク の切替 |
 | きせかえテーマ選択 | `theme_selection_modal.dart` | 標準（カラーパレット12色）・桜・夜空テーマ選択 |

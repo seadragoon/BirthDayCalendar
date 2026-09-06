@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 
 import 'package:birthday_calendar/features/calendar/models/event_model.dart';
 import 'package:birthday_calendar/features/calendar/providers/event_providers.dart';
+import 'package:birthday_calendar/features/settings/models/app_settings.dart';
+import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
 import 'package:birthday_calendar/shared/constants/event_color.dart';
 import 'package:birthday_calendar/shared/constants/notification_type.dart';
 import 'package:birthday_calendar/shared/constants/recurrence_type.dart';
@@ -60,6 +62,7 @@ class _EventModalState extends ConsumerState<EventModal> {
   bool _isEndDateManuallyChanged = false;
   List<NotificationType> _notifications = [NotificationType.none];
   String? _selectedIcon;
+  bool _hasAppliedDefaults = false;
 
   @override
   void initState() {
@@ -126,10 +129,28 @@ class _EventModalState extends ConsumerState<EventModal> {
       _notifications = List.from(event.notifications);
       _isEndDateManuallyChanged = true; // 編集・複製時は同期しない
     } else {
-      // 新規作成時の初期値
+      // 新規作成時の初期値（設定からデフォルト値を反映）
+      final appSettings = ref.read(appSettingsProvider).valueOrNull;
+      if (appSettings != null) {
+        _hasAppliedDefaults = true;
+      }
+      final defaultIsAllDay = appSettings?.defaultIsAllDay ?? false;
+      final defaultColorIndex = appSettings?.defaultColorIndex ?? 8;
+      final defaultNotifications = appSettings?.defaultNotifications ?? [NotificationType.none];
+
+      _isAllDay = defaultIsAllDay;
+      _selectedColor = EventColor.fromIndex(defaultColorIndex);
+      _notifications = List.from(defaultNotifications);
+
       final now = DateTime.now();
-      _startDate = widget.initialDate ?? DateTime(now.year, now.month, now.day, now.hour, 0);
-      _endDate = _startDate.add(const Duration(hours: 1));
+      if (_isAllDay) {
+        final base = widget.initialDate ?? DateTime(now.year, now.month, now.day);
+        _startDate = DateTime(base.year, base.month, base.day, 0, 0);
+        _endDate = DateTime(base.year, base.month, base.day, 23, 59);
+      } else {
+        _startDate = widget.initialDate ?? DateTime(now.year, now.month, now.day, now.hour, 0);
+        _endDate = _startDate.add(const Duration(hours: 1));
+      }
     }
 
     _titleController.addListener(() {
@@ -252,6 +273,24 @@ class _EventModalState extends ConsumerState<EventModal> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<AppSettings>>(appSettingsProvider, (previous, next) {
+      if (!_hasAppliedDefaults && widget.existingEvent == null && !widget.isCopyMode) {
+        next.whenData((settings) {
+          setState(() {
+            _hasAppliedDefaults = true;
+            _isAllDay = settings.defaultIsAllDay;
+            _selectedColor = EventColor.fromIndex(settings.defaultColorIndex);
+            _notifications = List.from(settings.defaultNotifications);
+            if (_isAllDay) {
+              final base = widget.initialDate ?? DateTime(_startDate.year, _startDate.month, _startDate.day);
+              _startDate = DateTime(base.year, base.month, base.day, 0, 0);
+              _endDate = DateTime(base.year, base.month, base.day, 23, 59);
+            }
+          });
+        });
+      }
+    });
+
     final isEditMode = widget.existingEvent != null && !widget.isCopyMode;
     final isSaveEnabled = _titleController.text.trim().isNotEmpty;
     final isDark = Theme.of(context).brightness == Brightness.dark;
