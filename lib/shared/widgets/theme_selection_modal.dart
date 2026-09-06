@@ -27,35 +27,38 @@ class ThemeSelectionModal extends ConsumerWidget {
               _buildSectionHeader(context, 'カラー変更'),
               const SizedBox(height: 16),
               Center(
-                child: GridView.count(
-                crossAxisCount: 6,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                children: EventColor.values.map((ec) {
-                  final isSelected = currentTheme.type == AppThemeType.standard && 
-                                    currentTheme.primaryColor.toARGB32() == ec.color.toARGB32();
-                  return GestureDetector(
-                    onTap: () => ref.read(themeProvider.notifier).updatePrimaryColor(ec.color),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: ec.color,
-                        shape: BoxShape.circle,
-                        border: isSelected ? Border.all(color: Colors.black54, width: 3) : null,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.15),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 360),
+                  child: GridView.count(
+                    crossAxisCount: 6,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    children: EventColor.values.map((ec) {
+                      final isSelected = currentTheme.type == AppThemeType.standard && 
+                                        currentTheme.primaryColor.toARGB32() == ec.color.toARGB32();
+                      return GestureDetector(
+                        onTap: () => ref.read(themeProvider.notifier).updatePrimaryColor(ec.color),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: ec.color,
+                            shape: BoxShape.circle,
+                            border: isSelected ? Border.all(color: Colors.black54, width: 3) : null,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 20) : null,
-                    ),
-                  );
-                }).toList(),
-              ),
+                          child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 20) : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
               ),
 
               const SizedBox(height: 48),
