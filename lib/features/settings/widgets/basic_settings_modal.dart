@@ -5,6 +5,8 @@ import 'package:birthday_calendar/features/settings/providers/settings_providers
 import 'package:birthday_calendar/shared/widgets/base_modal.dart';
 import 'package:birthday_calendar/shared/services/notification_service.dart';
 import 'package:birthday_calendar/features/widget/services/widget_sync_service.dart';
+import 'package:birthday_calendar/features/security/providers/security_providers.dart';
+import 'package:birthday_calendar/features/security/widgets/security_settings_modal.dart';
 
 /// アプリ全体の基本設定画面。
 class BasicSettingsModal extends ConsumerWidget {
@@ -75,6 +77,38 @@ class BasicSettingsModal extends ConsumerWidget {
                   }
                 }
                 await ref.read(appSettingsProvider.notifier).setNotificationsEnabled(value);
+              },
+            ),
+            const Divider(),
+
+            // セキュリティ設定
+            _buildSectionHeader('セキュリティ'),
+            Builder(
+              builder: (context) {
+                final securitySettings = ref.watch(securitySettingsProvider).valueOrNull;
+                final isSecured = securitySettings?.hasValidPasscode ?? false;
+
+                return ListTile(
+                  leading: const Icon(Icons.security_outlined),
+                  title: const Text('パスコード・生体認証ロック'),
+                  subtitle: Text(
+                    isSecured ? '有効（保護中）' : '未設定（無効）',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isSecured ? Colors.green : Colors.grey,
+                      fontWeight: isSecured ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const SecuritySettingsModal(),
+                        fullscreenDialog: true,
+                      ),
+                    );
+                  },
+                );
               },
             ),
             const Divider(),

@@ -107,13 +107,11 @@ class BirthdayCalendarApp extends ConsumerWidget {
           Locale('ja', 'JP'),
         ],
         builder: (context, child) {
-          return AppLockWrapper(
-            child: Center(
-              child: child ?? const SizedBox.shrink(),
-            ),
+          return Center(
+            child: child ?? const SizedBox.shrink(),
           );
         },
-        home: const AppShell(),
+        home: const AppLockWrapper(child: AppShell()),
         );
       },
       loading: () => const MaterialApp(

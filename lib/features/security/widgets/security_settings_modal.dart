@@ -99,35 +99,41 @@ class _SecuritySettingsModalState extends ConsumerState<SecuritySettingsModal> {
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: _changePasscode,
           ),
-          const Divider(),
+        ],
+        const Divider(),
 
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              '生体認証 & 自動ロック',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Text(
+            '生体認証 & 自動ロック',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
             ),
           ),
+        ),
 
-          // 生体認証スイッチ
-          SwitchListTile(
-            secondary: const Icon(Icons.fingerprint),
-            title: const Text('生体認証（指紋・顔認証）'),
-            subtitle: Text(
-              _isLoadingBiometricsCheck
-                  ? '対応状況を確認中...'
-                  : (_isBiometricsSupported
-                      ? '生体認証で素早くロックを解除できます'
-                      : 'お使いの端末は生体認証に対応していません'),
-            ),
-            value: settings.isBiometricEnabled && _isBiometricsSupported,
-            onChanged: _isBiometricsSupported ? _toggleBiometrics : null,
+        // 生体認証スイッチ（常時表示、パスコードOFF時は無効化＆案内表示）
+        SwitchListTile(
+          secondary: const Icon(Icons.fingerprint),
+          title: const Text('生体認証（指紋・顔認証）'),
+          subtitle: Text(
+            _isLoadingBiometricsCheck
+                ? '対応状況を確認中...'
+                : (!_isBiometricsSupported
+                    ? 'お使いの端末は生体認証に対応していません'
+                    : (!isPasscodeEnabled
+                        ? '※生体認証を使うには先にパスコードの設定が必要です'
+                        : '生体認証で素早くロックを解除できます')),
           ),
+          value: isPasscodeEnabled && settings.isBiometricEnabled && _isBiometricsSupported,
+          onChanged: (isPasscodeEnabled && _isBiometricsSupported)
+              ? _toggleBiometrics
+              : null,
+        ),
 
+        if (isPasscodeEnabled) ...[
           // 自動再ロックの時間
           ListTile(
             leading: const Icon(Icons.timer_outlined),

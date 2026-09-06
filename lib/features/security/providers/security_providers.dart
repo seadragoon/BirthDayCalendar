@@ -83,17 +83,19 @@ class SecuritySettingsNotifier extends AsyncNotifier<SecuritySettings> {
 class AppLockNotifier extends StateNotifier<bool> {
   final Ref ref;
   DateTime? _backgroundTime;
+  bool _hasCheckedInitialLock = false;
 
   AppLockNotifier(this.ref) : super(false) {
     _init();
   }
 
   void _init() {
-    // 初期起動時、セキュリティ設定が読み込まれたらロック状態を初期化
+    // 初回起動時（コールドスタート時）のみ設定を読み込んでロック判定
     ref.listen<AsyncValue<SecuritySettings>>(securitySettingsProvider, (_, next) {
-      if (next.hasValue) {
+      if (!_hasCheckedInitialLock && next.hasValue) {
+        _hasCheckedInitialLock = true;
         final settings = next.value!;
-        if (settings.hasValidPasscode && _backgroundTime == null) {
+        if (settings.hasValidPasscode) {
           // アプリコールドスタート時のロック
           state = true;
         }
