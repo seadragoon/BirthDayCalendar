@@ -11,6 +11,9 @@ import 'package:birthday_calendar/features/settings/widgets/theme_mode_dialog.da
 import 'package:birthday_calendar/features/backup/views/backup_restore_modal.dart';
 import 'package:birthday_calendar/features/birthday/widgets/contact_import_modal.dart';
 import 'package:birthday_calendar/features/calendar/widgets/device_calendar_import_modal.dart';
+import 'package:birthday_calendar/features/legal/models/legal_texts.dart';
+import 'package:birthday_calendar/features/legal/views/legal_document_modal.dart';
+import 'package:birthday_calendar/features/legal/widgets/contact_dialog.dart';
 
 /// アプリのドロワー（サイドメニュー）。
 ///
@@ -263,8 +266,46 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
 
           // 5. その他
           const Padding(
-            padding: EdgeInsets.all(16.0),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text('その他', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.description_outlined),
+            title: const Text('利用規約'),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const LegalDocumentModal(documentType: LegalDocumentType.termsOfService),
+                  fullscreenDialog: true,
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.shield_outlined),
+            title: const Text('プライバシーポリシー'),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const LegalDocumentModal(documentType: LegalDocumentType.privacyPolicy),
+                  fullscreenDialog: true,
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.mail_outline),
+            title: const Text('お問い合わせ・ご意見'),
+            subtitle: const Text('不具合報告・機能リクエスト', style: TextStyle(fontSize: 12)),
+            onTap: () {
+              Navigator.of(context).pop();
+              showDialog(
+                context: context,
+                builder: (_) => const ContactDialog(),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.info_outline),

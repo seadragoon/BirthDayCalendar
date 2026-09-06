@@ -74,6 +74,9 @@ dependencies:
   # Home Screen Widget
   home_widget: ^0.7.0
 
+  # URL launcher & mailto
+  url_launcher: ^6.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

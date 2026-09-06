@@ -72,13 +72,14 @@
 | 連絡先連携 | `flutter_contacts` | ^1.1.9 | 端末連絡先からの誕生日スキャン・一括取り込み |
 | 外部カレンダー連携 | `device_calendar` | ^4.3.3 | 端末/Google/iCloudカレンダーの予定取得・一括取り込み |
 | ホーム画面ウィジェット | `home_widget` | ^0.7.0 | Android/iOSホーム画面ウィジェット連携・データ同期 |
+| 外部リンク・メーラー | `url_launcher` | ^6.3.1 | お問い合わせメーラー起動（mailto:）およびURLオープン |
 
 ---
 
 ## 3. アーキテクチャ
 
 ### 3.1 設計方針
-- **Feature-based ディレクトリ構成**: 機能ごとにディレクトリを分離 (`calendar`, `birthday`, `settings`, `shared`)
+- **Feature-based ディレクトリ構成**: 機能ごとにディレクトリを分離 (`calendar`, `birthday`, `settings`, `legal`, `shared`)
 - **疎結合**: UI → Provider → Repository → DB の一方向依存
 - **ロジック分離**: Widget内にビジネスロジックを書かず、Notifierに集約
 
@@ -102,6 +103,10 @@ sqflite DB
 ## 4. ディレクトリ構成と全ファイル一覧
 
 ```
+docs/                                            # ── ストア公開用法務ドキュメント ──
+├── PRIVACY_POLICY.md                            # プライバシーポリシー全文（外部公開用Markdown）
+└── TERMS_OF_SERVICE.md                          # 利用規約全文（外部公開用Markdown）
+
 lib/
 ├── main.dart                                    # アプリエントリポイント（ProviderScope + MaterialApp）
 │
@@ -172,6 +177,16 @@ lib/
 │   │   └── services/
 │   │       └── widget_sync_service.dart         # ホーム画面ウィジェット連携・データ更新サービス（誕生日・予定同期）
 │   │
+│   ├── legal/                                   # ── 法務・ストア公開・お問い合わせ ──
+│   │   ├── models/
+│   │   │   └── legal_texts.dart                 # 利用規約・プライバシーポリシー全文＆セクションモデル
+│   │   ├── services/
+│   │   │   └── contact_service.dart             # お問い合わせメーラー起動（mailto:）・端末情報雛形生成
+│   │   ├── views/
+│   │   │   └── legal_document_modal.dart        # 規約・ポリシー閲覧モーダル（全文コピー対応）
+│   │   └── widgets/
+│   │       └── contact_dialog.dart              # お問い合わせ・ご意見ダイアログ（メーラー起動/メアドコピー）
+│   │
 │   └── settings/                                # ── 設定機能 ──
 │       ├── models/
 │       │   ├── app_settings.dart                # AppSettings（通知有効/週の開始日/themeMode 等）
@@ -186,7 +201,12 @@ lib/
 │
 └── shared/                                      # ── 共通部品 ──
     ├── constants/
+    │   ├── app_constants.dart                   # アプリ定数（アプリ名、バージョン、サポートメール）
     │   ├── event_color.dart                     # EventColor enum（12色）
+    │   ├── japanese_holiday.dart                # 日本の祝日判定ユーティリティ（振替休日/国民の休日対応）
+    │   ├── notification_type.dart               # NotificationType enum（なし/当日/1日前/2日前/3日前/1週間前）
+    │   ├── recurrence_type.dart                 # RecurrenceType enum（none/daily/weekly/monthly/yearly/weekday/custom）
+    │   └── view_type.dart                       # ViewType enum（schedule/birthday）
     │   ├── japanese_holiday.dart                # 日本の祝日判定ユーティリティ（振替休日/国民の休日対応）
     │   ├── notification_type.dart               # NotificationType enum（なし/当日/1日前/2日前/3日前/1週間前）
     │   ├── recurrence_type.dart                 # RecurrenceType enum（none/daily/weekly/monthly/yearly/weekday/custom）
@@ -443,6 +463,9 @@ CREATE TABLE tags (
 | バックアップと復元 | `backup_restore_modal.dart` | データ出力（共有/保存）・復元（上書き/追加）・.ics書き出し |
 | 誕生日を取り込み | `contact_import_modal.dart` | 連絡先スキャン・誕生日一括インポート・タグ付与 |
 | 外部カレンダーから取り込み | `device_calendar_import_modal.dart` | 端末/Google/iCloudカレンダー・.icsファイルの予定スキャン・重複検知・一括インポート |
+| 利用規約 | `legal_document_modal.dart` | 利用規約の全文閲覧・全文コピー機能 |
+| プライバシーポリシー | `legal_document_modal.dart` | 完全ローカル動作・権限利用目的・免責事項の全文閲覧・コピー機能 |
+| お問い合わせ・ご意見 | `contact_dialog.dart` | サポート窓口メール案内（mailto:連携・OS/アプリ環境雛形自動挿入・メアドコピー） |
 | 検索 | `custom_search_delegate.dart` | 予定・誕生日のリアルタイム横断検索 |
 | 共通ヘッダー | `base_modal.dart` | ×ボタン / 決定 / 削除 / 編集 |
 
@@ -468,8 +491,9 @@ CREATE TABLE tags (
 | 14 | データ保護（バックアップ・復元）＆ 連絡先誕生日インポート | ✅ 完了 |
 | 15 | 他カレンダー（Google/iCloud/.ics）からの予定インポート | ✅ 完了 |
 | 16 | ホーム画面ウィジェット（直近誕生日カウントダウン＆直近予定一覧：4×2, 2×2, 2×3 全6種） | ✅ 完了 |
+| 17 | ストア公開要件（プライバシーポリシー・利用規約・お問い合わせ窓口・メーラー連携） | ✅ 完了 |
 
-**全体進捗: 100%** — 主要機能および全拡張機能の実装・実機動作検証完了済み
+**全体進捗: 100%** — 主要機能、全拡張機能、ホーム画面ウィジェット、およびストア公開要件（法務・問い合わせ導線）の実装・実機動作検証完了済み
 
 ---
 
@@ -484,12 +508,14 @@ CREATE TABLE tags (
 | 設定機能 | ✅ 実装済み | 基本設定・誕生日表示設定・ダークモード設定 |
 | タグ管理 | ✅ 実装済み | タグ一覧・追加・削除・誕生日紐付け |
 | スタンプ・アイコン | ✅ 実装済み | 予定アイコン・スタンプのカレンダー表示・クイック追加 |
-| プレゼント履歴メモ | 未実装 (候補) | 誕生日ごとのプレゼント・お祝い履歴の記録 |
-| 六曜・旧暦表示 | 未実装 (候補) | 大安・友引などのカレンダー表示 |
 | データバックアップ | ✅ 実装済み | JSONエクスポート・共有・上書き/追加復元機能 |
 | 連絡先インポート | ✅ 実装済み | 端末連絡先からの誕生日スキャン・一括取り込み |
+| 外部カレンダー連携 | ✅ 実装済み | 端末/Google/iCloudカレンダー・.icsインポート |
 | ホーム画面ウィジェット | ✅ 実装済み | 誕生日＆予定ウィジェット（4×2, 2×2, 2×3 全6種対応） |
-| テスト | 基本テスト実装済 | Unit/Widget テスト追加 |
+| ストア公開要件 | ✅ 実装済み | プライバシーポリシー・利用規約・お問い合わせ（メール連携）導線整備 |
+| プレゼント履歴メモ | 未実装 (候補) | 誕生日ごとのプレゼント・お祝い履歴の記録 |
+| 六曜・旧暦表示 | 未実装 (候補) | 大安・友引などのカレンダー表示 |
+| テスト | 基本テスト実装済 | Unit/Widget テスト追加（15件通過） |
 
 ---
 
