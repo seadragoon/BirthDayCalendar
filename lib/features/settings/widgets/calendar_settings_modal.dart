@@ -37,6 +37,16 @@ class CalendarSettingsModal extends ConsumerWidget {
               onTap: () => _showFirstDayOfWeekDialog(context, ref, settings.firstDayOfWeek),
             ),
             const Divider(),
+            SwitchListTile(
+              secondary: const Icon(Icons.auto_awesome_outlined),
+              title: const Text('六曜を表示'),
+              subtitle: const Text('大安・友引・仏滅などの暦注を表示します'),
+              value: settings.showRokuyo,
+              onChanged: (value) {
+                ref.read(appSettingsProvider.notifier).setShowRokuyo(value);
+              },
+            ),
+            const Divider(),
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),

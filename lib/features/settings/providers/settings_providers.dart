@@ -130,4 +130,15 @@ class AppSettingsNotifier extends AsyncNotifier<AppSettings> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, updated.toJson());
   }
+
+  /// 六曜表示設定（有効/無効）を更新する。
+  Future<void> setShowRokuyo(bool value) async {
+    final current = state.valueOrNull ?? const AppSettings();
+    final updated = current.copyWith(showRokuyo: value);
+
+    state = AsyncValue.data(updated);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, updated.toJson());
+  }
 }

@@ -7,6 +7,8 @@ import 'package:birthday_calendar/shared/constants/japanese_holiday.dart';
 import 'package:birthday_calendar/shared/constants/event_color.dart';
 import 'package:birthday_calendar/features/calendar/models/event_model.dart';
 import 'package:birthday_calendar/features/calendar/providers/event_providers.dart';
+import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
+import 'package:birthday_calendar/shared/constants/rokuyo_util.dart';
 import 'package:birthday_calendar/features/calendar/widgets/stamp_picker_sheet.dart';
 import 'package:birthday_calendar/features/calendar/widgets/event_modal.dart';
 
@@ -27,6 +29,11 @@ class TodayBar extends ConsumerWidget {
 
     final isHoliday = JapaneseHoliday.isHoliday(selectedDate);
     final holidayName = JapaneseHoliday.getHolidayName(selectedDate);
+
+    // 六曜設定の取得
+    final appSettings = ref.watch(appSettingsProvider).valueOrNull;
+    final showRokuyo = appSettings?.showRokuyo ?? false;
+    final rokuyo = showRokuyo ? RokuyoUtil.getRokuyo(selectedDate) : '';
 
     // 曜日の色判定
     Color weekdayColor = Theme.of(context).colorScheme.onSurfaceVariant;
@@ -77,6 +84,20 @@ class TodayBar extends ConsumerWidget {
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
+          // 六曜
+          if (showRokuyo && rokuyo.isNotEmpty) ...[
+            const SizedBox(width: 6),
+            Text(
+              rokuyo,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: RokuyoUtil.isTaian(selectedDate)
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+                color: RokuyoUtil.getTextColor(context, selectedDate, isCurrentMonth: true),
+              ),
+            ),
+          ],
           // 祝日名
           if (isHoliday && holidayName != null) ...[
             const SizedBox(width: 8),

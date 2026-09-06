@@ -10,6 +10,7 @@ import 'package:birthday_calendar/features/calendar/widgets/event_modal.dart';
 import 'package:birthday_calendar/features/settings/models/app_settings.dart';
 import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
 import 'package:birthday_calendar/shared/constants/event_color.dart';
+import 'package:birthday_calendar/shared/constants/rokuyo_util.dart';
 
 /// 横スワイプ可能で、5/6週可変高さ、祝日・色分け等に対応したカスタムカレンダー。
 class CustomMonthView extends ConsumerStatefulWidget {
@@ -295,6 +296,14 @@ class _DayCell extends ConsumerWidget {
         ? EventColor.fromIndex(settings.colorIndex).color
         : EventColor.basil.color;
 
+    // 六曜設定の取得
+    final appSettings = ref.watch(appSettingsProvider).valueOrNull;
+    final showRokuyo = appSettings?.showRokuyo ?? false;
+    final rokuyo = showRokuyo ? RokuyoUtil.getRokuyo(date) : '';
+    final rokuyoColor = showRokuyo
+        ? RokuyoUtil.getTextColor(context, date, isCurrentMonth: isCurrentMonth)
+        : Colors.transparent;
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // 日付文字色
@@ -371,7 +380,7 @@ class _DayCell extends ConsumerWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // 日付テキスト (左寄せ) ＆ 誕生日マーク
+                    // 日付テキスト (左寄せ) ＆ 誕生日マーク ＆ 六曜 (右寄せ)
                     Padding(
                       padding: const EdgeInsets.only(left: 3.0, top: 2.0, bottom: 2.0, right: 2.0),
                       child: Row(
@@ -393,6 +402,20 @@ class _DayCell extends ConsumerWidget {
                               decoration: BoxDecoration(
                                 color: birthdayColor,
                                 shape: BoxShape.circle,
+                              ),
+                            ),
+                          ],
+                          if (showRokuyo && rokuyo.isNotEmpty) ...[
+                            const Spacer(),
+                            Text(
+                              rokuyo,
+                              style: TextStyle(
+                                fontSize: 8.5,
+                                height: 1.0,
+                                fontWeight: RokuyoUtil.isTaian(date)
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: rokuyoColor,
                               ),
                             ),
                           ],

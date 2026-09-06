@@ -63,6 +63,7 @@
 | DB (Web) | `sqflite_common_ffi_web` | ^1.1.1 | Web対応 |
 | パス操作 | `path` | ^1.9.1 | DBファイルパス構築 |
 | 祝日判定 | `holiday_jp` | ^0.0.8 | 日本の祝日データと判定論理 |
+| 旧暦・六曜 | `qreki_dart` | ^1.1.2 | 旧暦（天保暦）および六曜（大安・仏滅等）の算出 |
 | ローカル永続化 | `shared_preferences` | ^2.5.5 | アプリ設定・誕生日表示設定・テーマ永続化 |
 | ローカル通知 | `flutter_local_notifications` | ^18.0.1 | 予定・誕生日のローカル通知スケジュール |
 | タイムゾーン | `timezone` | ^0.9.4 | 日時のタイムゾーン制御 |
@@ -206,10 +207,7 @@ lib/
     │   ├── japanese_holiday.dart                # 日本の祝日判定ユーティリティ（振替休日/国民の休日対応）
     │   ├── notification_type.dart               # NotificationType enum（なし/当日/1日前/2日前/3日前/1週間前）
     │   ├── recurrence_type.dart                 # RecurrenceType enum（none/daily/weekly/monthly/yearly/weekday/custom）
-    │   └── view_type.dart                       # ViewType enum（schedule/birthday）
-    │   ├── japanese_holiday.dart                # 日本の祝日判定ユーティリティ（振替休日/国民の休日対応）
-    │   ├── notification_type.dart               # NotificationType enum（なし/当日/1日前/2日前/3日前/1週間前）
-    │   ├── recurrence_type.dart                 # RecurrenceType enum（none/daily/weekly/monthly/yearly/weekday/custom）
+    │   ├── rokuyo_util.dart                     # RokuyoUtil（旧暦・六曜計算・キャッシュユーティリティ）
     │   └── view_type.dart                       # ViewType enum（schedule/birthday）
     ├── services/
     │   └── notification_service.dart            # 通知の初期化・スケジュール制御・権限判定/リクエスト（ローカル通知）
@@ -301,6 +299,7 @@ lib/
 - `isNotificationsEnabled`: 全体通知の有効/無効
 - `firstDayOfWeek`: 週の開始日（0: 日曜日, 1: 月曜日）
 - `themeMode`: テーマモード（0: システム設定, 1: ライト, 2: ダーク）
+- `showRokuyo`: 六曜（大安・友引など）表示フラグ（デフォルト: false）
 
 ### 5.6 BirthdayDisplaySettings (`features/settings/models/birthday_display_settings.dart`)
 - `isShowOnSchedule`: スケジュール画面に誕生日を表示するか
