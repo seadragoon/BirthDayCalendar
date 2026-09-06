@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:birthday_calendar/shared/providers/theme_provider.dart';
+import 'package:birthday_calendar/shared/theme/app_theme.dart';
 
 /// 全画面モーダルの共通ベースレイアウト。
 ///
@@ -47,7 +48,7 @@ class BaseModal extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appTheme = ref.watch(themeProvider).requireValue;
+    final appTheme = ref.watch(themeProvider).valueOrNull ?? AppThemeData.standard;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final onPrimaryColor = isDark ? appTheme.darkOnPrimaryColor : appTheme.onPrimaryColor;
 

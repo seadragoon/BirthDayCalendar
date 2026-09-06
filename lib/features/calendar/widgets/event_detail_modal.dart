@@ -153,6 +153,30 @@ class _EventDetailModalState extends ConsumerState<EventDetailModal> {
           },
         ),
         IconButton(
+          icon: const Icon(Icons.copy_rounded),
+          tooltip: 'コピーして作成',
+          onPressed: () async {
+            final result = await Navigator.of(context).push<bool>(
+              MaterialPageRoute(
+                builder: (_) => EventModal(
+                  existingEvent: _currentEvent,
+                  isCopyMode: true,
+                ),
+                fullscreenDialog: true,
+              ),
+            );
+
+            if (result == true && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('予定をコピーしました'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          },
+        ),
+        IconButton(
           icon: const Icon(Icons.delete),
           tooltip: '削除',
           onPressed: () async {

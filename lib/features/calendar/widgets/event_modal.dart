@@ -29,12 +29,16 @@ class EventModal extends ConsumerStatefulWidget {
   /// 編集時、既存イベントの親（オリジナル）のイベントデータ
   final EventModel? originalParentEvent;
 
+  /// 既存の予定をもとに新規作成するコピーモードか
+  final bool isCopyMode;
+
   const EventModal({
     super.key,
     this.existingEvent,
     this.initialDate,
     this.editScope = EditScope.all,
     this.originalParentEvent,
+    this.isCopyMode = false,
   });
 
   @override
@@ -102,18 +106,25 @@ class _EventModalState extends ConsumerState<EventModal> {
       _titleController.text = event.title;
       _commentController.text = event.comment;
       _isAllDay = event.isAllDay;
-      _startDate = event.startDate;
-      _endDate = event.endDate;
+      if (widget.isCopyMode && widget.initialDate != null) {
+        final duration = event.endDate.difference(event.startDate);
+        final init = widget.initialDate!;
+        _startDate = DateTime(init.year, init.month, init.day, event.startDate.hour, event.startDate.minute);
+        _endDate = _startDate.add(duration);
+      } else {
+        _startDate = event.startDate;
+        _endDate = event.endDate;
+      }
       _selectedColor = event.colorIndex;
       _selectedIcon = event.icon;
       _recurrence = event.recurrence;
       _customRecurrence = event.customRecurrence;
-      if (widget.editScope == EditScope.thisEvent) {
+      if (!widget.isCopyMode && widget.editScope == EditScope.thisEvent) {
         _recurrence = RecurrenceType.none;
         _customRecurrence = null;
       }
       _notifications = List.from(event.notifications);
-      _isEndDateManuallyChanged = true; // 編集時は同期しない
+      _isEndDateManuallyChanged = true; // 編集・複製時は同期しない
     } else {
       // 新規作成時の初期値
       final now = DateTime.now();
@@ -170,7 +181,7 @@ class _EventModalState extends ConsumerState<EventModal> {
     if (title.isEmpty) return;
 
     final newEvent = EventModel(
-      id: widget.editScope == EditScope.all ? widget.existingEvent?.id : null,
+      id: (!widget.isCopyMode && widget.editScope == EditScope.all) ? widget.existingEvent?.id : null,
       title: title,
       startDate: _startDate,
       endDate: _endDate,
@@ -183,8 +194,8 @@ class _EventModalState extends ConsumerState<EventModal> {
       icon: _selectedIcon,
     );
 
-    if (widget.existingEvent == null) {
-      // 新規追加
+    if (widget.existingEvent == null || widget.isCopyMode) {
+      // 新規追加（複製モード含む）
       await ref.read(eventsByDateProvider.notifier).addEvent(newEvent);
     } else {
       if (widget.editScope == EditScope.thisEvent && widget.originalParentEvent != null) {
@@ -225,7 +236,7 @@ class _EventModalState extends ConsumerState<EventModal> {
     ref.read(eventsByMonthProvider.notifier).refresh();
 
     if (mounted) {
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     }
   }
 
@@ -241,7 +252,7 @@ class _EventModalState extends ConsumerState<EventModal> {
 
   @override
   Widget build(BuildContext context) {
-    final isEditMode = widget.existingEvent != null;
+    final isEditMode = widget.existingEvent != null && !widget.isCopyMode;
     final isSaveEnabled = _titleController.text.trim().isNotEmpty;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final titleColor = isDark ? Colors.white70 : null;
@@ -252,13 +263,17 @@ class _EventModalState extends ConsumerState<EventModal> {
         ? 'なし'
         : _notifications.map((e) => e.label).join(', ');
 
+    final String modalTitle = widget.isCopyMode
+        ? '予定の複製'
+        : (widget.existingEvent != null ? '予定を編集' : '予定を追加');
+
     return BaseModal(
-      title: isEditMode ? '予定を編集' : '予定を追加',
+      title: modalTitle,
       isEditMode: isEditMode,
       leadingIcon: isEditMode ? Icons.arrow_back : Icons.close,
       isSaveActionEnabled: isSaveEnabled,
       onSave: _onSave,
-      onDelete: _onDelete,
+      onDelete: isEditMode ? _onDelete : null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

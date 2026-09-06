@@ -134,9 +134,9 @@ lib/
 │   │       ├── custom_month_view.dart           # 横スワイプ可能・可変高さ・複数日バーのカスタムカレンダー（アイコン・スタンプ描画・日付長押し予定作成対応）
 │   │       ├── custom_recurrence_modal.dart     # カスタム繰り返し設定モーダル
 │   │       ├── device_calendar_import_modal.dart# 端末/Googleカレンダー・.ics予定インポートモーダル
-│   │       ├── event_detail_modal.dart          # イベント詳細表示モーダル（読み取り専用・範囲選択編集/削除）
+│   │       ├── event_detail_modal.dart          # イベント詳細表示モーダル（読み取り専用・範囲選択編集/削除・コピー作成対応）
 │   │       ├── event_list_view.dart             # 選択日付のイベントリスト（アイコン表示）
-│   │       ├── event_modal.dart                 # イベント追加/編集モーダル（スタンプ・アイコン選択）
+│   │       ├── event_modal.dart                 # イベント追加/編集/複製モーダル（スタンプ・アイコン選択・コピー作成対応）
 │   │       ├── month_picker_sheet.dart          # 月選択ボトムシート（ヘッダータップからの年月ジャンプUI）
 │   │       ├── stamp_picker_sheet.dart          # スタンプ選択モーダルシート（カテゴリ別タブ・グリッド）
 │   │       └── today_bar.dart                   # 選択日付表示バー（スタンプクイック追加対応）
