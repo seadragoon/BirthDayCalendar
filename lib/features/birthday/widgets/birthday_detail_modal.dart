@@ -10,6 +10,9 @@ import 'package:birthday_calendar/shared/providers/repository_providers.dart';
 import 'package:birthday_calendar/shared/constants/notification_type.dart';
 import 'package:birthday_calendar/shared/constants/event_color.dart';
 import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
+import 'package:birthday_calendar/features/birthday/models/gift_model.dart';
+import 'package:birthday_calendar/features/birthday/providers/gift_providers.dart';
+import 'package:birthday_calendar/features/birthday/widgets/gift_edit_modal.dart';
 
 /// 誕生日詳細を表示する読み取り専用モーダル
 class BirthdayDetailModal extends ConsumerStatefulWidget {
@@ -163,6 +166,211 @@ class _BirthdayDetailModalState extends ConsumerState<BirthdayDetailModal> {
                 content: Text(
                   _currentBirthday.comment,
                   style: const TextStyle(fontSize: 16),
+                ),
+              ),
+            ],
+            const Divider(),
+            const SizedBox(height: 8),
+
+            // プレゼント・お祝い履歴
+            _buildGiftSection(isDark),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// プレゼント・お祝い履歴セクション
+  Widget _buildGiftSection(bool isDark) {
+    if (_currentBirthday.id == null) return const SizedBox.shrink();
+
+    final giftsAsync = ref.watch(giftsByBirthdayProvider(_currentBirthday.id!));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.card_giftcard, size: 20, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 8),
+            const Text(
+              'プレゼント・お祝い履歴',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const Spacer(),
+            FilledButton.tonalIcon(
+              onPressed: () {
+                GiftEditModal.show(context, birthdayId: _currentBirthday.id!);
+              },
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('記録する'),
+              style: FilledButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        giftsAsync.when(
+          data: (gifts) {
+            if (gifts.isEmpty) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey.shade800.withValues(alpha: 0.5) : Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.redeem_outlined,
+                      size: 32,
+                      color: isDark ? Colors.grey.shade500 : Colors.grey.shade400,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'プレゼントやお祝いの記録はありません',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '「記録する」から過去に贈ったものや欲しいものをメモできます',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: isDark ? Colors.grey.shade500 : Colors.grey.shade500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: gifts.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final gift = gifts[index];
+                return _buildGiftCard(gift, isDark);
+              },
+            );
+          },
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          error: (err, _) => Text('エラーが発生しました: $err'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGiftCard(GiftModel gift, bool isDark) {
+    return InkWell(
+      onTap: () {
+        GiftEditModal.show(
+          context,
+          birthdayId: _currentBirthday.id!,
+          existingGift: gift,
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey.shade800 : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? Colors.grey.shade700 : Colors.grey.shade200,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 上段: 年度 ＆ 種別バッジ ＆ 編集アイコン
+            Row(
+              children: [
+                Text(
+                  '${gift.year}年',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: gift.type.color.withValues(alpha: isDark ? 0.25 : 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${gift.type.emoji} ${gift.type.label}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? gift.type.color.shade200 : gift.type.color.shade800,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  Icons.edit_outlined,
+                  size: 16,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // 中段: 品名 ＆ 金額
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    gift.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                if (gift.price != null) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    '¥${NumberFormat('#,###').format(gift.price)}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+
+            // 下段: メモ（存在する場合）
+            if (gift.memo.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                gift.memo,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                 ),
               ),
             ],

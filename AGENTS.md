@@ -144,22 +144,27 @@ lib/
 │   ├── birthday/                                # ── 誕生日機能 ──
 │   │   ├── models/
 │   │   │   ├── birthday_model.dart              # BirthdayModel（age計算, daysUntilNextBirthday）
+│   │   │   ├── gift_model.dart                  # GiftModel（プレゼント・お祝い履歴、GiftType enum）
 │   │   │   └── tag_model.dart                   # TagModel（タグ管理用データモデル）
 │   │   ├── repositories/
 │   │   │   ├── birthday_repository.dart         # BirthdayRepository 抽象クラス
-│   │   │   ├── sqflite_birthday_repository.dart # sqflite実装
+│   │   │   ├── sqflite_birthday_repository.dart # sqflite実装（ギフト連動削除対応）
+│   │   │   ├── gift_repository.dart             # GiftRepository 抽象クラス
+│   │   │   ├── sqflite_gift_repository.dart     # sqfliteギフト履歴実装
 │   │   │   ├── tag_repository.dart              # TagRepository 抽象クラス
 │   │   │   └── sqflite_tag_repository.dart      # sqfliteタグ管理実装
 │   │   ├── providers/
-│   │   │   └── birthday_providers.dart          # BirthdayList Notifier, TagList, タグフィルタ, 検索
+│   │   │   ├── birthday_providers.dart          # BirthdayList Notifier, TagList, タグフィルタ, 検索
+│   │   │   └── gift_providers.dart              # GiftsByBirthday Notifier（誕生日別プレゼント履歴管理）
 │   │   ├── views/
 │   │   │   ├── birthday_view.dart               # Birthday画面（タグフィルタ + リスト統合）
 │   │   │   └── tag_management_view.dart         # タグ管理画面（追加・削除・一覧）
 │   │   └── widgets/
-│   │       ├── birthday_detail_modal.dart       # 誕生日詳細表示モーダル（読み取り専用・編集/削除）
+│   │       ├── birthday_detail_modal.dart       # 誕生日詳細表示モーダル（読み取り専用・プレゼント履歴・編集/削除）
 │   │       ├── birthday_list_view.dart          # 誕生日リスト表示（ソート・カウント・0件時インポート導線対応）
-│   │       ├── birthday_modal.dart              # 誕生日追加/編集モーダル
+│   │       ├── birthday_modal.dart              # 誕生日追加/編集モーダル（プレゼント履歴初期登録対応）
 │   │       ├── contact_import_modal.dart        # 連絡先誕生日インポートモーダル
+│   │       ├── gift_edit_modal.dart             # プレゼント記録追加・編集ボトムシートモーダル
 │   │       └── tag_filter_bar.dart              # タグフィルターバー
 │   │   └── services/
 │   │       └── contact_import_service.dart      # 端末連絡先アクセス・誕生日抽出・重複照合
@@ -296,7 +301,21 @@ lib/
 | name | `String` | (必須) | name | タグ名（UNIQUE） |
 | createdAt | `DateTime` | (必須) | created_at | 作成日時（ミリ秒） |
 
-### 5.4 CustomRecurrence (`features/calendar/models/custom_recurrence.dart`)
+### 5.4 GiftModel (`features/birthday/models/gift_model.dart`)
+
+| フィールド | 型 | デフォルト | DB列名 | 説明 |
+|-----------|-----|---------|--------|------|
+| id | `int?` | null (AUTOINCREMENT) | id | 主キー |
+| birthdayId | `int` | (必須) | birthday_id | 紐づく誕生日のID |
+| year | `int` | (必須) | year | 年度（例: 2026） |
+| type | `GiftType` | (必須) | type | 種別（give: あげた, receive: もらった, idea: 候補） |
+| name | `String` | (必須) | name | 品名 |
+| price | `int?` | null | price | 金額・予算（任意） |
+| memo | `String` | '' | memo | メモ・相手の反応 |
+| createdAt | `DateTime` | DateTime.now() | created_at | 作成日時（ミリ秒） |
+| updatedAt | `DateTime` | DateTime.now() | updated_at | 更新日時（ミリ秒） |
+
+### 5.5 CustomRecurrence (`features/calendar/models/custom_recurrence.dart`)
 
 | フィールド | 型 | デフォルト | 説明 |
 |-----------|-----|---------|------|
@@ -341,6 +360,7 @@ lib/
 | `eventRepositoryProvider` | `Provider<EventRepository>` | EventRepository インスタンス |
 | `birthdayRepositoryProvider` | `Provider<BirthdayRepository>` | BirthdayRepository インスタンス |
 | `tagRepositoryProvider` | `Provider<TagRepository>` | TagRepository インスタンス |
+| `giftRepositoryProvider` | `Provider<GiftRepository>` | GiftRepository インスタンス |
 | `themeProvider` | `AsyncNotifierProvider<ThemeNotifier, AppThemeData>` | きせかえテーマ＆カラー永続化管理 |
 
 ### 6.2 イベント関連 (`features/calendar/providers/`)
@@ -361,6 +381,7 @@ lib/
 | `filteredBirthdaysProvider` | `Provider<AsyncValue<List<BirthdayModel>>>` | フィルタ済み誕生日リスト |
 | `allTagsProvider` | `Provider<AsyncValue<List<String>>>` | 登録済みユニークタグ一覧 |
 | `birthdaySearchProvider` | `FutureProvider.family<..., String>` | 誕生日検索結果 |
+| `giftsByBirthdayProvider` | `AutoDisposeAsyncNotifierProviderFamily<..., List<GiftModel>, int>` | 誕生日別のプレゼント・お祝い履歴一覧 |
 
 ### 6.4 設定関連 (`features/settings/providers/`)
 
@@ -427,7 +448,23 @@ CREATE TABLE tags (
 );
 ```
 
-- **DBバージョン:** 7
+### 7.4 gifts テーブル (Version 8 追加)
+```sql
+CREATE TABLE gifts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  birthday_id INTEGER NOT NULL,     -- 紐づく誕生日ID
+  year INTEGER NOT NULL,            -- 年度（例: 2026）
+  type TEXT NOT NULL,               -- 'give' (あげた), 'receive' (もらった), 'idea' (候補)
+  name TEXT NOT NULL,               -- 品名
+  price INTEGER,                    -- 金額・予算（任意）
+  memo TEXT,                        -- メモ・相手の反応
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+-- INDEX: idx_gifts_birthday_id
+```
+
+- **DBバージョン:** 8
 - **DBファイル名:** `birthday_calendar.db`
 - **マイグレーション履歴:** 
   - v2: notification の JSON化
@@ -436,6 +473,7 @@ CREATE TABLE tags (
   - v5: birthdays に comment カラム追加
   - v6: events に custom_recurrence と exception_dates カラム追加
   - v7: events に icon カラム追加
+  - v8: gifts テーブル追加（プレゼント・お祝い履歴管理）
 
 ---
 

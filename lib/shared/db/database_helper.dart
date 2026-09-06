@@ -17,12 +17,13 @@ class DatabaseHelper {
   static const String _databaseName = 'birthday_calendar.db';
 
   /// データベースバージョン（スキーマ変更時にインクリメント）
-  static const int _databaseVersion = 7;
+  static const int _databaseVersion = 8;
 
   // テーブル名
   static const String tableEvents = 'events';
   static const String tableBirthdays = 'birthdays';
   static const String tableTags = 'tags';
+  static const String tableGifts = 'gifts';
 
   /// データベースインスタンスを取得する。
   /// 初回アクセス時に自動的にDBファイルを作成する。
@@ -92,6 +93,21 @@ class DatabaseHelper {
       )
     ''');
 
+    // gifts テーブル (Version 8 追加)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableGifts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        birthday_id INTEGER NOT NULL,
+        year INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        name TEXT NOT NULL,
+        price INTEGER,
+        memo TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+
     // インデックスの作成（日付での検索を高速化）
     await db.execute('''
       CREATE INDEX idx_events_start_date ON $tableEvents (start_date)
@@ -101,6 +117,9 @@ class DatabaseHelper {
     ''');
     await db.execute('''
       CREATE INDEX idx_birthdays_date ON $tableBirthdays (date)
+    ''');
+    await db.execute('''
+      CREATE INDEX idx_gifts_birthday_id ON $tableGifts (birthday_id)
     ''');
 
     // 初期データの投入 (Version 4 以降)
@@ -167,6 +186,26 @@ class DatabaseHelper {
     if (oldVersion < 7) {
       // events テーブルに icon カラムを追加
       await db.execute('ALTER TABLE $tableEvents ADD COLUMN icon TEXT');
+    }
+
+    if (oldVersion < 8) {
+      // gifts テーブルの追加
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS $tableGifts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          birthday_id INTEGER NOT NULL,
+          year INTEGER NOT NULL,
+          type TEXT NOT NULL,
+          name TEXT NOT NULL,
+          price INTEGER,
+          memo TEXT,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        )
+      ''');
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_gifts_birthday_id ON $tableGifts (birthday_id)
+      ''');
     }
   }
 

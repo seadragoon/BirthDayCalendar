@@ -109,6 +109,12 @@ class SqfliteBirthdayRepository implements BirthdayRepository {
   @override
   Future<int> deleteBirthday(int id) async {
     final db = await _dbHelper.database;
+    // 紐づくプレゼント履歴も連動削除
+    await db.delete(
+      DatabaseHelper.tableGifts,
+      where: 'birthday_id = ?',
+      whereArgs: [id],
+    );
     return await db.delete(
       DatabaseHelper.tableBirthdays,
       where: 'id = ?',

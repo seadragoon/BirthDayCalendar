@@ -11,6 +11,7 @@ import 'package:birthday_calendar/features/backup/models/backup_data.dart';
 import 'package:birthday_calendar/features/calendar/models/event_model.dart';
 import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
 import 'package:birthday_calendar/features/birthday/models/tag_model.dart';
+import 'package:birthday_calendar/features/birthday/models/gift_model.dart';
 import 'package:birthday_calendar/shared/db/database_helper.dart';
 import 'package:birthday_calendar/shared/services/notification_service.dart';
 import 'package:birthday_calendar/features/widget/services/widget_sync_service.dart';
@@ -27,10 +28,12 @@ class BackupService {
     final eventMaps = await db.query(DatabaseHelper.tableEvents);
     final birthdayMaps = await db.query(DatabaseHelper.tableBirthdays);
     final tagMaps = await db.query(DatabaseHelper.tableTags);
+    final giftMaps = await db.query(DatabaseHelper.tableGifts);
 
     final events = eventMaps.map((m) => EventModel.fromMap(m)).toList();
     final birthdays = birthdayMaps.map((m) => BirthdayModel.fromMap(m)).toList();
     final tags = tagMaps.map((m) => TagModel.fromMap(m)).toList();
+    final gifts = giftMaps.map((m) => GiftModel.fromMap(m)).toList();
 
     // 2. BackupData 作成
     final now = DateTime.now();
@@ -41,6 +44,7 @@ class BackupService {
       events: events,
       birthdays: birthdays,
       tags: tags,
+      gifts: gifts,
     );
 
     // 3. JSON文字列生成（可読性のためインデント付き）
@@ -155,6 +159,15 @@ class BackupService {
           );
           restoredEvents++;
         }
+
+        // プレゼント・お祝い履歴の復元
+        await txn.delete(DatabaseHelper.tableGifts);
+        for (final gift in data.gifts) {
+          await txn.insert(
+            DatabaseHelper.tableGifts,
+            gift.toMap(),
+          );
+        }
       } else {
         // 追加復元（重複判定）
 
@@ -205,6 +218,24 @@ class BackupService {
             await txn.insert(DatabaseHelper.tableEvents, eMap);
             existingEventKeys.add(key);
             restoredEvents++;
+          }
+        }
+
+        // 4. 既存プレゼントの取得（birthday_id, year, name で重複判定）
+        final existingGifts = await txn.query(DatabaseHelper.tableGifts);
+        final existingGiftKeys = existingGifts.map((g) {
+          final bId = g['birthday_id'] as int;
+          final year = g['year'] as int;
+          final name = g['name'] as String;
+          return '$bId-$year-$name';
+        }).toSet();
+
+        for (final gift in data.gifts) {
+          final key = '${gift.birthdayId}-${gift.year}-${gift.name}';
+          if (!existingGiftKeys.contains(key)) {
+            final gMap = gift.toMap()..remove('id');
+            await txn.insert(DatabaseHelper.tableGifts, gMap);
+            existingGiftKeys.add(key);
           }
         }
       }

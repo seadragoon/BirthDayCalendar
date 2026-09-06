@@ -4,6 +4,8 @@ import 'package:birthday_calendar/features/birthday/repositories/birthday_reposi
 import 'package:birthday_calendar/features/birthday/repositories/sqflite_birthday_repository.dart';
 import 'package:birthday_calendar/features/birthday/repositories/tag_repository.dart';
 import 'package:birthday_calendar/features/birthday/repositories/sqflite_tag_repository.dart';
+import 'package:birthday_calendar/features/birthday/repositories/gift_repository.dart';
+import 'package:birthday_calendar/features/birthday/repositories/sqflite_gift_repository.dart';
 import 'package:birthday_calendar/features/calendar/repositories/event_repository.dart';
 import 'package:birthday_calendar/features/calendar/repositories/sqflite_event_repository.dart';
 
@@ -26,4 +28,9 @@ final birthdayRepositoryProvider = Provider<BirthdayRepository>((ref) {
 /// TagRepository のインスタンスを提供するProvider。
 final tagRepositoryProvider = Provider<TagRepository>((ref) {
   return SqfliteTagRepository();
+});
+
+/// GiftRepository のインスタンスを提供するProvider。
+final giftRepositoryProvider = Provider<GiftRepository>((ref) {
+  return SqfliteGiftRepository();
 });

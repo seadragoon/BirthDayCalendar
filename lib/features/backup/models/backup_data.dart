@@ -1,6 +1,7 @@
 import 'package:birthday_calendar/features/calendar/models/event_model.dart';
 import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
 import 'package:birthday_calendar/features/birthday/models/tag_model.dart';
+import 'package:birthday_calendar/features/birthday/models/gift_model.dart';
 
 /// アプリ全体のバックアップデータ構造。
 ///
@@ -25,6 +26,9 @@ class BackupData {
   /// タグリスト
   final List<TagModel> tags;
 
+  /// プレゼント・お祝い履歴リスト
+  final List<GiftModel> gifts;
+
   /// 各種設定（任意）
   final Map<String, dynamic>? settings;
 
@@ -35,6 +39,7 @@ class BackupData {
     required this.events,
     required this.birthdays,
     required this.tags,
+    this.gifts = const [],
     this.settings,
   });
 
@@ -48,6 +53,7 @@ class BackupData {
         'events': events.map((e) => e.toMap()).toList(),
         'birthdays': birthdays.map((b) => b.toMap()).toList(),
         'tags': tags.map((t) => t.toMap()).toList(),
+        'gifts': gifts.map((g) => g.toMap()).toList(),
         if (settings != null) 'settings': settings,
       },
     };
@@ -82,6 +88,12 @@ class BackupData {
         .map((t) => TagModel.fromMap(t))
         .toList();
 
+    final rawGifts = (data['gifts'] as List<dynamic>?) ?? [];
+    final gifts = rawGifts
+        .whereType<Map<String, dynamic>>()
+        .map((g) => GiftModel.fromMap(g))
+        .toList();
+
     final settings = data['settings'] as Map<String, dynamic>?;
 
     return BackupData(
@@ -91,6 +103,7 @@ class BackupData {
       events: events,
       birthdays: birthdays,
       tags: tags,
+      gifts: gifts,
       settings: settings,
     );
   }

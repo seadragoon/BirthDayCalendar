@@ -25,17 +25,20 @@ class BirthdayListNotifier extends AsyncNotifier<List<BirthdayModel>> {
     return _repository.getAllBirthdays();
   }
 
-  /// 誕生日を追加し、リストを再取得する。
-  Future<void> addBirthday(BirthdayModel birthday) async {
+  /// 誕生日を追加し、生成されたIDを返す（リストも再取得する）。
+  Future<int?> addBirthday(BirthdayModel birthday) async {
+    int? insertedId;
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final id = await _repository.insertBirthday(birthday);
+      insertedId = id;
       final newBirthday = birthday.copyWith(id: id);
       await NotificationService.instance.scheduleBirthdayNotification(newBirthday);
       final list = await _repository.getAllBirthdays();
       WidgetSyncService.updateAllWidgets();
       return list;
     });
+    return insertedId;
   }
 
   /// 誕生日を更新し、リストを再取得する。

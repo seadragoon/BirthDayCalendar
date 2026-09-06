@@ -4,8 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
+import 'package:birthday_calendar/features/birthday/models/gift_model.dart';
 import 'package:birthday_calendar/features/birthday/providers/birthday_providers.dart';
+import 'package:birthday_calendar/features/birthday/providers/gift_providers.dart';
+import 'package:birthday_calendar/features/birthday/widgets/gift_edit_modal.dart';
 import 'package:birthday_calendar/shared/constants/notification_type.dart';
+import 'package:birthday_calendar/shared/providers/repository_providers.dart';
 import 'package:birthday_calendar/shared/widgets/base_modal.dart';
 import 'package:birthday_calendar/shared/widgets/multi_select_dialog.dart';
 
@@ -30,6 +34,7 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
   bool _isYearSet = false;
   List<NotificationType> _notifications = [NotificationType.none];
   List<String> _selectedTags = [];
+  final List<GiftModel> _pendingGifts = [];
 
   @override
   void initState() {
@@ -200,7 +205,13 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
     );
 
     if (widget.existingBirthday == null) {
-      await ref.read(birthdayListProvider.notifier).addBirthday(newBirthday);
+      final insertedId = await ref.read(birthdayListProvider.notifier).addBirthday(newBirthday);
+      if (insertedId != null && _pendingGifts.isNotEmpty) {
+        final giftRepo = ref.read(giftRepositoryProvider);
+        for (final gift in _pendingGifts) {
+          await giftRepo.insertGift(gift.copyWith(birthdayId: insertedId));
+        }
+      }
     } else {
       await ref.read(birthdayListProvider.notifier).updateBirthday(newBirthday);
     }
@@ -354,7 +365,281 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
             ),
             const SizedBox(height: 16),
             const Divider(),
+            const SizedBox(height: 8),
+
+            // プレゼント・お祝い履歴
+            _buildGiftSection(isDark),
             const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// プレゼント・お祝い履歴セクション
+  Widget _buildGiftSection(bool isDark) {
+    final isNew = widget.existingBirthday == null;
+
+    if (isNew) {
+      // 新規作成時（未確定の _pendingGifts を表示・編集）
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.card_giftcard, size: 20, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 8),
+              const Text(
+                'プレゼント・お祝い履歴',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              FilledButton.tonalIcon(
+                onPressed: () async {
+                  final result = await GiftEditModal.show(context, birthdayId: 0);
+                  if (result is GiftModel) {
+                    setState(() {
+                      _pendingGifts.add(result);
+                    });
+                  }
+                },
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('記録を追加'),
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_pendingGifts.isEmpty)
+            _buildEmptyGiftCard(isDark)
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _pendingGifts.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final gift = _pendingGifts[index];
+                return _buildGiftCard(
+                  gift: gift,
+                  isDark: isDark,
+                  onTap: () async {
+                    final result = await GiftEditModal.show(
+                      context,
+                      birthdayId: 0,
+                      existingGift: gift,
+                    );
+                    if (result == 'deleted') {
+                      setState(() {
+                        _pendingGifts.removeAt(index);
+                      });
+                    } else if (result is GiftModel) {
+                      setState(() {
+                        _pendingGifts[index] = result;
+                      });
+                    }
+                  },
+                );
+              },
+            ),
+        ],
+      );
+    } else {
+      // 既存誕生日の編集時（Provider と連携）
+      final birthdayId = widget.existingBirthday!.id!;
+      final giftsAsync = ref.watch(giftsByBirthdayProvider(birthdayId));
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.card_giftcard, size: 20, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 8),
+              const Text(
+                'プレゼント・お祝い履歴',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              FilledButton.tonalIcon(
+                onPressed: () {
+                  GiftEditModal.show(context, birthdayId: birthdayId);
+                },
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('記録を追加'),
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          giftsAsync.when(
+            data: (gifts) {
+              if (gifts.isEmpty) {
+                return _buildEmptyGiftCard(isDark);
+              }
+              return ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: gifts.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final gift = gifts[index];
+                  return _buildGiftCard(
+                    gift: gift,
+                    isDark: isDark,
+                    onTap: () {
+                      GiftEditModal.show(
+                        context,
+                        birthdayId: birthdayId,
+                        existingGift: gift,
+                      );
+                    },
+                  );
+                },
+              );
+            },
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+            error: (err, _) => Text('エラーが発生しました: $err'),
+          ),
+        ],
+      );
+    }
+  }
+
+  Widget _buildEmptyGiftCard(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey.shade800.withValues(alpha: 0.5) : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.redeem_outlined,
+            size: 32,
+            color: isDark ? Colors.grey.shade500 : Colors.grey.shade400,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'プレゼントやお祝いの記録はありません（任意）',
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '「記録を追加」から事前に贈ったものや欲しいものをメモできます',
+            style: TextStyle(
+              fontSize: 11.5,
+              color: isDark ? Colors.grey.shade500 : Colors.grey.shade500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGiftCard({
+    required GiftModel gift,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey.shade800 : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? Colors.grey.shade700 : Colors.grey.shade200,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  '${gift.year}年',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: gift.type.color.withValues(alpha: isDark ? 0.25 : 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${gift.type.emoji} ${gift.type.label}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? gift.type.color.shade200 : gift.type.color.shade800,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  Icons.edit_outlined,
+                  size: 16,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    gift.name,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                if (gift.price != null) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    '¥${NumberFormat('#,###').format(gift.price)}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            if (gift.memo.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                gift.memo,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                ),
+              ),
+            ],
           ],
         ),
       ),
