@@ -74,8 +74,11 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final onPrimaryColor = isDark ? currentTheme.darkOnPrimaryColor : currentTheme.onPrimaryColor;
-    final drawerBgColor = Theme.of(context).drawerTheme.backgroundColor ??
+    final onPrimaryColor = isDark
+        ? currentTheme.darkOnPrimaryColor
+        : currentTheme.onPrimaryColor;
+    final drawerBgColor =
+        Theme.of(context).drawerTheme.backgroundColor ??
         (isDark ? const Color(0xFF1E1E1E) : Colors.white);
 
     return Drawer(
@@ -103,7 +106,9 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                           color: currentTheme.primaryColor,
                           image: currentTheme.backgroundImagePath.isNotEmpty
                               ? DecorationImage(
-                                  image: AssetImage(currentTheme.backgroundImagePath),
+                                  image: AssetImage(
+                                    currentTheme.backgroundImagePath,
+                                  ),
                                   fit: BoxFit.cover,
                                   colorFilter: ColorFilter.mode(
                                     Colors.black.withValues(alpha: 0.2),
@@ -127,206 +132,243 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                       // 1. アプリ設定
                       const Padding(
                         padding: EdgeInsets.fromLTRB(16, 14, 16, 6),
-                        child: Text('アプリ設定', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                        child: Text(
+                          'アプリ設定',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                        ),
                       ),
-          ListTile(
-            leading: const Icon(Icons.settings_outlined),
-            title: const Text('基本設定'),
-            subtitle: const Text('通知・セキュリティ・バックアップ等', style: TextStyle(fontSize: 12)),
-            onTap: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const BasicSettingsModal(),
-                  fullscreenDialog: true,
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.palette_outlined),
-            title: const Text('きせかえ（テーマ）'),
-            onTap: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const ThemeSelectionModal(),
-                  fullscreenDialog: true,
-                ),
-              );
-            },
-          ),
-          const Divider(),
-
-          // 2. カレンダー
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text('カレンダー', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-          ),
-          ListTile(
-            leading: const Icon(Icons.calendar_month_outlined),
-            title: const Text('カレンダー設定'),
-            subtitle: const Text('週の開始日', style: TextStyle(fontSize: 12)),
-            onTap: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const CalendarSettingsModal(),
-                  fullscreenDialog: true,
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.event_available_outlined),
-            title: const Text('誕生日の表示設定'),
-            subtitle: const Text('カレンダー上の帯表示・色', style: TextStyle(fontSize: 12)),
-            onTap: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const BirthdayDisplaySettingsModal(),
-                  fullscreenDialog: true,
-                ),
-              );
-            },
-          ),
-          const Divider(),
-
-          // 3. 誕生日
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text('誕生日', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-          ),
-          ListTile(
-            leading: const Icon(Icons.sell_outlined),
-            title: const Text('タグ管理'),
-            onTap: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const TagManagementView(),
-                  fullscreenDialog: true,
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.contacts_outlined),
-            title: const Text('誕生日を取り込み'),
-            subtitle: const Text('端末の連絡先から一括追加', style: TextStyle(fontSize: 12)),
-            onTap: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const ContactImportModal(),
-                  fullscreenDialog: true,
-                ),
-              );
-            },
-          ),
-          const Divider(),
-
-          // 4. その他
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text('その他', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-          ),
-          ListTile(
-            leading: const Icon(Icons.description_outlined),
-            title: const Text('利用規約'),
-            onTap: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const LegalDocumentModal(documentType: LegalDocumentType.termsOfService),
-                  fullscreenDialog: true,
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.shield_outlined),
-            title: const Text('プライバシーポリシー'),
-            onTap: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const LegalDocumentModal(documentType: LegalDocumentType.privacyPolicy),
-                  fullscreenDialog: true,
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.mail_outline),
-            title: const Text('お問い合わせ・ご意見'),
-            subtitle: const Text('不具合報告・機能リクエスト', style: TextStyle(fontSize: 12)),
-            onTap: () {
-              Navigator.of(context).pop();
-              showDialog(
-                context: context,
-                builder: (_) => const ContactDialog(),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text('アプリについて'),
-            onTap: () {
-              Navigator.of(context).pop();
-              showAboutDialog(
-                context: context,
-                applicationName: 'Birthday Calendar',
-                applicationVersion: '1.0.0',
-                applicationLegalese: '© 2026 Developer',
-                children: const [
-                  SizedBox(height: 16),
-                  Text('大切な人の誕生日や日常のスケジュールを管理するシンプルなカレンダーアプリです。'),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    ),
-            // 下部にまだスクロールできる場合、うっすらグラデーションフェードと下矢印を表示
-            if (_canScrollDown)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: 28,
-                child: IgnorePointer(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          drawerBgColor.withValues(alpha: 0.0),
-                          drawerBgColor.withValues(alpha: 0.9),
-                        ],
+                      ListTile(
+                        leading: const Icon(Icons.settings_outlined),
+                        title: const Text('基本設定'),
+                        subtitle: const Text(
+                          '通知・セキュリティ・バックアップ等',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const BasicSettingsModal(),
+                              fullscreenDialog: true,
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      Icons.keyboard_arrow_down,
-                      size: 18,
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-                    ),
+                      ListTile(
+                        leading: const Icon(Icons.palette_outlined),
+                        title: const Text('きせかえ（テーマ）'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ThemeSelectionModal(),
+                              fullscreenDialog: true,
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(),
+
+                      // 2. カレンダー
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Text(
+                          'カレンダー',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.calendar_month_outlined),
+                        title: const Text('カレンダー設定'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const CalendarSettingsModal(),
+                              fullscreenDialog: true,
+                            ),
+                          );
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.event_available_outlined),
+                        title: const Text('誕生日の表示設定'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const BirthdayDisplaySettingsModal(),
+                              fullscreenDialog: true,
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(),
+
+                      // 3. 誕生日
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Text(
+                          '誕生日',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.sell_outlined),
+                        title: const Text('タグ管理'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const TagManagementView(),
+                              fullscreenDialog: true,
+                            ),
+                          );
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.contacts_outlined),
+                        title: const Text('誕生日を取り込み'),
+                        subtitle: const Text(
+                          '端末の連絡先から一括追加',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ContactImportModal(),
+                              fullscreenDialog: true,
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(),
+
+                      // 4. その他
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Text(
+                          'その他',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.description_outlined),
+                        title: const Text('利用規約'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const LegalDocumentModal(
+                                documentType: LegalDocumentType.termsOfService,
+                              ),
+                              fullscreenDialog: true,
+                            ),
+                          );
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.shield_outlined),
+                        title: const Text('プライバシーポリシー'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const LegalDocumentModal(
+                                documentType: LegalDocumentType.privacyPolicy,
+                              ),
+                              fullscreenDialog: true,
+                            ),
+                          );
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.mail_outline),
+                        title: const Text('お問い合わせ・ご意見'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          showDialog(
+                            context: context,
+                            builder: (_) => const ContactDialog(),
+                          );
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.info_outline),
+                        title: const Text('アプリについて'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          showAboutDialog(
+                            context: context,
+                            applicationName: 'Birthday Calendar',
+                            applicationVersion: '1.0.0',
+                            applicationLegalese: '© 2026 Developer',
+                            children: const [
+                              SizedBox(height: 16),
+                              Text('大切な人の誕生日や日常のスケジュールを管理するシンプルなカレンダーアプリです。'),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                   ),
                 ),
-              ),
-          ],
-        ),
-      ),
+                // 下部にまだスクロールできる場合、うっすらグラデーションフェードと下矢印を表示
+                if (_canScrollDown)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: 28,
+                    child: IgnorePointer(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              drawerBgColor.withValues(alpha: 0.0),
+                              drawerBgColor.withValues(alpha: 0.9),
+                            ],
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 18,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
           const Divider(height: 1),
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 4.0,
+              ),
               child: Row(
                 children: [
                   IconButton(
