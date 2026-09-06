@@ -37,6 +37,12 @@ class AppThemeData {
   /// ダークモード時のメインコンテンツの背景色。
   final Color darkSurfaceColor;
 
+  /// ユーザーがフォトライブラリから設定したカスタム背景写真のファイルパス（nullの場合はなし）
+  final String? customBackgroundPath;
+
+  /// カレンダー背景のオーバーレイ不透明度（0.5〜0.95、デフォルト: 0.80）
+  final double backgroundOpacity;
+
   const AppThemeData({
     required this.type,
     required this.label,
@@ -48,6 +54,8 @@ class AppThemeData {
     required this.darkBackgroundColor,
     required this.surfaceColor,
     required this.darkSurfaceColor,
+    this.customBackgroundPath,
+    this.backgroundOpacity = 0.80,
   });
 
   static const standard = AppThemeData(
@@ -61,6 +69,8 @@ class AppThemeData {
     darkBackgroundColor: Color(0xFF121212),
     surfaceColor: Colors.white,
     darkSurfaceColor: Color(0xFF1E1E1E),
+    customBackgroundPath: null,
+    backgroundOpacity: 0.80,
   );
 
   static const sakura = AppThemeData(
@@ -74,6 +84,8 @@ class AppThemeData {
     darkBackgroundColor: Color(0xFFAD1457), // Pink 800 (Base for 80% Black overlay)
     surfaceColor: Color(0xCCFFFFFF), // 80% White (slightly transparent)
     darkSurfaceColor: Color(0xCC000000), // 80% Black
+    customBackgroundPath: null,
+    backgroundOpacity: 0.80,
   );
 
   static const night = AppThemeData(
@@ -87,6 +99,8 @@ class AppThemeData {
     darkBackgroundColor: Color(0xFF1A237E), // Indigo 900
     surfaceColor: Color(0xDDFFFFFF), // 85% White
     darkSurfaceColor: Color(0xDD000000), // 85% Black
+    customBackgroundPath: null,
+    backgroundOpacity: 0.80,
   );
 
   static final values = [standard, sakura, night];
@@ -102,6 +116,9 @@ class AppThemeData {
     Color? darkBackgroundColor,
     Color? surfaceColor,
     Color? darkSurfaceColor,
+    String? customBackgroundPath,
+    bool clearCustomBackground = false,
+    double? backgroundOpacity,
   }) {
     return AppThemeData(
       type: type ?? this.type,
@@ -114,6 +131,9 @@ class AppThemeData {
       darkBackgroundColor: darkBackgroundColor ?? this.darkBackgroundColor,
       surfaceColor: surfaceColor ?? this.surfaceColor,
       darkSurfaceColor: darkSurfaceColor ?? this.darkSurfaceColor,
+      customBackgroundPath: clearCustomBackground ? null : (customBackgroundPath ?? this.customBackgroundPath),
+      backgroundOpacity: backgroundOpacity ?? this.backgroundOpacity,
     );
   }
 }
+

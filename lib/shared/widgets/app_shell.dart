@@ -115,8 +115,10 @@ class _AppShellState extends ConsumerState<AppShell> {
         ),
         bottomNavigationBar: const CustomFooter(),
         floatingActionButton: const CustomFab(),
+
       ),
     );
+
   }
 
   /// 現在の [ViewType] に対応するViewを返す。

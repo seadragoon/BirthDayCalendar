@@ -74,5 +74,7 @@
 	<string>端末やGoogle/iCloudカレンダーの予定をアプリ内に取り込むために使用します。</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>端末やGoogle/iCloudカレンダーの予定をアプリ内に取り込むために使用します。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>カレンダーの背景画像をフォトライブラリの写真から設定するために使用します。</string>
 </dict>
 </plist>

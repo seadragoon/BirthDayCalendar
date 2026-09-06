@@ -82,6 +82,9 @@ dependencies:
   # URL launcher & mailto
   url_launcher: ^6.3.1
 
+  # Image Picker (Photo Background Theme)
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

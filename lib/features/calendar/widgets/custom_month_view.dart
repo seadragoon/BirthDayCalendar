@@ -340,10 +340,11 @@ class _DayCell extends ConsumerWidget {
         );
       },
       child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+        decoration: const BoxDecoration(
+          color: Colors.transparent,
         ),
         clipBehavior: Clip.hardEdge, // 見切れバーが下の週にはみ出さないように制御
+
         child: LayoutBuilder(
           builder: (context, constraints) {
             // セル全体の高さから日付エリア(18px)を引く
