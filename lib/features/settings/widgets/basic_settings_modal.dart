@@ -7,6 +7,8 @@ import 'package:birthday_calendar/shared/services/notification_service.dart';
 import 'package:birthday_calendar/features/widget/services/widget_sync_service.dart';
 import 'package:birthday_calendar/features/security/providers/security_providers.dart';
 import 'package:birthday_calendar/features/security/widgets/security_settings_modal.dart';
+import 'package:birthday_calendar/features/calendar/widgets/device_calendar_import_modal.dart';
+import 'package:birthday_calendar/features/backup/views/backup_restore_modal.dart';
 
 /// アプリ全体の基本設定画面。
 class BasicSettingsModal extends ConsumerWidget {
@@ -108,6 +110,38 @@ class BasicSettingsModal extends ConsumerWidget {
                       ),
                     );
                   },
+                );
+              },
+            ),
+            const Divider(),
+
+            // データ連携・バックアップ
+            _buildSectionHeader('データ連携・バックアップ'),
+            ListTile(
+              leading: const Icon(Icons.sync_alt_outlined),
+              title: const Text('外部カレンダーから取り込み'),
+              subtitle: const Text('Googleカレンダー/.icsファイル等', style: TextStyle(fontSize: 12)),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const DeviceCalendarImportModal(),
+                    fullscreenDialog: true,
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.backup_outlined),
+              title: const Text('バックアップと復元'),
+              subtitle: const Text('完全復元・.icsエクスポート', style: TextStyle(fontSize: 12)),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const BackupRestoreModal(),
+                    fullscreenDialog: true,
+                  ),
                 );
               },
             ),

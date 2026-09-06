@@ -209,7 +209,7 @@ lib/
 │       ├── providers/
 │       │   └── settings_providers.dart          # AppSettingsNotifier, BirthdayDisplaySettingsNotifier
 │       └── widgets/
-│           ├── basic_settings_modal.dart        # 基本設定モーダル（通知一括ON/OFF）
+│           ├── basic_settings_modal.dart        # 基本設定モーダル（通知・セキュリティ・データ連携/バックアップ・ウィジェット）
 │           ├── calendar_settings_modal.dart     # カレンダー設定モーダル（週の開始日等）
 │           ├── birthday_display_settings_modal.dart # 誕生日カレンダー表示設定モーダル
 │           └── theme_mode_dialog.dart           # ダークモード切り替えダイアログ（システム/ライト/ダーク）

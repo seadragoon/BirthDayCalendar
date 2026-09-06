@@ -8,9 +8,7 @@ import 'package:birthday_calendar/features/settings/widgets/basic_settings_modal
 import 'package:birthday_calendar/features/settings/widgets/calendar_settings_modal.dart';
 import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
 import 'package:birthday_calendar/features/settings/widgets/theme_mode_dialog.dart';
-import 'package:birthday_calendar/features/backup/views/backup_restore_modal.dart';
 import 'package:birthday_calendar/features/birthday/widgets/contact_import_modal.dart';
-import 'package:birthday_calendar/features/calendar/widgets/device_calendar_import_modal.dart';
 import 'package:birthday_calendar/features/legal/models/legal_texts.dart';
 import 'package:birthday_calendar/features/legal/views/legal_document_modal.dart';
 import 'package:birthday_calendar/features/legal/widgets/contact_dialog.dart';
@@ -134,7 +132,7 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
           ListTile(
             leading: const Icon(Icons.settings_outlined),
             title: const Text('基本設定'),
-            subtitle: const Text('通知・セキュリティ・ウィジェット', style: TextStyle(fontSize: 12)),
+            subtitle: const Text('通知・セキュリティ・バックアップ等', style: TextStyle(fontSize: 12)),
             onTap: () {
               Navigator.of(context).pop();
               Navigator.of(context).push(
@@ -229,42 +227,7 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
           ),
           const Divider(),
 
-          // 4. データ連携・バックアップ
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text('データ連携・バックアップ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-          ),
-          ListTile(
-            leading: const Icon(Icons.sync_alt_outlined),
-            title: const Text('外部カレンダーから取り込み'),
-            subtitle: const Text('Googleカレンダー/.icsファイル等', style: TextStyle(fontSize: 12)),
-            onTap: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const DeviceCalendarImportModal(),
-                  fullscreenDialog: true,
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.backup_outlined),
-            title: const Text('バックアップと復元'),
-            subtitle: const Text('完全復元・.icsエクスポート', style: TextStyle(fontSize: 12)),
-            onTap: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const BackupRestoreModal(),
-                  fullscreenDialog: true,
-                ),
-              );
-            },
-          ),
-          const Divider(),
-
-          // 5. その他
+          // 4. その他
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text('その他', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
