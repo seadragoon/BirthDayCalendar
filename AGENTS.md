@@ -1,7 +1,7 @@
 # AGENTS.md — AI向けプロジェクトリファレンス
 
 > **このファイルはAIアシスタントがセッション開始時に最初に読むべきドキュメントです。**
-> 最終更新: 2026-09-07
+> 最終更新: 2026-09-22
 
 ---
 
@@ -485,12 +485,17 @@ CREATE TABLE gifts (
 ---
 
 ## 8. きせかえテーマ & ダークモード
-
-| テーマ名 | `AppThemeType` | primaryColor | 背景画像 |
-|---------|---------------|-------------|---------|
-| 標準（シンプルホワイト） | `standard` | Lavender (`#7986CB`) または 12色カスタム | なし |
-| 桜（サクラ） | `sakura` | Pink 400 (`#EC407A`) | `assets/images/themes/sakura.png` |
-| 夜空（ナイト） | `night` | Indigo 600 (`#3949AB`) | `assets/images/themes/night.png` |
+ 
+| テーマ名 | `AppThemeType` | primaryColor | 背景画像 | 区分 |
+|---------|---------------|-------------|---------|:---:|
+| 標準（シンプルホワイト） | `standard` | Lavender (`#7986CB`) または 12色カスタム | なし | 通常 |
+| 桜（サクラ） | `sakura` | Pink 400 (`#EC407A`) | `assets/images/themes/sakura.png` | 通常 |
+| 夜空（ナイト） | `night` | Indigo 600 (`#3949AB`) | `assets/images/themes/night.png` | 通常 |
+| ミント（ボタニカル） | `mint` | Teal 400 (`#26A69A`) | `assets/images/themes/mint.jpg` | 👑 プレミアム限定 |
+| モカ（カフェ） | `cafe` | Brown 400 (`#8D6E63`) | `assets/images/themes/cafe.jpg` | 👑 プレミアム限定 |
+| 夕暮れ（サンセット） | `sunset` | Deep Orange 400 (`#FF7043`) | `assets/images/themes/sunset.jpg` | 👑 プレミアム限定 |
+| ローズ（エレガント） | `rose` | Pink 700 (`#C2185B`) | `assets/images/themes/rose.jpg` | 👑 プレミアム限定 |
+| 海（オーシャン） | `ocean` | Cyan 600 (`#00ACC1`) | `assets/images/themes/ocean.jpg` | 👑 プレミアム限定 |
 
 - **写真きせかえ（オリジナル背景）:** フォトライブラリから好きな写真を選択し、カレンダー背景にホワイトアウト/ブラックアウトを被せて設定可能（文字の見やすさ・濃さを0.5〜0.95でスライダー調整可能）。画像はアプリ内ローカルストレージに安全に永続化。
 - **永続化:** `SharedPreferences` で選択テーマ、標準テーマのカスタムカラー、カスタム背景パス、背景不透明度を保存。

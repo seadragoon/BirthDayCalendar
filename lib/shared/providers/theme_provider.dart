@@ -69,12 +69,13 @@ class ThemeNotifier extends AsyncNotifier<AppThemeData> {
     }
   }
 
-  /// プライマリカラーを更新して保存する（テーマは標準に切り替わる）。
+  /// プライマリカラーを更新して保存する（テーマは標準・シンプルホワイトに切り替わる）。
   Future<void> updatePrimaryColor(Color color) async {
     final current = state.valueOrNull ?? AppThemeData.standard;
-    final updatedTheme = current.copyWith(
-      type: AppThemeType.standard,
+    final updatedTheme = AppThemeData.standard.copyWith(
       primaryColor: color,
+      customBackgroundPath: current.customBackgroundPath,
+      backgroundOpacity: current.backgroundOpacity,
     );
     state = AsyncValue.data(updatedTheme);
     
@@ -83,10 +84,20 @@ class ThemeNotifier extends AsyncNotifier<AppThemeData> {
     await prefs.setInt(_keyColor, color.toARGB32());
   }
 
-  /// テーマタイプ（標準、桜、夜空）に基づいてテーマを切り替えて保存する。
+  /// テーマタイプ（標準、桜、夜空など）に基づいてテーマを切り替えて保存する。
   Future<void> setThemeType(AppThemeType type) async {
     final current = state.valueOrNull ?? AppThemeData.standard;
-    final theme = AppThemeData.values.firstWhere((t) => t.type == type);
+    var theme = AppThemeData.values.firstWhere((t) => t.type == type);
+
+    // 標準テーマに戻す場合は、保存されていたカスタムカラーがあれば反映
+    if (type == AppThemeType.standard) {
+      final prefs = await SharedPreferences.getInstance();
+      final colorValue = prefs.getInt(_keyColor);
+      if (colorValue != null) {
+        theme = theme.copyWith(primaryColor: Color(colorValue));
+      }
+    }
+
     final updatedTheme = theme.copyWith(
       customBackgroundPath: current.customBackgroundPath,
       backgroundOpacity: current.backgroundOpacity,

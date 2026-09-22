@@ -68,13 +68,14 @@ class ThemeSelectionModal extends ConsumerWidget {
               const SizedBox(height: 48),
 
               // きせかえテーマセクション
-              _buildSectionHeader(context, 'きせかえテーマ'),
+              _buildSectionHeader(context, 'プリセットテーマ'),
               const SizedBox(height: 16),
               _buildThemeOption(
                 context: context,
                 ref: ref,
                 type: AppThemeType.sakura,
                 label: '桜（サクラ）',
+                description: '春の訪れを感じる華やかな和風ピンク',
                 assetPath: 'assets/images/themes/sakura.png',
                 currentType: currentTheme.type,
               ),
@@ -84,8 +85,113 @@ class ThemeSelectionModal extends ConsumerWidget {
                 ref: ref,
                 type: AppThemeType.night,
                 label: '夜空（ナイト）',
+                description: '静寂な星空が広がるディープインディゴ',
                 assetPath: 'assets/images/themes/night.png',
                 currentType: currentTheme.type,
+              ),
+
+              const SizedBox(height: 48),
+
+              // プレミアム限定テーマセクション
+              _buildSectionHeader(
+                context, 
+                'プレミアム限定テーマ', 
+                trailingBadge: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFFB300), Color(0xFFFF8F00)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.amber.withValues(alpha: 0.3),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.workspace_premium, color: Colors.white, size: 14),
+                      SizedBox(width: 4),
+                      Text(
+                        'PREMIUM',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '洗練された世界観と専用パレットで彩る特別な限定テーマです。',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildThemeOption(
+                context: context,
+                ref: ref,
+                type: AppThemeType.mint,
+                label: 'ミント（ボタニカル）',
+                description: '爽やかな北欧風ハーブと木漏れ日',
+                assetPath: 'assets/images/themes/mint.jpg',
+                currentType: currentTheme.type,
+                isPremium: true,
+              ),
+              const SizedBox(height: 12),
+              _buildThemeOption(
+                context: context,
+                ref: ref,
+                type: AppThemeType.cafe,
+                label: 'モカ（カフェ）',
+                description: '温かみのあるラテとくすみベージュ',
+                assetPath: 'assets/images/themes/cafe.jpg',
+                currentType: currentTheme.type,
+                isPremium: true,
+              ),
+              const SizedBox(height: 12),
+              _buildThemeOption(
+                context: context,
+                ref: ref,
+                type: AppThemeType.sunset,
+                label: '夕暮れ（サンセット）',
+                description: '黄昏時のエモーショナルなグラデーション',
+                assetPath: 'assets/images/themes/sunset.jpg',
+                currentType: currentTheme.type,
+                isPremium: true,
+              ),
+              const SizedBox(height: 12),
+              _buildThemeOption(
+                context: context,
+                ref: ref,
+                type: AppThemeType.rose,
+                label: 'ローズ（エレガント）',
+                description: '大理石と上品なアンティークローズ',
+                assetPath: 'assets/images/themes/rose.jpg',
+                currentType: currentTheme.type,
+                isPremium: true,
+              ),
+              const SizedBox(height: 12),
+              _buildThemeOption(
+                context: context,
+                ref: ref,
+                type: AppThemeType.ocean,
+                label: '海（オーシャン）',
+                description: '透き通るエメラルドブルーの水面ときらめき',
+                assetPath: 'assets/images/themes/ocean.jpg',
+                currentType: currentTheme.type,
+                isPremium: true,
               ),
 
               const SizedBox(height: 48),
@@ -135,14 +241,21 @@ class ThemeSelectionModal extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
+  Widget _buildSectionHeader(BuildContext context, String title, {Widget? trailingBadge}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title, 
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              title, 
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+            ),
+            ?trailingBadge,
+          ],
         ),
         const SizedBox(height: 8),
         Divider(color: isDark ? Colors.grey.shade700 : Colors.grey.shade200),
@@ -157,6 +270,8 @@ class ThemeSelectionModal extends ConsumerWidget {
     required String label,
     required String assetPath,
     required AppThemeType currentType,
+    String? description,
+    bool isPremium = false,
   }) {
     final isSelected = currentType == type;
     final themeColor = Theme.of(context).primaryColor;
@@ -209,19 +324,71 @@ class ThemeSelectionModal extends ConsumerWidget {
                 child: Image.asset(assetPath, fit: BoxFit.cover),
               ),
             ),
-            const SizedBox(width: 20),
+            const SizedBox(width: 16),
             Expanded(
-              child: Text(
-                label, 
-                style: TextStyle(
-                  fontSize: 18, 
-                  fontWeight: FontWeight.bold,
-                  color: isSelected ? selectedTextColor : unselectedTextColor,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          label, 
+                          style: TextStyle(
+                            fontSize: 17, 
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? selectedTextColor : unselectedTextColor,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (isPremium) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade100,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.amber.shade400, width: 0.8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.stars, color: Colors.amber.shade800, size: 11),
+                              const SizedBox(width: 2),
+                              Text(
+                                '限定',
+                                style: TextStyle(
+                                  color: Colors.amber.shade900,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (description != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
               ),
             ),
+            const SizedBox(width: 8),
             if (isSelected)
-              Icon(Icons.check_circle, color: checkIconColor, size: 28),
+              Icon(Icons.check_circle, color: checkIconColor, size: 26),
           ],
         ),
       ),
