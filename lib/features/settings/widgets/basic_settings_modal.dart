@@ -9,6 +9,7 @@ import 'package:birthday_calendar/features/security/providers/security_providers
 import 'package:birthday_calendar/features/security/widgets/security_settings_modal.dart';
 import 'package:birthday_calendar/features/calendar/widgets/device_calendar_import_modal.dart';
 import 'package:birthday_calendar/features/backup/views/backup_restore_modal.dart';
+import 'package:birthday_calendar/features/widget/widgets/photo_countdown_settings_modal.dart';
 
 /// アプリ全体の基本設定画面。
 class BasicSettingsModal extends ConsumerWidget {
@@ -150,12 +151,26 @@ class BasicSettingsModal extends ConsumerWidget {
             // ホーム画面ウィジェット
             _buildSectionHeader('ホーム画面ウィジェット'),
             ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('写真付きカウントダウン設定'),
+              subtitle: const Text('推し・家族の写真でカウントダウンウィジェットを作成', style: TextStyle(fontSize: 12)),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const PhotoCountdownSettingsModal(),
+                    fullscreenDialog: true,
+                  ),
+                );
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.widgets_outlined),
               title: const Text('ウィジェットのデータを手動更新'),
               subtitle: const Text('ホーム画面の「もうすぐ誕生日」を最新化します', style: TextStyle(fontSize: 12)),
               trailing: const Icon(Icons.sync, size: 20),
               onTap: () async {
-                await WidgetSyncService.updateWidgetData();
+                await WidgetSyncService.updateAllWidgets();
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -166,6 +181,7 @@ class BasicSettingsModal extends ConsumerWidget {
                 }
               },
             ),
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Container(

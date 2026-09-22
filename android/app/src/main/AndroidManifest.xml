@@ -112,7 +112,32 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/schedule_widget_2x3_info" />
         </receiver>
+        <!-- Home Screen Photo Countdown Widget (2x2) -->
+        <receiver
+            android:name=".PhotoCountdownWidget2x2Provider"
+            android:label="写真カウントダウン (2x2)"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/photo_countdown_widget_2x2_info" />
+        </receiver>
+        <!-- Home Screen Photo Countdown Widget (4x2) -->
+        <receiver
+            android:name=".PhotoCountdownWidget4x2Provider"
+            android:label="写真カウントダウン (4x2)"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/photo_countdown_widget_4x2_info" />
+        </receiver>
     </application>
+
     <!-- Permisions for notifications -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.VIBRATE"/>

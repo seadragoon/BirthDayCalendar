@@ -8,6 +8,7 @@ import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
 import 'package:birthday_calendar/features/calendar/models/event_model.dart';
 import 'package:birthday_calendar/features/calendar/providers/event_providers.dart';
 import 'package:birthday_calendar/features/settings/models/birthday_display_settings.dart';
+import 'package:birthday_calendar/features/widget/models/photo_countdown_widget_settings.dart';
 import 'package:birthday_calendar/features/widget/models/widget_birthday_item.dart';
 import 'package:birthday_calendar/features/widget/models/widget_schedule_item.dart';
 import 'package:birthday_calendar/shared/db/database_helper.dart';
@@ -24,9 +25,15 @@ class WidgetSyncService {
     'ScheduleWidget2x2Provider',
     'ScheduleWidget2x3Provider',
   ];
+  static const List<String> _androidPhotoCountdownWidgetNames = [
+    'PhotoCountdownWidget2x2Provider',
+    'PhotoCountdownWidget4x2Provider',
+  ];
   static const String _birthdayDataKey = 'birthday_widget_data';
   static const String _scheduleDataKey = 'schedule_widget_data';
   static const String _scheduleDateHeaderKey = 'schedule_widget_date_header';
+  static const String photoCountdownSettingsKey = 'photo_countdown_widget_settings';
+  static const String photoCountdownDataKey = 'photo_countdown_widget_data';
 
   /// プラットフォームがホーム画面ウィジェットに対応しているか判定
   static bool get isSupported {
@@ -34,12 +41,14 @@ class WidgetSyncService {
     return Platform.isAndroid || Platform.isIOS;
   }
 
-  /// 全ウィジェット（誕生日・予定）のデータを一括更新する
+  /// 全ウィジェット（誕生日・予定・写真カウントダウン）のデータを一括更新する
   static Future<void> updateAllWidgets() async {
     if (!isSupported) return;
     await updateWidgetData();
     await updateScheduleWidgetData();
+    await updatePhotoCountdownWidget();
   }
+
 
   /// データベースから直近の誕生日を取得し、ホーム画面ウィジェットのデータを更新する
   static Future<void> updateWidgetData() async {
@@ -146,4 +155,74 @@ class WidgetSyncService {
       debugPrint('[WidgetSyncService] 予定ウィジェット更新エラー: $e');
     }
   }
+
+  /// 写真付きカウントダウンウィジェットのデータを算出し更新する
+  static Future<void> updatePhotoCountdownWidget() async {
+    if (!isSupported) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final settingsJson = prefs.getString(photoCountdownSettingsKey);
+      final settings = settingsJson != null
+          ? PhotoCountdownWidgetSettings.fromJson(settingsJson)
+          : const PhotoCountdownWidgetSettings();
+
+      final db = await DatabaseHelper.instance.database;
+      final maps = await db.query(DatabaseHelper.tableBirthdays);
+      final birthdays = maps.map((m) => BirthdayModel.fromMap(m)).toList();
+
+      BirthdayModel? targetBirthday;
+      if (settings.birthdayId != null) {
+        // 特定の誕生日を検索
+        final matches = birthdays.where((b) => b.id == settings.birthdayId);
+        if (matches.isNotEmpty) {
+          targetBirthday = matches.first;
+        }
+      }
+
+      // 特定の人が見つからない、または未指定なら直近の人を採用
+      if (targetBirthday == null && birthdays.isNotEmpty) {
+        birthdays.sort((a, b) => a.daysUntilNextBirthday.compareTo(b.daysUntilNextBirthday));
+        targetBirthday = birthdays.first;
+      }
+
+      Map<String, dynamic> data;
+      if (targetBirthday != null) {
+        final days = targetBirthday.daysUntilNextBirthday;
+        final daysLabel = days == 0 ? '本日誕生日！🎉' : 'あと$days日';
+        final dateLabel = settings.showAge && targetBirthday.ageThisYear != null
+            ? '${targetBirthday.date.month}月${targetBirthday.date.day}日 (${targetBirthday.ageThisYear}歳)'
+            : '${targetBirthday.date.month}月${targetBirthday.date.day}日';
+
+        data = {
+          'has_data': true,
+          'name': targetBirthday.name,
+          'days': days,
+          'days_label': daysLabel,
+          'date_label': dateLabel,
+          'photo_path': settings.photoPath ?? '',
+          'is_today': days == 0,
+        };
+      } else {
+        data = {
+          'has_data': false,
+          'photo_path': settings.photoPath ?? '',
+        };
+      }
+
+      final jsonString = jsonEncode(data);
+      await HomeWidget.saveWidgetData<String>(photoCountdownDataKey, jsonString);
+
+      // 全サイズ（2x2, 4x2）の写真カウントダウンウィジェットの再描画を要求
+      for (final widgetName in _androidPhotoCountdownWidgetNames) {
+        await HomeWidget.updateWidget(
+          name: widgetName,
+          androidName: widgetName,
+        );
+      }
+    } catch (e) {
+      debugPrint('[WidgetSyncService] 写真カウントダウンウィジェット更新エラー: $e');
+    }
+  }
 }
+

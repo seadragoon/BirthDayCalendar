@@ -13,6 +13,7 @@ import 'package:birthday_calendar/features/settings/providers/settings_providers
 import 'package:birthday_calendar/features/birthday/models/gift_model.dart';
 import 'package:birthday_calendar/features/birthday/providers/gift_providers.dart';
 import 'package:birthday_calendar/features/birthday/widgets/gift_edit_modal.dart';
+import 'package:birthday_calendar/features/widget/widgets/photo_countdown_settings_modal.dart';
 
 /// 誕生日詳細を表示する読み取り専用モーダル
 class BirthdayDetailModal extends ConsumerStatefulWidget {
@@ -69,6 +70,20 @@ class _BirthdayDetailModalState extends ConsumerState<BirthdayDetailModal> {
       },
       customActions: [
         IconButton(
+          icon: const Icon(Icons.widgets_outlined),
+          tooltip: '写真ウィジェットに設定',
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => PhotoCountdownSettingsModal(
+                  initialBirthdayId: _currentBirthday.id,
+                ),
+                fullscreenDialog: true,
+              ),
+            );
+          },
+        ),
+        IconButton(
           icon: const Icon(Icons.edit),
           tooltip: '編集',
           onPressed: () async {
@@ -83,6 +98,7 @@ class _BirthdayDetailModalState extends ConsumerState<BirthdayDetailModal> {
           },
         ),
       ],
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
