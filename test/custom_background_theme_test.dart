@@ -102,8 +102,8 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // 「写真きせかえ（オリジナル背景）」セクションが表示される
-      expect(find.text('写真きせかえ（オリジナル背景）'), findsOneWidget);
+      // 「オリジナル背景設定」セクションが表示される
+      expect(find.text('オリジナル背景設定'), findsOneWidget);
       // 「アルバムから写真を選ぶ」カードが表示される
       expect(find.text('アルバムから写真を選ぶ'), findsOneWidget);
       expect(find.text('好きな写真をカレンダー背景に設定'), findsOneWidget);

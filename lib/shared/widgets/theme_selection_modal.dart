@@ -17,13 +17,12 @@ class ThemeSelectionModal extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentThemeAsync = ref.watch(themeProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return currentThemeAsync.when(
       data: (currentTheme) => BaseModal(
         title: 'きせかえ（テーマ）',
         body: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -92,123 +91,8 @@ class ThemeSelectionModal extends ConsumerWidget {
 
               const SizedBox(height: 48),
 
-              // プレミアム限定テーマセクション
-              _buildSectionHeader(
-                context, 
-                'プレミアム限定テーマ', 
-                trailingBadge: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFFB300), Color(0xFFFF8F00)],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.amber.withValues(alpha: 0.3),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.workspace_premium, color: Colors.white, size: 14),
-                      SizedBox(width: 4),
-                      Text(
-                        'PREMIUM',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '洗練された世界観と専用パレットで彩る特別な限定テーマです。',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildThemeOption(
-                context: context,
-                ref: ref,
-                type: AppThemeType.mint,
-                label: 'ミント（ボタニカル）',
-                description: '爽やかな北欧風ハーブと木漏れ日',
-                assetPath: 'assets/images/themes/mint.jpg',
-                currentType: currentTheme.type,
-                isPremium: true,
-              ),
-              const SizedBox(height: 12),
-              _buildThemeOption(
-                context: context,
-                ref: ref,
-                type: AppThemeType.cafe,
-                label: 'モカ（カフェ）',
-                description: '温かみのあるラテとくすみベージュ',
-                assetPath: 'assets/images/themes/cafe.jpg',
-                currentType: currentTheme.type,
-                isPremium: true,
-              ),
-              const SizedBox(height: 12),
-              _buildThemeOption(
-                context: context,
-                ref: ref,
-                type: AppThemeType.sunset,
-                label: '夕暮れ（サンセット）',
-                description: '黄昏時のエモーショナルなグラデーション',
-                assetPath: 'assets/images/themes/sunset.jpg',
-                currentType: currentTheme.type,
-                isPremium: true,
-              ),
-              const SizedBox(height: 12),
-              _buildThemeOption(
-                context: context,
-                ref: ref,
-                type: AppThemeType.rose,
-                label: 'ローズ（エレガント）',
-                description: '大理石と上品なアンティークローズ',
-                assetPath: 'assets/images/themes/rose.jpg',
-                currentType: currentTheme.type,
-                isPremium: true,
-              ),
-              const SizedBox(height: 12),
-              _buildThemeOption(
-                context: context,
-                ref: ref,
-                type: AppThemeType.ocean,
-                label: '海（オーシャン）',
-                description: '透き通るエメラルドブルーの水面ときらめき',
-                assetPath: 'assets/images/themes/ocean.jpg',
-                currentType: currentTheme.type,
-                isPremium: true,
-              ),
-
-              const SizedBox(height: 48),
-
-              // 写真きせかえセクション（オリジナル背景）
-              _buildSectionHeader(context, '写真きせかえ（オリジナル背景）'),
-              const SizedBox(height: 8),
-              Text(
-                '推し・お子さま・ペット・お気に入りの風景写真をカレンダーの背景に設定できます。',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildCustomBackgroundSection(context, ref, currentTheme),
+              // ────────────── プレミアム機能（PRO）エリア ──────────────
+              _buildPremiumSection(context, ref, currentTheme),
               
               const SizedBox(height: 40),
 
@@ -241,7 +125,275 @@ class ThemeSelectionModal extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, {Widget? trailingBadge}) {
+  /// プレミアム限定機能（テーマ＆写真きせかえ）を美しくグルーピングしてデザイン分離するコンテナ
+  Widget _buildPremiumSection(BuildContext context, WidgetRef ref, AppThemeData currentTheme) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final containerBg = isDark
+        ? const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF221C14), Color(0xFF181510)],
+          )
+        : const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFFFFDF5), Color(0xFFFFF8E7)],
+          );
+
+    final borderColor = isDark
+        ? Colors.amber.shade700.withValues(alpha: 0.5)
+        : Colors.amber.shade300;
+
+    final titleColor = isDark ? Colors.amber.shade300 : Colors.amber.shade900;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: containerBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: borderColor, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.amber.withValues(alpha: 0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 👑 プレミアムバナーヘッダー
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFB300), Color(0xFFFF8F00)],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.amber.withValues(alpha: 0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.workspace_premium, color: Colors.white, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'プレミアム機能',
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.bold,
+                            color: titleColor,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.amber.shade900.withValues(alpha: 0.6) : Colors.amber.shade100,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isDark ? Colors.amber.shade600 : Colors.amber.shade400,
+                              width: 0.8,
+                            ),
+                          ),
+                          child: const Text(
+                            'PRO',
+                            style: TextStyle(
+                              color: Color(0xFFFF8F00),
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '特別な限定テーマや写真背景で、さらに華やかにカスタマイズ',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+          Divider(color: isDark ? Colors.amber.shade900.withValues(alpha: 0.3) : Colors.amber.shade200),
+          const SizedBox(height: 16),
+
+          // 1. プレミアム限定テーマ
+          _buildSectionHeader(
+            context,
+            'プレミアム限定テーマ',
+            fontSize: 17,
+            trailingBadge: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFB300), Color(0xFFFF8F00)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.stars, color: Colors.white, size: 13),
+                  SizedBox(width: 4),
+                  Text(
+                    'PREMIUM',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '洗練された世界観と専用パレットで彩る特別な限定テーマです。',
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildThemeOption(
+            context: context,
+            ref: ref,
+            type: AppThemeType.mint,
+            label: 'ミント（ボタニカル）',
+            description: '爽やかな北欧風ハーブと木漏れ日',
+            assetPath: 'assets/images/themes/mint.jpg',
+            currentType: currentTheme.type,
+            isPremium: true,
+          ),
+          const SizedBox(height: 12),
+          _buildThemeOption(
+            context: context,
+            ref: ref,
+            type: AppThemeType.cafe,
+            label: 'モカ（カフェ）',
+            description: '温かみのあるラテとくすみベージュ',
+            assetPath: 'assets/images/themes/cafe.jpg',
+            currentType: currentTheme.type,
+            isPremium: true,
+          ),
+          const SizedBox(height: 12),
+          _buildThemeOption(
+            context: context,
+            ref: ref,
+            type: AppThemeType.sunset,
+            label: '夕暮れ（サンセット）',
+            description: '黄昏時のエモーショナルなグラデーション',
+            assetPath: 'assets/images/themes/sunset.jpg',
+            currentType: currentTheme.type,
+            isPremium: true,
+          ),
+          const SizedBox(height: 12),
+          _buildThemeOption(
+            context: context,
+            ref: ref,
+            type: AppThemeType.rose,
+            label: 'ローズ（エレガント）',
+            description: '大理石と上品なアンティークローズ',
+            assetPath: 'assets/images/themes/rose.jpg',
+            currentType: currentTheme.type,
+            isPremium: true,
+          ),
+          const SizedBox(height: 12),
+          _buildThemeOption(
+            context: context,
+            ref: ref,
+            type: AppThemeType.ocean,
+            label: '海（オーシャン）',
+            description: '透き通るエメラルドブルーの水面ときらめき',
+            assetPath: 'assets/images/themes/ocean.jpg',
+            currentType: currentTheme.type,
+            isPremium: true,
+          ),
+
+          const SizedBox(height: 36),
+
+          // 2. オリジナル背景設定
+          _buildSectionHeader(
+            context,
+            'オリジナル背景設定',
+            fontSize: 17,
+            trailingBadge: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFB300), Color(0xFFFF8F00)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.photo_library, color: Colors.white, size: 13),
+                  SizedBox(width: 4),
+                  Text(
+                    'PREMIUM',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '推し・お子さま・ペット・お気に入りの風景写真をカレンダーの背景に設定できます。',
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildCustomBackgroundSection(context, ref, currentTheme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(
+    BuildContext context, 
+    String title, {
+    Widget? trailingBadge,
+    double fontSize = 18,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,11 +402,20 @@ class ThemeSelectionModal extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              title, 
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+            Expanded(
+              child: Text(
+                title, 
+                style: TextStyle(
+                  fontSize: fontSize, 
+                  fontWeight: FontWeight.bold, 
+                  letterSpacing: 0.5,
+                ),
+              ),
             ),
-            ?trailingBadge,
+            if (trailingBadge != null) ...[
+              const SizedBox(width: 8),
+              trailingBadge,
+            ],
           ],
         ),
         const SizedBox(height: 8),
@@ -291,7 +452,7 @@ class ThemeSelectionModal extends ConsumerWidget {
       borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
@@ -311,20 +472,20 @@ class ThemeSelectionModal extends ConsumerWidget {
           children: [
             // テーマプレビュー
             Container(
-              width: 90,
-              height: 65,
+              width: 80,
+              height: 58,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4),
                 ],
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 child: Image.asset(assetPath, fit: BoxFit.cover),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

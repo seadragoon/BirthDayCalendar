@@ -85,8 +85,10 @@ void main() {
 
       // ヘッダーやセクション見出し
       expect(find.text('プリセットテーマ'), findsOneWidget);
+      expect(find.text('プレミアム機能'), findsOneWidget);
+      expect(find.text('PRO'), findsOneWidget);
       expect(find.text('プレミアム限定テーマ'), findsOneWidget);
-      expect(find.text('PREMIUM'), findsOneWidget);
+      expect(find.text('PREMIUM'), findsNWidgets(2));
 
       // テーマオプションラベル
       expect(find.text('ミント（ボタニカル）'), findsOneWidget);
