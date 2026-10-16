@@ -9,7 +9,9 @@ import 'package:birthday_calendar/features/security/providers/security_providers
 import 'package:birthday_calendar/features/security/widgets/security_settings_modal.dart';
 import 'package:birthday_calendar/features/calendar/widgets/device_calendar_import_modal.dart';
 import 'package:birthday_calendar/features/backup/views/backup_restore_modal.dart';
+import 'package:flutter/foundation.dart';
 import 'package:birthday_calendar/features/widget/widgets/photo_countdown_settings_modal.dart';
+import 'package:birthday_calendar/features/premium/providers/premium_provider.dart';
 
 /// アプリ全体の基本設定画面。
 class BasicSettingsModal extends ConsumerWidget {
@@ -207,6 +209,40 @@ class BasicSettingsModal extends ConsumerWidget {
               ),
             ),
             const Divider(),
+
+            // 🛠️ 開発者用メニュー（リリースビルドではコンパイル時Tree Shakingにより完全削除）
+            if (kDebugMode) ...[
+              _buildSectionHeader('開発者メニュー (Debug Only)'),
+              Consumer(
+                builder: (context, ref, _) {
+                  final isPremiumAsync = ref.watch(isPremiumProvider);
+                  final isPremium = isPremiumAsync.value ?? false;
+
+                  return SwitchListTile(
+                    secondary: Icon(
+                      Icons.workspace_premium,
+                      color: isPremium ? Colors.amber : Colors.grey,
+                    ),
+                    title: const Text('【開発用】プレミアム状態モック'),
+                    subtitle: Text(
+                      isPremium
+                          ? '現在: 👑 プレミアム有効 (Pro)'
+                          : '現在: 🆓 無料プラン (Free)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isPremium ? Colors.amber.shade800 : Colors.grey.shade600,
+                        fontWeight: isPremium ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                    value: isPremium,
+                    onChanged: (val) {
+                      ref.read(isPremiumProvider.notifier).setDebugPremium(val);
+                    },
+                  );
+                },
+              ),
+              const Divider(),
+            ],
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),

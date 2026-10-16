@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:birthday_calendar/shared/theme/app_theme.dart';
 import 'package:birthday_calendar/shared/providers/theme_provider.dart';
 import 'package:birthday_calendar/shared/widgets/theme_selection_modal.dart';
+import 'package:birthday_calendar/features/premium/providers/premium_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -101,6 +102,73 @@ void main() {
       expect(find.text('限定'), findsNWidgets(5));
     });
 
+    testWidgets('tapping premium theme when non-premium shows promo sheet and does not apply theme', (tester) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: ThemeSelectionModal(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // プレミアム限定テーマ（ミント）をタップ
+      await tester.tap(find.text('ミント（ボタニカル）'));
+      await tester.pumpAndSettle();
+
+      // プロモ案内シートが表示されていること
+      expect(find.text('プレミアム限定機能'), findsOneWidget);
+      expect(find.textContaining('ミント（ボタニカル） テーマ'), findsOneWidget);
+      expect(find.text('閉じる'), findsOneWidget);
+
+      // シートを閉じる
+      await tester.tap(find.text('閉じる'));
+      await tester.pumpAndSettle();
+      expect(find.text('プレミアム限定機能'), findsNothing);
+    });
+
+    testWidgets('tapping premium theme when premium is active applies theme immediately without sheet', (tester) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final container = ProviderContainer(
+        overrides: [
+          isPremiumProvider.overrideWith(_AlwaysPremiumNotifier.new),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(isPremiumProvider.future);
+      await container.read(themeProvider.future);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: ThemeSelectionModal(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 解放時のヘッダー表示
+      expect(find.text('プレミアム有効'), findsOneWidget);
+      expect(find.text('PRO 会員'), findsOneWidget);
+      expect(find.text('すべての限定テーマとオリジナル写真背景をご利用いただけます ✨'), findsOneWidget);
+
+      // プレミアム限定テーマ（ミント）をタップ
+      await tester.tap(find.text('ミント（ボタニカル）'));
+      await tester.pumpAndSettle();
+
+      // プロモシートは表示されない
+      expect(find.text('プレミアム限定機能'), findsNothing);
+    });
+
     test('ThemeNotifier restores standard theme and clears background image when updating primary color', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -125,4 +193,9 @@ void main() {
       expect(current.backgroundColor, Colors.white);
     });
   });
+}
+
+class _AlwaysPremiumNotifier extends PremiumNotifier {
+  @override
+  Future<bool> build() async => true;
 }

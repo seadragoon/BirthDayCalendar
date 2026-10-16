@@ -106,7 +106,31 @@ void main() {
       expect(find.text('オリジナル背景設定'), findsOneWidget);
       // 「アルバムから写真を選ぶ」カードが表示される
       expect(find.text('アルバムから写真を選ぶ'), findsOneWidget);
+      // 未解放時はPRO限定表示
+      expect(find.textContaining('好きな写真をカレンダー背景に設定'), findsOneWidget);
+      expect(find.text('PROで解放する'), findsOneWidget);
+    });
+
+    testWidgets('renders unconstrained photo picker card when premium is active', (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'debug_force_is_premium': true,
+      });
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: ThemeSelectionModal(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('アルバムから写真を選ぶ'), findsOneWidget);
       expect(find.text('好きな写真をカレンダー背景に設定'), findsOneWidget);
+      // 解放時は「PROで解放する」ボタンが表示されない
+      expect(find.text('PROで解放する'), findsNothing);
     });
   });
 }
