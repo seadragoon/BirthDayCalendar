@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:birthday_calendar/features/legal/models/legal_texts.dart';
 import 'package:birthday_calendar/features/legal/views/legal_document_modal.dart';
 import 'package:birthday_calendar/features/premium/models/premium_plan.dart';
+import 'package:birthday_calendar/features/premium/models/purchase_outcome.dart';
 import 'package:birthday_calendar/features/premium/providers/premium_provider.dart';
 
 /// プレミアムプラン（Pro）の料金案内・アップグレードモーダル（Paywall）。
@@ -45,14 +46,17 @@ class _PremiumPaywallModalState extends ConsumerState<PremiumPaywallModal> {
   PremiumPlanType _selectedPlanType = PremiumPlanType.yearly;
   bool _isProcessing = false;
 
-  PremiumPlan get _selectedPlan => PremiumPlan.allPlans.firstWhere(
+  PremiumPlan _resolveSelectedPlan(List<PremiumPlan> plans) => plans.firstWhere(
         (plan) => plan.type == _selectedPlanType,
-        orElse: () => PremiumPlan.yearly,
+        orElse: () => plans.isNotEmpty ? plans.first : PremiumPlan.yearly,
       );
 
   @override
   Widget build(BuildContext context) {
     final isPremium = ref.watch(isPremiumProvider).value ?? false;
+    final plans =
+        ref.watch(premiumPlansProvider).valueOrNull ?? PremiumPlan.allPlans;
+    final selectedPlan = _resolveSelectedPlan(plans);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFFAFAFC);
 
@@ -129,7 +133,7 @@ class _PremiumPaywallModalState extends ConsumerState<PremiumPaywallModal> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ...PremiumPlan.allPlans.map(
+                      ...plans.map(
                         (plan) => Padding(
                           padding: const EdgeInsets.only(bottom: 10),
                           child: _buildPlanCard(plan, isDark),
@@ -146,7 +150,7 @@ class _PremiumPaywallModalState extends ConsumerState<PremiumPaywallModal> {
             ),
 
             // 固定フッターCTA（未解放時）
-            if (!isPremium) _buildBottomCtaBar(context, isDark),
+            if (!isPremium) _buildBottomCtaBar(context, isDark, selectedPlan),
           ],
         ),
       ),
@@ -516,8 +520,11 @@ class _PremiumPaywallModalState extends ConsumerState<PremiumPaywallModal> {
   }
 
   /// 下部固定の購入CTA・復元ボタンエリア
-  Widget _buildBottomCtaBar(BuildContext context, bool isDark) {
-    final plan = _selectedPlan;
+  Widget _buildBottomCtaBar(
+    BuildContext context,
+    bool isDark,
+    PremiumPlan plan,
+  ) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       decoration: BoxDecoration(
@@ -536,7 +543,9 @@ class _PremiumPaywallModalState extends ConsumerState<PremiumPaywallModal> {
             height: 50,
             child: FilledButton(
               key: const ValueKey('premium_purchase_cta_button'),
-              onPressed: _isProcessing ? null : () => _handlePurchase(context),
+              onPressed: _isProcessing
+                  ? null
+                  : () => _handlePurchase(context, plan),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFFF8F00),
                 foregroundColor: Colors.white,
@@ -646,9 +655,51 @@ class _PremiumPaywallModalState extends ConsumerState<PremiumPaywallModal> {
     );
   }
 
-  /// 購入ボタン押下時のモック処理（ステップ4でストア決済に接続）
-  Future<void> _handlePurchase(BuildContext context) async {
-    final plan = _selectedPlan;
+  /// 購入ボタン押下時の処理（RevenueCat接続時は実購入、未設定時はモック案内）
+  Future<void> _handlePurchase(BuildContext context, PremiumPlan plan) async {
+    final purchaseService = ref.read(purchaseServiceProvider);
+
+    if (purchaseService.isConfigured) {
+      setState(() => _isProcessing = true);
+      try {
+        final outcome = await ref
+            .read(isPremiumProvider.notifier)
+            .purchasePlan(plan.type);
+        if (!context.mounted) return;
+        switch (outcome.status) {
+          case PurchaseStatus.success:
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '👑 ${outcome.message ?? 'プレミアムプラン（Pro）が有効になりました！'}',
+                ),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          case PurchaseStatus.cancelled:
+            // ユーザーキャンセル時は静かに待機状態へ戻す
+            break;
+          case PurchaseStatus.error:
+          case PurchaseStatus.notFound:
+          case PurchaseStatus.notConfigured:
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  outcome.message ?? '購入処理を完了できませんでした。',
+                ),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isProcessing = false);
+        }
+      }
+      return;
+    }
+
+    // RevenueCat APIキー未設定時（開発・モック環境）
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -683,7 +734,7 @@ class _PremiumPaywallModalState extends ConsumerState<PremiumPaywallModal> {
             ),
             const SizedBox(height: 10),
             const Text(
-              'ストア決済連携は現在準備中です（ステップ4にて接続予定）。',
+              '現在ストア決済APIキーが未設定のため、実課金は無効になっています。',
               style: TextStyle(fontSize: 13, height: 1.4),
             ),
             if (kDebugMode) ...[
@@ -730,17 +781,57 @@ class _PremiumPaywallModalState extends ConsumerState<PremiumPaywallModal> {
     );
   }
 
-  /// 購入復元（Restore）ボタン押下時のモック処理
+  /// 購入復元（Restore）ボタン押下時の処理
   Future<void> _handleRestore(BuildContext context) async {
-    setState(() => _isProcessing = true);
-    try {
+    final purchaseService = ref.read(purchaseServiceProvider);
+
+    if (!purchaseService.isConfigured) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('購入履歴を確認しました（ストア決済連携は準備中です）。'),
+          content: Text('購入履歴を確認しました（ストア決済APIキー未設定のためモック動作中）。'),
           behavior: SnackBarBehavior.floating,
         ),
       );
+      return;
+    }
+
+    setState(() => _isProcessing = true);
+    try {
+      final outcome =
+          await ref.read(isPremiumProvider.notifier).restorePurchases();
+      if (!context.mounted) return;
+      switch (outcome.status) {
+        case PurchaseStatus.success:
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '👑 ${outcome.message ?? '購入を復元しました！プレミアム機能が有効です。'}',
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        case PurchaseStatus.notFound:
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                outcome.message ?? '復元可能な有効な購入履歴が見つかりませんでした。',
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        case PurchaseStatus.error:
+        case PurchaseStatus.cancelled:
+        case PurchaseStatus.notConfigured:
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                outcome.message ?? '購入の復元に失敗しました。',
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+      }
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);

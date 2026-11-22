@@ -8,7 +8,7 @@
 PRODUCT_NAME = birthday_calendar
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.birthdayCalendar
+PRODUCT_BUNDLE_IDENTIFIER = com.seadragoon.birthdayCalendar
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.seadragoon. All rights reserved.

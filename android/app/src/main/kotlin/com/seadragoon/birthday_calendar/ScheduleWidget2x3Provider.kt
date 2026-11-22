@@ -1,4 +1,4 @@
-package com.example.birthday_calendar
+﻿package com.seadragoon.birthday_calendar
 
 import android.appwidget.AppWidgetManager
 import android.content.Context

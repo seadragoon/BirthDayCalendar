@@ -1,7 +1,7 @@
 # AGENTS.md — AI向けプロジェクトリファレンス
 
 > **このファイルはAIアシスタントがセッション開始時に最初に読むべきドキュメントです。**
-> 最終更新: 2026-11-22
+> 最終更新: 2026-11-23
 
 ---
 
@@ -77,6 +77,7 @@
 | 生体認証 | `local_auth` | ^2.3.0 | 指紋認証 / 顔認証 (Face ID / BiometricPrompt) |
 | 暗号化・ハッシュ | `crypto` | ^3.0.6 | パスコードのSHA-256ソルト付きハッシュ化 |
 | 写真選択・きせかえ | `image_picker` | ^1.1.2 | アルバムからのカレンダー背景写真選択 |
+| アプリ内課金 | `purchases_flutter` | ^11.0.4 | RevenueCat によるサブスクリプション・買い切り課金＆レシート検証 |
 
 ---
 
@@ -201,11 +202,15 @@ lib/
 │   │
 │   ├── premium/                                 # ── プレミアム機能 ──
 │   │   ├── models/
-│   │   │   └── premium_plan.dart                # PremiumPlan / PremiumPlanType（月額/年額/買い切りモデル）
+│   │   │   ├── premium_plan.dart                # PremiumPlan / PremiumPlanType（月額/年額/買い切りモデル）
+│   │   │   ├── purchase_config.dart             # PurchaseConfig（RevenueCat APIキー --dart-define 注入・Entitlement定義）
+│   │   │   └── purchase_outcome.dart            # PurchaseOutcome / PurchaseStatus（購入・復元結果モデル）
 │   │   ├── providers/
-│   │   │   └── premium_provider.dart            # isPremiumProvider (kDebugMode安全ガード・モック切替)
+│   │   │   └── premium_provider.dart            # isPremiumProvider / purchaseServiceProvider / premiumPlansProvider
+│   │   ├── services/
+│   │   │   └── purchase_service.dart            # PurchaseService 抽象 & RevenueCatPurchaseService 実装
 │   │   └── views/
-│   │       └── premium_paywall_modal.dart       # PremiumPaywallModal（Paywall/料金案内・プラン選択・復元UI）
+│   │       └── premium_paywall_modal.dart       # PremiumPaywallModal（Paywall/料金案内・プラン選択・実購入/復元UI）
 │   │
 │   ├── security/                                # ── セキュリティ・パスコード・生体認証機能 ──
 │   │   ├── models/
@@ -632,7 +637,7 @@ CREATE TABLE gifts (
 | 拡張ウィジェット（プレミアム） | ✅ 実装済み (フェーズ22-1) | 写真付きカウントダウンウィジェット（2×2, 4×2 全2種・円形クロップ・ライブプレビュー） |
 | プレミアム状態管理基盤 | ✅ 実装済み (フェーズ22-2) | isPremiumProvider (kDebugMode安全ガード・Tree Shaking対応)、基本設定デバッグ切替スイッチ |
 | Paywall・料金案内モーダル | ✅ 実装済み (フェーズ22-3) | PremiumPaywallModal、月額/年額/買い切りプラン選択、CTA動的切替、復元・規約リンク、ドロワー/基本設定/きせかえ導線 |
-| 課金決済・広告連携 | 計画中 (フェーズ22-4) | RevenueCat (purchases_flutter) 決済、Google AdMob 連携 |
+| 課金決済・広告連携 | 🟡 課金連携実装済 (フェーズ22-4) | RevenueCat (`purchases_flutter`) 接続基盤実装済（APIキー注入で実稼働）、Google AdMob 連携は未実装 |
 | 記念日への拡張 | 未実装 (候補) | 結婚記念日・命日・ペット記念日などのカウントダウン管理 |
 | 予定の定型テンプレート | 未実装 (候補) | シフトや通院など、よく使う予定のワンタップ入力 |
 | お祝い連絡ショートカット | 未実装 (候補) | 誕生日詳細からのLINE/電話/SMS直接起動 |

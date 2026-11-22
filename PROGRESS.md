@@ -74,7 +74,7 @@
 | **ステップ 2** | **プレミアム状態管理基盤 & UIガード連動**<br>・`isPremiumProvider`（Riverpod）の作成（`kDebugMode`安全ガード・Tree Shaking対応）<br>・基本設定（`BasicSettingsModal`）にデバッグ用即時切り替えスイッチを追加<br>・きせかえ画面（`ThemeSelectionModal`）でプレミアム状態に応じたUI切り替え（未解放時は限定テーマ・写真背景設定のブロック＆案内モーダル表示、解放時はフル機能利用） | ✅ 完了 |
 
 | **ステップ 3** | **Paywall / 料金案内モーダル**<br>・王冠アイコン 👑 / Proアップグレード案内画面（`PremiumPaywallModal`）<br>・プラン選択カード（月額 / 年額【7日間無料・一番お得】 / 買い切りLifetime）<br>・CTA動的切替、購入復元（Restore）、利用規約/ポリシーリンク<br>・ドロワー、基本設定、きせかえ画面からの起動導線とテスト実装 | ✅ 完了 |
-| **ステップ 4** | **課金パッケージ連携 & 広告枠**<br>・`purchases_flutter` (RevenueCat) によるストア決済接続<br>・`google_mobile_ads` 導入（無料時のみ表示・プレミアム時完全非表示） | 📋 計画中 |
+| **ステップ 4** | **課金パッケージ連携 & 広告枠**<br>・`purchases_flutter` (RevenueCat) によるストア決済・Offering動的価格・購入復元・リアルタイム権限連動を実装完了（APIキー `--dart-define` 注入対応）<br>・`google_mobile_ads` 導入（無料時のみ表示・プレミアム時完全非表示）は未着手 | 🟡 課金連携完了 |
 
 ---
 

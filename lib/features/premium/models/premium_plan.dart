@@ -58,6 +58,32 @@ class PremiumPlan {
     this.isRecommended = false,
   });
 
+  PremiumPlan copyWith({
+    PremiumPlanType? type,
+    String? productId,
+    String? title,
+    String? priceText,
+    String? periodText,
+    String? subText,
+    String? badgeText,
+    String? ctaLabel,
+    bool? hasFreeTrial,
+    bool? isRecommended,
+  }) {
+    return PremiumPlan(
+      type: type ?? this.type,
+      productId: productId ?? this.productId,
+      title: title ?? this.title,
+      priceText: priceText ?? this.priceText,
+      periodText: periodText ?? this.periodText,
+      subText: subText ?? this.subText,
+      badgeText: badgeText ?? this.badgeText,
+      ctaLabel: ctaLabel ?? this.ctaLabel,
+      hasFreeTrial: hasFreeTrial ?? this.hasFreeTrial,
+      isRecommended: isRecommended ?? this.isRecommended,
+    );
+  }
+
   /// 年額プラン（推奨・デフォルト選択）
   static const PremiumPlan yearly = PremiumPlan(
     type: PremiumPlanType.yearly,

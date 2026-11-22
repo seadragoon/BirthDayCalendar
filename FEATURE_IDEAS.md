@@ -100,9 +100,9 @@ Yahoo!カレンダーやGoogleカレンダーなどの既存カレンダーと�
   - 選択プランに応じたCTA動的切替、「購入を復元する（Restore）」ボタン、利用規約・プライバシーポリシーリンクを実装完了
 
 ### 💳 ステップ 4: 課金パッケージ連携（ストア公開前）
-- [ ] **RevenueCat (`purchases_flutter`) または公式IAPの接続**:
-  - App Store / Google Play Console のプロダクトID連携
-  - レシート検証、自動更新サブスクリプション、購入復元処理の実装
+- [x] **RevenueCat (`purchases_flutter`) の接続**:
+  - `PurchaseService` / `RevenueCatPurchaseService` によるSDK初期化・Offering動的価格取得・購入・購入復元（Restore）・リアルタイム権限リスナー実装完了
+  - `--dart-define=REVENUECAT_ANDROID_API_KEY=...` / `REVENUECAT_IOS_API_KEY=...` による安全なAPIキー注入（未設定時はデバッグモックにフォールバック）
 - [ ] **広告枠（Google AdMob）の実装**:
   - `google_mobile_ads` パッケージ導入
   - 無料ユーザー時のみバナー広告等の表示制御（プレミアム時は完全非表示）
