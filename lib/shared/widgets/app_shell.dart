@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:birthday_calendar/features/ads/widgets/ad_banner_widget.dart';
 import 'package:birthday_calendar/features/birthday/views/birthday_view.dart';
 import 'package:birthday_calendar/features/calendar/views/schedule_view.dart';
 import 'package:birthday_calendar/features/settings/providers/settings_providers.dart';
@@ -113,7 +114,13 @@ class _AppShellState extends ConsumerState<AppShell> {
             child: _buildBody(viewType),
           ),
         ),
-        bottomNavigationBar: const CustomFooter(),
+        bottomNavigationBar: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AdBannerWidget(),
+            CustomFooter(),
+          ],
+        ),
         floatingActionButton: const CustomFab(),
 
       ),

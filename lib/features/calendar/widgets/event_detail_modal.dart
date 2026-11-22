@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'package:birthday_calendar/features/ads/widgets/ad_banner_widget.dart';
 import 'package:birthday_calendar/features/calendar/models/event_model.dart';
 import 'package:birthday_calendar/features/calendar/providers/event_providers.dart';
 import 'package:birthday_calendar/features/calendar/widgets/event_modal.dart';
@@ -112,6 +113,7 @@ class _EventDetailModalState extends ConsumerState<EventDetailModal> {
     return BaseModal(
       title: titleDateStr,
       isEditMode: true,
+      bottomNavigationBar: const AdBannerWidget(safeAreaBottom: true),
       customActions: [
         IconButton(
           icon: const Icon(Icons.edit),

@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'package:birthday_calendar/features/ads/widgets/ad_banner_widget.dart';
 import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
 import 'package:birthday_calendar/features/birthday/models/gift_model.dart';
 import 'package:birthday_calendar/features/birthday/providers/birthday_providers.dart';
@@ -248,6 +249,7 @@ class _BirthdayModalState extends ConsumerState<BirthdayModal> {
       isSaveActionEnabled: isSaveEnabled,
       onSave: _onSave,
       onDelete: _onDelete,
+      bottomNavigationBar: const AdBannerWidget(safeAreaBottom: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

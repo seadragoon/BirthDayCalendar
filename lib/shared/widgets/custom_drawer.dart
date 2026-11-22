@@ -191,12 +191,17 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                               decoration: BoxDecoration(
                                 color: isPremium
                                     ? (isDark
-                                        ? Colors.amber.shade900
-                                            .withValues(alpha: 0.28)
-                                        : Colors.amber.withValues(alpha: 0.14))
+                                          ? Colors.amber.shade900.withValues(
+                                              alpha: 0.28,
+                                            )
+                                          : Colors.amber.withValues(
+                                              alpha: 0.14,
+                                            ))
                                     : (isDark
-                                        ? Colors.amber.withValues(alpha: 0.08)
-                                        : Colors.amber.withValues(alpha: 0.05)),
+                                          ? Colors.amber.withValues(alpha: 0.08)
+                                          : Colors.amber.withValues(
+                                              alpha: 0.05,
+                                            )),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: isDark
@@ -240,12 +245,13 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                                               Container(
                                                 padding:
                                                     const EdgeInsets.symmetric(
-                                                  horizontal: 6,
-                                                  vertical: 1.5,
-                                                ),
+                                                      horizontal: 6,
+                                                      vertical: 1.5,
+                                                    ),
                                                 decoration: BoxDecoration(
-                                                  color:
-                                                      const Color(0xFFFF8F00),
+                                                  color: const Color(
+                                                    0xFFFF8F00,
+                                                  ),
                                                   borderRadius:
                                                       BorderRadius.circular(6),
                                                 ),

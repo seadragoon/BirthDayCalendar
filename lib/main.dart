@@ -18,6 +18,7 @@ import 'package:birthday_calendar/shared/services/notification_service.dart';
 import 'package:birthday_calendar/features/widget/services/widget_sync_service.dart';
 import 'package:birthday_calendar/features/security/widgets/app_lock_wrapper.dart';
 import 'package:birthday_calendar/features/premium/services/purchase_service.dart';
+import 'package:birthday_calendar/features/ads/services/ad_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,6 +48,9 @@ void main() async {
 
   // アプリ内課金（RevenueCat）の初期化（APIキー未設定時は安全にスキップ）
   await RevenueCatPurchaseService.instance.initialize();
+
+  // Google AdMob の初期化（モバイル環境のみ）
+  await AdMobService.instance.initialize();
 
   // ホーム画面ウィジェットのデータ初期同期
   WidgetSyncService.updateAllWidgets();

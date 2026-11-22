@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'package:birthday_calendar/features/ads/widgets/ad_banner_widget.dart';
 import 'package:birthday_calendar/features/calendar/models/event_model.dart';
 import 'package:birthday_calendar/features/calendar/providers/event_providers.dart';
 import 'package:birthday_calendar/features/settings/models/app_settings.dart';
@@ -313,6 +314,7 @@ class _EventModalState extends ConsumerState<EventModal> {
       isSaveActionEnabled: isSaveEnabled,
       onSave: _onSave,
       onDelete: isEditMode ? _onDelete : null,
+      bottomNavigationBar: const AdBannerWidget(safeAreaBottom: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

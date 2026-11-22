@@ -34,6 +34,9 @@ class BaseModal extends ConsumerWidget {
   /// 左上のアイコン（デフォルトは閉じるマーク）
   final IconData leadingIcon;
 
+  /// 画面下部に固定表示するウィジェット（バナー広告など）
+  final Widget? bottomNavigationBar;
+
   const BaseModal({
     super.key,
     required this.title,
@@ -44,6 +47,7 @@ class BaseModal extends ConsumerWidget {
     this.isEditMode = false,
     this.customActions,
     this.leadingIcon = Icons.close,
+    this.bottomNavigationBar,
   });
 
   @override
@@ -140,6 +144,7 @@ class BaseModal extends ConsumerWidget {
           ),
         ),
       ),
+      bottomNavigationBar: bottomNavigationBar,
     );
   }
 }

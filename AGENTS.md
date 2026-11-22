@@ -78,6 +78,7 @@
 | 暗号化・ハッシュ | `crypto` | ^3.0.6 | パスコードのSHA-256ソルト付きハッシュ化 |
 | 写真選択・きせかえ | `image_picker` | ^1.1.2 | アルバムからのカレンダー背景写真選択 |
 | アプリ内課金 | `purchases_flutter` | ^11.0.4 | RevenueCat によるサブスクリプション・買い切り課金＆レシート検証 |
+| 広告配信 | `google_mobile_ads` | ^9.2.0 | Google AdMob バナー広告表示（無料ユーザー時のみ表示・Pro時完全非表示） |
 
 ---
 
@@ -199,6 +200,16 @@ lib/
 │   │   │   └── legal_document_modal.dart        # 規約・ポリシー閲覧モーダル（全文コピー対応）
 │   │   └── widgets/
 │   │       └── contact_dialog.dart              # お問い合わせ・ご意見ダイアログ（メーラー起動/メアドコピー）
+│   │
+│   ├── ads/                                     # ── 広告表示機能（AdMob） ──
+│   │   ├── models/
+│   │   │   └── ad_config.dart                   # AdConfig（テストID自動切替・本番ID --dart-define注入）
+│   │   ├── providers/
+│   │   │   └── ad_providers.dart                # adServiceProvider / shouldShowAdsProvider（Pro時完全非表示）
+│   │   ├── services/
+│   │   │   └── ad_service.dart                  # AdService 抽象 & AdMobService 実装
+│   │   └── widgets/
+│   │       └── ad_banner_widget.dart            # AdBannerWidget（フッター上部バナー・無料時のみ描画）
 │   │
 │   ├── premium/                                 # ── プレミアム機能 ──
 │   │   ├── models/
@@ -605,9 +616,9 @@ CREATE TABLE gifts (
 | 19 | 六曜・旧暦表示（qreki_dart、月カレンダーセル＆選択日バー表示、設定ON/OFF） | ✅ 完了 |
 | 20 | プレゼント・お祝い履歴管理（DB v8、年度別ギフト履歴、金額・メモ、JSONバックアップ連携） | ✅ 完了 |
 | 21 | 操作性向上（既存予定の複製作成、月選択ジャンプシート、カレンダー初期値設定） | ✅ 完了 |
-| 22 | プレミアム・マネタイズ（写真きせかえ・拡張ウィジェット・isPremiumProvider・きせかえUIガード連動・Paywall・IAP連携） | 🟡 ステップ3完了 |
+| 22 | プレミアム・マネタイズ（写真きせかえ・拡張ウィジェット・isPremiumProvider・きせかえUIガード連動・Paywall・RevenueCat課金・AdMob広告） | ✅ 完了 |
 
-**全体進捗: コア機能・拡張機能完了、フェーズ22（ステップ1キラー機能 ＆ ステップ2状態管理・UIガード連動 ＆ ステップ3 Paywall完了）**
+**全体進捗: 全22フェーズ完了（コア機能・拡張機能・プレミアム＆マネタイズ基盤一式完了）**
 
 ---
 
@@ -637,7 +648,7 @@ CREATE TABLE gifts (
 | 拡張ウィジェット（プレミアム） | ✅ 実装済み (フェーズ22-1) | 写真付きカウントダウンウィジェット（2×2, 4×2 全2種・円形クロップ・ライブプレビュー） |
 | プレミアム状態管理基盤 | ✅ 実装済み (フェーズ22-2) | isPremiumProvider (kDebugMode安全ガード・Tree Shaking対応)、基本設定デバッグ切替スイッチ |
 | Paywall・料金案内モーダル | ✅ 実装済み (フェーズ22-3) | PremiumPaywallModal、月額/年額/買い切りプラン選択、CTA動的切替、復元・規約リンク、ドロワー/基本設定/きせかえ導線 |
-| 課金決済・広告連携 | 🟡 課金連携実装済 (フェーズ22-4) | RevenueCat (`purchases_flutter`) 接続基盤実装済（APIキー注入で実稼働）、Google AdMob 連携は未実装 |
+| 課金決済・広告連携 | ✅ 実装済み (フェーズ22-4) | RevenueCat (`purchases_flutter`) 接続基盤＆Google AdMob (`google_mobile_ads`) バナー広告実装済（無料時のみ表示・Pro時完全非表示） |
 | 記念日への拡張 | 未実装 (候補) | 結婚記念日・命日・ペット記念日などのカウントダウン管理 |
 | 予定の定型テンプレート | 未実装 (候補) | シフトや通院など、よく使う予定のワンタップ入力 |
 | お祝い連絡ショートカット | 未実装 (候補) | 誕生日詳細からのLINE/電話/SMS直接起動 |

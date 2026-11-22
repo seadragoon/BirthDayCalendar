@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'package:birthday_calendar/features/ads/widgets/ad_banner_widget.dart';
 import 'package:birthday_calendar/features/birthday/models/birthday_model.dart';
 import 'package:birthday_calendar/features/birthday/providers/birthday_providers.dart';
 import 'package:birthday_calendar/features/birthday/widgets/birthday_modal.dart';
@@ -61,6 +62,7 @@ class _BirthdayDetailModalState extends ConsumerState<BirthdayDetailModal> {
     return BaseModal(
       title: headerTitle,
       isEditMode: true,
+      bottomNavigationBar: const AdBannerWidget(safeAreaBottom: true),
       onDelete: () async {
         if (_currentBirthday.id != null) {
           await ref.read(birthdayListProvider.notifier).deleteBirthday(_currentBirthday.id!);

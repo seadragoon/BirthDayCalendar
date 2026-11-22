@@ -103,9 +103,9 @@ Yahoo!カレンダーやGoogleカレンダーなどの既存カレンダーと�
 - [x] **RevenueCat (`purchases_flutter`) の接続**:
   - `PurchaseService` / `RevenueCatPurchaseService` によるSDK初期化・Offering動的価格取得・購入・購入復元（Restore）・リアルタイム権限リスナー実装完了
   - `--dart-define=REVENUECAT_ANDROID_API_KEY=...` / `REVENUECAT_IOS_API_KEY=...` による安全なAPIキー注入（未設定時はデバッグモックにフォールバック）
-- [ ] **広告枠（Google AdMob）の実装**:
-  - `google_mobile_ads` パッケージ導入
-  - 無料ユーザー時のみバナー広告等の表示制御（プレミアム時は完全非表示）
+- [x] **広告枠（Google AdMob）の実装**:
+  - `google_mobile_ads` パッケージ導入・`AdConfig` / `AdMobService` / `shouldShowAdsProvider` / `AdBannerWidget` を実装完了
+  - 無料ユーザー時のみフッター上部にバナー広告を表示（プレミアム会員時は完全非表示、デバッグ時は公式テストID自動切替）
 
 ---
 
