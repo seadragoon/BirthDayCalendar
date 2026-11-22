@@ -1,7 +1,7 @@
 # AGENTS.md — AI向けプロジェクトリファレンス
 
 > **このファイルはAIアシスタントがセッション開始時に最初に読むべきドキュメントです。**
-> 最終更新: 2026-10-09
+> 最終更新: 2026-11-22
 
 ---
 
@@ -200,8 +200,12 @@ lib/
 │   │       └── contact_dialog.dart              # お問い合わせ・ご意見ダイアログ（メーラー起動/メアドコピー）
 │   │
 │   ├── premium/                                 # ── プレミアム機能 ──
-│   │   └── providers/
-│   │       └── premium_provider.dart            # isPremiumProvider (kDebugMode安全ガード・モック切替)
+│   │   ├── models/
+│   │   │   └── premium_plan.dart                # PremiumPlan / PremiumPlanType（月額/年額/買い切りモデル）
+│   │   ├── providers/
+│   │   │   └── premium_provider.dart            # isPremiumProvider (kDebugMode安全ガード・モック切替)
+│   │   └── views/
+│   │       └── premium_paywall_modal.dart       # PremiumPaywallModal（Paywall/料金案内・プラン選択・復元UI）
 │   │
 │   ├── security/                                # ── セキュリティ・パスコード・生体認証機能 ──
 │   │   ├── models/
@@ -566,6 +570,7 @@ CREATE TABLE gifts (
 | お問い合わせ・ご意見 | `contact_dialog.dart` | サポート窓口メール案内（mailto:連携・OS/アプリ環境雛形自動挿入・メアドコピー） |
 | 検索 | `custom_search_delegate.dart` | 予定・誕生日のリアルタイム横断検索 |
 | 写真付きウィジェット設定 | `photo_countdown_settings_modal.dart` | カウントダウン対象の誕生日・写真の選択、ライブプレビュー |
+| プレミアム案内（Paywall） | `premium_paywall_modal.dart` | 特典ハイライト・月額/年額/買い切りプラン選択・CTA動的切替・購入復元・規約リンク |
 | 共通ヘッダー | `base_modal.dart` | ×ボタン / 決定 / 削除 / 編集 |
 
 ---
@@ -595,9 +600,9 @@ CREATE TABLE gifts (
 | 19 | 六曜・旧暦表示（qreki_dart、月カレンダーセル＆選択日バー表示、設定ON/OFF） | ✅ 完了 |
 | 20 | プレゼント・お祝い履歴管理（DB v8、年度別ギフト履歴、金額・メモ、JSONバックアップ連携） | ✅ 完了 |
 | 21 | 操作性向上（既存予定の複製作成、月選択ジャンプシート、カレンダー初期値設定） | ✅ 完了 |
-| 22 | プレミアム・マネタイズ（写真きせかえ・拡張ウィジェット・isPremiumProvider・きせかえUIガード連動・Paywall・IAP連携） | 🟡 ステップ2完了 |
+| 22 | プレミアム・マネタイズ（写真きせかえ・拡張ウィジェット・isPremiumProvider・きせかえUIガード連動・Paywall・IAP連携） | 🟡 ステップ3完了 |
 
-**全体進捗: コア機能・拡張機能完了、フェーズ22（ステップ1キラー機能 ＆ ステップ2状態管理・UIガード連動完了）** — 全70テスト通過完了済み
+**全体進捗: コア機能・拡張機能完了、フェーズ22（ステップ1キラー機能 ＆ ステップ2状態管理・UIガード連動 ＆ ステップ3 Paywall完了）**
 
 ---
 
@@ -626,7 +631,7 @@ CREATE TABLE gifts (
 | 写真きせかえ（プレミアム） | ✅ 実装済み (フェーズ22-1) | フォトライブラリから好きな写真をカレンダー背景に設定（濃度スライダー・永続化・解除対応） |
 | 拡張ウィジェット（プレミアム） | ✅ 実装済み (フェーズ22-1) | 写真付きカウントダウンウィジェット（2×2, 4×2 全2種・円形クロップ・ライブプレビュー） |
 | プレミアム状態管理基盤 | ✅ 実装済み (フェーズ22-2) | isPremiumProvider (kDebugMode安全ガード・Tree Shaking対応)、基本設定デバッグ切替スイッチ |
-| Paywall・料金案内モーダル | 計画中 (フェーズ22-3) | 料金案内モーダル、プラン選択カード、購入・復元導線モック |
+| Paywall・料金案内モーダル | ✅ 実装済み (フェーズ22-3) | PremiumPaywallModal、月額/年額/買い切りプラン選択、CTA動的切替、復元・規約リンク、ドロワー/基本設定/きせかえ導線 |
 | 課金決済・広告連携 | 計画中 (フェーズ22-4) | RevenueCat (purchases_flutter) 決済、Google AdMob 連携 |
 | 記念日への拡張 | 未実装 (候補) | 結婚記念日・命日・ペット記念日などのカウントダウン管理 |
 | 予定の定型テンプレート | 未実装 (候補) | シフトや通院など、よく使う予定のワンタップ入力 |

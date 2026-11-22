@@ -12,6 +12,8 @@ import 'package:birthday_calendar/features/birthday/widgets/contact_import_modal
 import 'package:birthday_calendar/features/legal/models/legal_texts.dart';
 import 'package:birthday_calendar/features/legal/views/legal_document_modal.dart';
 import 'package:birthday_calendar/features/legal/widgets/contact_dialog.dart';
+import 'package:birthday_calendar/features/premium/providers/premium_provider.dart';
+import 'package:birthday_calendar/features/premium/views/premium_paywall_modal.dart';
 
 /// アプリのドロワー（サイドメニュー）。
 ///
@@ -58,6 +60,7 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
   Widget build(BuildContext context) {
     final currentTheme = ref.watch(themeProvider).requireValue;
     final appSettingsAsync = ref.watch(appSettingsProvider);
+    final isPremium = ref.watch(isPremiumProvider).value ?? false;
     final themeMode = appSettingsAsync.valueOrNull?.themeMode ?? 1;
 
     IconData getThemeModeIcon() {
@@ -169,6 +172,121 @@ class _CustomDrawerState extends ConsumerState<CustomDrawer> {
                             ),
                           );
                         },
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              PremiumPaywallModal.show(context);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isPremium
+                                    ? (isDark
+                                        ? Colors.amber.shade900
+                                            .withValues(alpha: 0.28)
+                                        : Colors.amber.withValues(alpha: 0.14))
+                                    : (isDark
+                                        ? Colors.amber.withValues(alpha: 0.08)
+                                        : Colors.amber.withValues(alpha: 0.05)),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.amber.shade700
+                                      : Colors.amber.shade600,
+                                  width: 1.3,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.workspace_premium,
+                                    color: Colors.amber.shade700,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                isPremium
+                                                    ? 'プレミアム会員（Pro）'
+                                                    : 'Proにアップグレード',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isDark
+                                                      ? Colors.amber.shade200
+                                                      : Colors.black87,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            if (!isPremium) ...[
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 1.5,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      const Color(0xFFFF8F00),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                ),
+                                                child: const Text(
+                                                  'PRO',
+                                                  style: TextStyle(
+                                                    fontSize: 9.5,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                    letterSpacing: 0.5,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          isPremium
+                                              ? 'すべての限定機能が利用可能です'
+                                              : '写真背景・限定テーマ・広告非表示',
+                                          style: TextStyle(
+                                            fontSize: 11.5,
+                                            color: isDark
+                                                ? Colors.grey.shade400
+                                                : Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    size: 18,
+                                    color: Colors.amber.shade700,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                       const Divider(),
 

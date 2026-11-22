@@ -12,6 +12,7 @@ import 'package:birthday_calendar/features/backup/views/backup_restore_modal.dar
 import 'package:flutter/foundation.dart';
 import 'package:birthday_calendar/features/widget/widgets/photo_countdown_settings_modal.dart';
 import 'package:birthday_calendar/features/premium/providers/premium_provider.dart';
+import 'package:birthday_calendar/features/premium/views/premium_paywall_modal.dart';
 
 /// アプリ全体の基本設定画面。
 class BasicSettingsModal extends ConsumerWidget {
@@ -27,6 +28,33 @@ class BasicSettingsModal extends ConsumerWidget {
         data: (settings) => ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           children: [
+            // プレミアムプラン
+            _buildSectionHeader('プレミアムプラン'),
+            Consumer(
+              builder: (context, ref, _) {
+                final isPremium = ref.watch(isPremiumProvider).value ?? false;
+                return ListTile(
+                  leading: Icon(
+                    Icons.workspace_premium,
+                    color: isPremium ? Colors.amber.shade700 : Colors.amber,
+                  ),
+                  title: Text(
+                    isPremium ? 'プレミアム会員（Pro）有効中' : 'Proにアップグレード',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    isPremium
+                        ? 'すべての限定機能をご利用いただけます'
+                        : '限定テーマ・写真背景・広告非表示を解放',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => PremiumPaywallModal.show(context),
+                );
+              },
+            ),
+            const Divider(),
+
             // 通知設定
             _buildSectionHeader('通知'),
             SwitchListTile(

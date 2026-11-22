@@ -9,6 +9,7 @@ import 'package:birthday_calendar/shared/theme/app_theme.dart';
 import 'package:birthday_calendar/shared/constants/event_color.dart';
 import 'package:birthday_calendar/shared/widgets/base_modal.dart';
 import 'package:birthday_calendar/features/premium/providers/premium_provider.dart';
+import 'package:birthday_calendar/features/premium/views/premium_paywall_modal.dart';
 
 /// きせかえ（テーマ）選択画面。
 ///
@@ -174,9 +175,9 @@ class ThemeSelectionModal extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 👑 プレミアムバナーヘッダー（未解放時はタップで案内モーダル表示）
+          // 👑 プレミアムバナーヘッダー（未解放時はタップでPaywall表示）
           InkWell(
-            onTap: !isPremium ? () => _showPremiumPromoModal(context) : null,
+            onTap: !isPremium ? () => PremiumPaywallModal.show(context) : null,
             borderRadius: BorderRadius.circular(16),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
@@ -1163,19 +1164,55 @@ class _PremiumPromoModalSheet extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          // ボタン
+          // ボタン（Paywall遷移 + 閉じる）
           SizedBox(
             width: double.infinity,
             height: 48,
-            child: FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
+            child: FilledButton.icon(
+              onPressed: () {
+                final navigator = Navigator.of(context);
+                navigator.pop();
+                navigator.push(
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        PremiumPaywallModal(featureTitle: featureTitle),
+                    fullscreenDialog: true,
+                  ),
+                );
+              },
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFFF8F00),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
-              child: const Text(
+              icon: const Icon(
+                Icons.workspace_premium,
+                size: 20,
+                color: Colors.white,
+              ),
+              label: const Text(
+                'プレミアムプランを見る',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 40,
+            child: TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
                 '閉じる',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                ),
               ),
             ),
           ),
