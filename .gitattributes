@@ -1,0 +1,18 @@
+# GitHub の言語統計（Linguist）で Dart がメイン表示されるように、
+# Flutter が自動生成する各プラットフォームのボイラープレートを統計対象から除外します。
+
+# 自動生成プラットフォームコード（C++ / CMake / Swift / C / HTML 等）を除外
+windows/** linguist-generated=true
+linux/** linguist-generated=true
+macos/** linguist-generated=true
+ios/** linguist-generated=true
+web/** linguist-generated=true
+
+# Android の自動生成ファイル・ビルド設定を除外（ウィジェット等の Kotlin 実装は除外しない場合はそのまま残る）
+android/gradle/** linguist-generated=true
+android/gradlew linguist-generated=true
+android/gradlew.bat linguist-generated=true
+android/app/src/main/res/** linguist-generated=true
+
+# Dart コードを明示的に検出対象にする
+*.dart linguist-detectable=true
